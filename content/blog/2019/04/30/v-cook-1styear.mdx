@@ -1,0 +1,334 @@
+---
+title: "NPOがビーガンレシピアプリを開発する１年間の軌跡"
+date: "2019-04-30T02:13:31.000Z"
+slug: "v-cook-1styear"
+summary: "ヴィーガン料理に特化したレシピ投稿サービス「V-cook」を、NPO法人日本ヴィーガンコミュニティの事業として開発した１年間の軌跡です。NPOの認識や社会の中での役割を再定義するきっかけになればと思います。"
+tags: ["product", "allcontents"]
+thumbnail: "https://kudoshu07.com/wp-content/uploads/2019/04/ヴィーガンレシピアプリ開発１年アイキャッチ.png"
+---
+
+<div class="wp-block-image"><figure class="aligncenter"><img src="https://kudoshu07.com/wp-content/uploads/2019/04/image-7-1024x576.png" alt="" class="wp-image-1895"/></figure></div>
+
+<p>こんにちは。工藤(<a href="https://twitter.com/itllbedark">@itllbedark</a>)です。</p>
+
+<p>と、いつものブログなら、このままリズミカルに記事を進めていくのだが、今回は少し真面目な話をしたい。いつも当ブログを読んでくださっている方は、です・ます口調ではない文章を楽しんでいただけたらと思う。</p>
+
+<p style="background-color:#e0f9ef" class="has-background has-normal-font-size"><strong>▶︎この記事を読んで欲しい人</strong><br>　・ヴィーガンを実践する方<br>　・ヴィーガン事業を行う方<br>　・NPO、NGO関係の方<br>　・エンジニアの方<br></p>
+
+<div style="height:40px" aria-hidden="true" class="wp-block-spacer"></div>
+
+<p>僕は、現在、NPO法人日本ヴィーガンコミュニティにて、代表理事という分部不相応にも思える肩書きを背負って、ヴィーガンを実践しやすい社会を創り出すために活動している。</p>
+
+<p><a href="https://hellovegan.jp/">【HP】NPO法人日本ヴィーガンコミュニティ</a></p>
+
+<div style="height:40px" aria-hidden="true" class="wp-block-spacer"></div>
+
+<p>当法人のいくつかの事業の中で、僕が担当しているのは<strong>「V-cook」という、ヴィーガン料理に特化したレシピ投稿サービスだ。</strong>このサービスでは、ユーザー登録した人なら誰でも簡単にレシピを投稿することができ、そのように蓄積されたレシピを検索することができる。コンセプトの通り、まさに「みんなでつくるヴィーガンレシピ集」である。</p>
+
+<p>今回の記事では、NPO法人の事業としては珍しいWebアプリケーション、「V-cook」のアイデアが思い浮かんだ瞬間から、現在（平成最後の日）一般の方に先行利用という形で利用していただけるまでの、開発の軌跡を記したいと思う。</p>
+
+<p>ヴィーガンの方や、ヴィーガン関係の事業家や活動家の方、NPO・NGOに携わる方、そしてウェブエンジニアの方には、ぜひ最後まで読んでいただきたい。</p>
+
+<div style="height:40px" aria-hidden="true" class="wp-block-spacer"></div>
+
+<h2>"Hello Vegan!"な社会を目指して</h2>
+
+<figure class="wp-block-image"><img src="https://kudoshu07.com/wp-content/uploads/2019/04/image-25-1024x683.png" alt="" class="wp-image-1917"/></figure>
+
+<p>「V-cook」の開発の前に、少しだけ僕、工藤柊のことを知っていただきたい。僕の活動の原点は、二つの不条理にある。ではまずは、一つ目の不条理である、僕がヴィーガンを始めたきっかけについてだ。</p>
+
+<p>僕は、2018年11月、高校３年の秋にヴィーガンを始めた。きっかけとなった出来事は、車に轢かれて「ぺちゃんこの猫」を見たこと。その出来事の前から、飢餓や紛争、環境問題などを学校の授業で学び、犠牲になる側と犠牲を生む側との差、すなわち不条理に対して憤りを感じていたが、その猫を見て<strong>「不条理は教科書の中だけではない」</strong>と世界の見方が変わったのだ。</p>
+
+<p>そして、身近にある不条理を探している内に、保健所での殺処分や、畜産業に置ける動物の扱いを知る。その事実を知って、憤りを感じていた不条理を生み出す側に、自らが立っていたことに気が付いた。これが一つ目の不条理だ。次の日から僕はヴィーガンを実践し始めた。</p>
+
+<p>ヴィーガンを始めた頃は、本当に大変だった。これまで食べていたものを一気に制限することになるため、1ヶ月ほど家では水炊きの鍋を食べ、学校へは塩おにぎりを持っていくという生活が続いた。</p>
+
+<p>1ヶ月が過ぎた頃から、母の協力もあり、少しずつヴィーガン料理の幅も広がって、自分の生活に余裕ができ始めた。その頃から、自分以外のベジタリアンやヴィーガンの方と、SNSやイベントを通して、会う機会が増え始める。ベジタリアンやヴィーガンを実践する彼ら彼女らは、動物や環境、将来世代のことを思いやる心を持ち、自分にできる行動を取るこのできる強くて優しい人たちだった。</p>
+
+<p>しかし、ヴィーガンの方々と交流を深める内に、二つ目の不条理に遭遇することになる。それは、<strong>優しい人が幸せで居られない</strong>という、なんとも悲しい事実であった。</p>
+
+<p>他者への思いやりから自らの行動を選択する、優しい友人たちが、外食の不便さや商品の少なさに世知辛さを感じていた。中には、それ故に人間関係が崩れ、目の前で涙する友人も見た。</p>
+
+<div style="height:40px" aria-hidden="true" class="wp-block-spacer"></div>
+
+<figure class="wp-block-image"><img src="https://kudoshu07.com/wp-content/uploads/2019/04/image-26-1024x577.png" alt="" class="wp-image-1918"/></figure>
+
+<p class="has-medium-font-size">「優しい人が幸せに生きられる社会を創りたい」</p>
+
+<p>それが僕の活動の根源にある思いであり、生きる目的の一つだ。もちろん、優しい人とはヴィーガンを実践する人だけではない、他者を思いやる心をもち、行動する人たちが報われる社会になれば、きっと平和な世界に近づくと信じている。</p>
+
+<p>そして、まずは自分も当事者であるヴィーガンという優しさを発揮する人が、幸せに暮らせる社会を創ることを目指した。それが、活動のコンセプトでもある"Hello Vegan!"という考えだ。この言葉には、<strong>ヴィーガンを実践したいという人に、"Hello Vegan!"と笑顔で迎え入れられるような環境を整える</strong>という意味を込めている。</p>
+
+<p>そして、まずは活動の第一歩として、入学が決まった神戸大学の食堂にヴィーガンメニューを導入する活動や、ブログでの発信を始めた。多くの人に届くように、社会に影響を与えるために、全力を尽くした。</p>
+
+<p>しかし、多くの人に価値は届かず、社会は大きくは変わらなかった。自分一人での活動には、必ず限界があるのだと気が付いたのはその時だ。</p>
+
+<div style="height:40px" aria-hidden="true" class="wp-block-spacer"></div>
+
+<h2>日本ヴィーガンコミュニティの構想</h2>
+
+<figure class="wp-block-image"><img src="https://kudoshu07.com/wp-content/uploads/2019/04/image-27-1024x595.png" alt="" class="wp-image-1920"/></figure>
+
+<p>一人の力では限界がある。そうであるなら、社会は変わらないと諦めることしかできないのだろうか。社会に何も影響を与えない存在であるならば、自分は何のために生まれ、生きていくのだろうか。</p>
+
+<p>自問自答を繰り返しながら、これまで社会に影響を与えてきた人の本を読んだ。人生の先を行く先輩たちに相談もした。そして出た結論はシンプルで、<strong>「一人で達成できないことも、多くの人と協力すれば達成できる」</strong>というものだった。</p>
+
+<p>この答えは、生協（生活協同組合）の父と呼ばれる賀川豊彦という人物に関する本を読んで得たものだ。協同組合という、共通の課題を持つ人々が協力し、みなでお金を出し合い、事業運営に参加し、生み出された商品を利用するという組織の形を知り、衝撃を受けた。</p>
+
+<div style="height:40px" aria-hidden="true" class="wp-block-spacer"></div>
+
+<p class="has-medium-font-size">ヴィーガンの協同組合を作れば、ヴィーガンの課題を自分たちで解決することができる。</p>
+
+<div style="height:40px" aria-hidden="true" class="wp-block-spacer"></div>
+
+<p>当時まだ18だった僕は、今よりも更に知識も経験もなかった。それでも、協同組合という、同じ目的を持った人たちが集まる箱なら、なんとか作ることができるのではないか。むしろそれは、世間知らずで向こう見ずな学生の<strong>自分だからできることではないか</strong>と、自分の使命を見つけた気がしたのだ。その時から、日本ヴィーガンコミュニティの構想が始まった。</p>
+
+<p>これは少し余談になるが、法人格にNPO法人を選択した理由も、優しい人が幸せに生きられる社会を創るためだ。利他的で優しい人が多いNPOを経営・運営する人が、「NPO=ボラティア、無給」という偏見によって損をする社会を、少しでも変えたいという思いがあった。</p>
+
+<div style="height:40px" aria-hidden="true" class="wp-block-spacer"></div>
+
+<h2>V-cookは、ただの候補の一つだった</h2>
+
+<figure class="wp-block-image"><img src="https://kudoshu07.com/wp-content/uploads/2019/04/image-4-1024x592.png" alt="" class="wp-image-1892"/></figure>
+
+<p>前置きが長くなってしまったが、ここからが本題である「V-cook」の開発についてだ。そもそも、「V-cook」は日本ヴィーガンコミュニティで行う事業を考えていた時に出た、９つある内のただの候補の一つでしかなかった。</p>
+
+<p>当時の企画は、ニーズ調査も不十分であり、ターゲットも絞り切れていない状態。僕は、大学食堂へのメニュー導入の活動の失敗経験から得た学びを活かし、自己満足ではなく、<strong>本当に求められているものをつくることを意識した。</strong>そうでなければ、社会を本当に変えることなどできない。</p>
+
+<div style="height:40px" aria-hidden="true" class="wp-block-spacer"></div>
+
+<h2>170名へのヒアリング・アンケート</h2>
+
+<figure class="wp-block-image"><img src="https://kudoshu07.com/wp-content/uploads/2019/04/image-5-1024x632.png" alt="" class="wp-image-1893"/><figcaption>深森史子さんへのヒアリングの様子</figcaption></figure>
+
+<p>早速、アンケートフォームを作成し、SNSを利用して回答をお願いした。そうした結果、質問数が28もあるアンケートに、想定外にも110人もの方に回答していただき、ヴィーガンやベジタリアンを実践する人たちの悩みが明確になった。</p>
+
+<p>次に、更に悩みや課題を明確にするために、知り合いのヴィーガンやベジタリアンの方々に、メッセージを送り始めた。知り合いから知り合いを紹介していただき、関西圏で直接話したヴィーガンの人数は、なんと合計６０名。</p>
+
+<div style="height:40px" aria-hidden="true" class="wp-block-spacer"></div>
+
+<figure class="wp-block-image"><img src="https://kudoshu07.com/wp-content/uploads/2019/04/image-6-1024x639.png" alt="" class="wp-image-1894"/><figcaption>V-talkというイベントの様子</figcaption></figure>
+
+<p>知り合いではない人とも出会うために、何度かイベントも企画した。このヒアリングの時期に出会ったのが、現在（2019年4月）理事を務める深森史子さんと神谷真奈さんだ。</p>
+
+<p>時間を取って会ってくださった方々にとって、本当に困っていることが何か、日本ヴィーガンコミュニティは本当に必要なのか、９つの事業の候補のどれに可能性があるのかなど、<strong>５ヶ月の間、質問と傾聴、分析を繰り返した。</strong></p>
+
+<div style="height:40px" aria-hidden="true" class="wp-block-spacer"></div>
+
+<h2>選ばれたのは、V-cookでした</h2>
+
+<figure class="wp-block-image"><img src="https://kudoshu07.com/wp-content/uploads/2019/04/image-28.png" alt="" class="wp-image-1921"/></figure>
+
+<p>アンケート結果と、ヒアリングを行い、ヴィーガンやベジタリアンの人たちが抱える悩みの全貌が明らかになった。アンケートの結果で、<strong>最も多かったのは「外食に困る」という悩みだ。</strong>しかし、実際に会って話してみると、この悩みの本質は「ヴィーガンではない人と気軽に入ることができるお店が少なく、人間関係が崩れてしまう」というものなのだ。</p>
+
+<p>つまり、求められているのは、どこにでもあるヴィーガン対応飲食店、もしくは近く（この場合、徒歩５分程度）にあるヴィーガン対応飲食店を見つけるサービスである。現状、ヴィーガンに対応した飲食店が物理的に少ない状態で、このニーズを満たすことは、神戸でヴィーガンカフェの店長を務めた経験からも、難しいと判断した。</p>
+
+<p>僕が注目したのは、<strong>ヴィーガン料理を作る際に参考にするレシピだ。</strong>アンケートの結果でも、27.8%の人が料理をする際にクックパッドを参考にしていることがわかる。しかし、クックパッドの「ヴィーガン」で検索してヒットするレシピは約2,000件であり、その中にはヴィーガンとタイトルに付けながら、牛乳や卵を使っている料理も含まれている。</p>
+
+<p>また、<a href="https://www.facebook.com/groups/831028623627816/">「ヴィーガンな食卓」</a>というフェイスブックグループには、4,500名を超えるメンバーが参加している。そこでは、ヴィーガン料理の写真が頻繁に投稿され、「いいね！」やコメント機能を利用し、活発なコミュニケーションが行われていたのだ。</p>
+
+<div style="height:20px" aria-hidden="true" class="wp-block-spacer"></div>
+
+<p>僕はその二つの事実から、３つの仮説を立てた。</p>
+
+<p style="font-size:14px">・ネット上にヴィーガンレシピが散在している<br>・既存レシピ投稿サイトのヴィーガンレシピは数が少なく信用に欠ける<br>・料理を通して、同じライフスタイルを送る仲間との交流を楽むことができる</p>
+
+<p>これらの仮説を元に、「V-cook」というサービスの開発は始まったのだ。</p>
+
+<div style="height:40px" aria-hidden="true" class="wp-block-spacer"></div>
+
+<h2>手探りでデザインしてみた</h2>
+
+<figure class="wp-block-image"><img src="https://kudoshu07.com/wp-content/uploads/2019/04/image-1.png" alt="" class="wp-image-1889"/></figure>
+
+<p>兎にも角にも、まずは自分が描いているイメージを人に伝えるために、サービスのデザインを手探りで始めた。しかし、<strong>自分のデザインセンスが欠落していることを認めざるを得ない結果となってしまった。</strong></p>
+
+<p>この時は、ウェブサービスのデザインのためのソフトすらも知らず、自分が使えるパワーポイントで一生懸命に作っていたことを今でも覚えている。そのせいで、当時協力してくれていたエンジニアの先輩をとても困らせてしまった。</p>
+
+<div style="height:40px" aria-hidden="true" class="wp-block-spacer"></div>
+
+<h2>UIデザインを依頼</h2>
+
+<figure class="wp-block-image"><img src="https://kudoshu07.com/wp-content/uploads/2019/04/image-29-1024x518.png" alt="" class="wp-image-1922"/></figure>
+
+<p>自分のセンスに見切りをつけ、偶然出会った同じ大学のデザイナーに「V-cook」のUIデザインを依頼した。その結果、僕が作成していたものとは比べ物にならないクオリティのデザインを作り上げてくれた。</p>
+
+<p>デザインはできた。次は、エンジニアに実装してもらうことが必要だ。しかし、工藤の人脈はもちろん、これまで出会ってきたヴィーガンの人の人脈の中にも<strong>エンジニアの方はおらず、途方に暮れていた。</strong>一時期は、まずはフェイスブックグループを利用したり、ワードプレスにてサイトを作り、手動で運営しようとも考えていた程だ。</p>
+
+<div style="height:40px" aria-hidden="true" class="wp-block-spacer"></div>
+
+<h2>ビジョナリーエンジニア山本祐己との出会い</h2>
+
+<figure class="wp-block-image"><img src="https://kudoshu07.com/wp-content/uploads/2019/04/image-9-1024x684.png" alt="" class="wp-image-1897"/></figure>
+
+<p>サービス開発を諦めかけていた頃、大学１年の頃に同団体で活動していた先輩の山本祐己こと、もっちさん(<a href="https://twitter.com/muscleandlogic">@muscleandlogic</a>)と再会を果たす。彼は、エンジニアを目指して修行中の身だったが、その技術を社会貢献のために活かしたいという思いを僕に語ってくれた。そういった理由から僕は彼のことをビジョナリーエンジニアやソーシャルエンジニアと勝手に呼んでいる。</p>
+
+<p class="has-small-font-size">（シーシャルエンジニアは、ソーシャルエンジニアリングを連想させるのであまり使わない方がいいとのこと）</p>
+
+<p>「V-cook」のウェブアプリとしての事業運営を諦めきれない心があった僕は、そんな思いを持つもっちさんに「V-cookを開発してもらえないか」と嘆願した。当時のもっちさんの技術力はその時はどうでもよかったのだ。ただ、<strong>その志に感動し、共に一つのことを成し遂げたい</strong>と思えただけで十分だった。</p>
+
+<p>返事は「いいで」というあっさりとしたもので、アツい握手を交わして次の日から早速開発に取り組み始めた。この時もっちさんと一緒に「V-cook」を開発することを選んだ自分の選択が間違っていなかったことは、後になってわかる。</p>
+
+<div style="height:40px" aria-hidden="true" class="wp-block-spacer"></div>
+
+<h2>メンバー限定でβ版リリース</h2>
+
+<figure class="wp-block-image"><img src="https://kudoshu07.com/wp-content/uploads/2019/04/image-12-1024x574.png" alt="" class="wp-image-1900"/></figure>
+
+<p>2018年12月後半、日本ヴィーガンコミュニティのメンバー限定でβ版をリリースすることができた。コミュニティのフェイスブックページを利用し、URLを配布。コミュニティメンバー75名のうち、<strong>60名に利用され、投稿レシピ数は170を超えた。</strong></p>
+
+<p>それから数カ月かけ、メンバーに協力してもらい、実際に「V-cook」を利用した感想や、エラーの報告などを収集。それを参考に、製品版「V-cook」の実装を開始した。</p>
+
+<div style="height:40px" aria-hidden="true" class="wp-block-spacer"></div>
+
+<h2>インスタグラムの運用開始</h2>
+
+<figure class="wp-block-image"><img src="https://kudoshu07.com/wp-content/uploads/2019/04/image-8.png" alt="" class="wp-image-1896"/></figure>
+
+<p>次に行ったことは、コミュニティメンバーの協力を経て集まったレシピを、更に多くの人に届けるために、SNSを利用して発信を始めた。毎日のレシピ投稿はコミュニティメンバーのスマベジさん(<a href="https://twitter.com/Smile_veg">@Smile_veg</a>)に協力していただき、最初に始めたのはツイッター、フェイスブック、インスタグラムの３種類だ。</p>
+
+<p>２週間の運用の結果<br>　・ツイッター：フォロワー98名<br>　・FBグループ：メンバー181名<br>　・インスタグラム：フォロワー148名</p>
+
+<p>この結果から、ツイッターの運用を終了し、その後FBグループの運用も終了し、インスタグラムに注力することを決定。</p>
+
+<figure class="wp-block-image"><img src="https://kudoshu07.com/wp-content/uploads/2019/04/image-14-1024x431.png" alt="" class="wp-image-1902"/></figure>
+
+<p>その結果、101日間毎日レシピを投稿したインスタグラムのフォロワーは3,450人を突破（2019年4月）。この数字は、<strong>「V-cook」が多くの人に求められていることの証明となった。</strong>同時に、この成果は、メンバーで協力して集まったレシピと、スマベジさんの協力がなければなかった、つまり、昨年に感じた一人の限界からコミュニティをつくり、協同をコンセプトに進んできたことが間違えていなかったことの証明にもなった。</p>
+
+<p><a href="https://www.instagram.com/vcook_japan/">【Instagram】V-cook公式アカウント</a></p>
+
+<div style="height:40px" aria-hidden="true" class="wp-block-spacer"></div>
+
+<h2>インスタグラムからペインを発見</h2>
+
+<figure class="wp-block-image"><img src="https://kudoshu07.com/wp-content/uploads/2019/04/image-16-1024x600.png" alt="" class="wp-image-1904"/></figure>
+
+<p>インスタグラムのフォロワーが増えたことによって、そのインサイトから「V-cook」を求める人の傾向が見えてきた。フォロワーの90%以上が女性であり、その内25-44歳が70%を占める。つまり、当たり前の話だが、「V-cook」を求めているのは、料理を作る主体である主婦であったのだ。</p>
+
+<p>そして、インスタグラムのメッセージを通して、主婦の方々にお話を伺うと、僕たちが本当に解決するべき痛み（ペイン）が見えてきた。これまで、「ヴィーガン料理の幅が狭い」という課題を解決すべくサービスを開発していたが、ヴィーガン料理の幅を広げることはただの手段である。<strong>本当に解決するべきことは「ヴィーガンというライフスタイルを理解されない孤独」だった。</strong></p>
+
+<p>フォローしてくださった方や知人のヴィーガンの方に聞くと、ヴィーガン料理を頑張って作っても「美味しくない」と言われて食べてすらくれない家族がいるのだという。それはつまり、家族の中でも自分の居場所がないことを意味し、その孤独以上に辛いことはないだろうと想像できる。</p>
+
+<div style="height:40px" aria-hidden="true" class="wp-block-spacer"></div>
+
+<p class="has-medium-font-size">本当に届けたいものは、笑顔溢れるヴィーガンの食卓だった。</p>
+
+<div style="height:40px" aria-hidden="true" class="wp-block-spacer"></div>
+
+<figure class="wp-block-image"><img src="https://kudoshu07.com/wp-content/uploads/2019/04/image-20.png" alt="" class="wp-image-1908"/></figure>
+
+<figure class="wp-block-image"><img src="https://kudoshu07.com/wp-content/uploads/2019/04/image-18.png" alt="" class="wp-image-1906"/></figure>
+
+<p>そこで、サービスを開発する上で、ユーザーをイメージし易くするために設定するペルソナを、大幅に変えた。これまでのヒアリングやアンケート、メッセージのやり取りで、「V-cook」を通して笑顔になって欲しい人のイメージは上の通りだ。</p>
+
+<div style="height:40px" aria-hidden="true" class="wp-block-spacer"></div>
+
+<h2>AdobeでUIデザイン開始</h2>
+
+<figure class="wp-block-image"><img src="https://kudoshu07.com/wp-content/uploads/2019/04/image-13-1024x640.png" alt="" class="wp-image-1901"/></figure>
+
+<p>ペルソナも決定し、後はリリースして改善を繰り返すだけだと安心したのも束の間、デザイナーと都合が合わず、製品版のUIデザインを自分ですることとなる。一度はセンスがないと切り捨てた作業を、次はデザイナーの先輩方に教わりながら始めた。</p>
+
+<p>Adobeの契約から、使い方までを教えてもらい、そこからはひたすら類似サービスのサイトやアプリを参考に、独学で作り上げた。<strong>自分でユーザーが実際に触る画面をデザインできてよかった点がいくつかある。</strong></p>
+
+<p>・ユーザー視点に立てること<br>・機能の抜け漏れに気が付けること<br>・Adobeを何とか使えるようになったこと</p>
+
+<div style="height:40px" aria-hidden="true" class="wp-block-spacer"></div>
+
+<h2>ロゴマークの決定</h2>
+
+<figure class="wp-block-image"><img src="https://kudoshu07.com/wp-content/uploads/2019/04/image-21-1024x576.png" alt="" class="wp-image-1909"/></figure>
+
+<p>次に、ロゴマークの作成を依頼していたデザイナーからロゴが納品された。これが、V-cookのVを人参に見立てたシンプルかつ、ヴィーガンの要素を表したとても可愛いロゴだ。Vの空間を見ると、ラディッシュ的な野菜があるようにも見えるというちょっとしたこだわりも含まれている。</p>
+
+<p>丁寧に話を聞いてくださり、V-cookのコンセプトを理解し、解釈してロゴを完成させてくださったデザイナーのグレイテストヒロキさん(<a href="https://twitter.com/greatest_hiroki">@greatest_hiroki</a>)にこの場を借りて感謝を伝えたい。</p>
+
+<p><a href="https://hellovegan.jp/vcook-logo/">【ロゴ発表】みんなでつくるヴィーガンレシピ集「V-cook」のロゴが決定しました！</a></p>
+
+<div style="height:40px" aria-hidden="true" class="wp-block-spacer"></div>
+
+<h2>先行利用がスタート！</h2>
+
+<figure class="wp-block-image"><img src="https://kudoshu07.com/wp-content/uploads/2019/04/image-22-1024x576.png" alt="" class="wp-image-1910"/></figure>
+
+<p>UIデザイン、最低限の機能の実装、ロゴが完成し、<strong>４月下旬にしてついに先行利用を開始した。</strong>これまで通り、日本ヴィーガンコミュニティのメンバーをはじめ、追加でV-cookのフェイスブックグループへ参加してくださっていたメンバー、インスタグラムのフォロワーから応募していただいた30名に利用していただいている。</p>
+
+<p>今後、サービスの改善を行いながら、毎週数十人ずつ募集をかけて先行利用者を増やしていく予定である。インスタグラムにて、応募フォームの案内を行っているため、先行利用を行いたい方は公式アカウントのストーリーズに注目しておいてほしい。</p>
+
+<p><a href="https://www.instagram.com/vcook_japan/">【Instagram】V-cook公式アカウント</a></p>
+
+<figure class="wp-block-image"><img src="https://kudoshu07.com/wp-content/uploads/2019/04/image-32-1024x918.png" alt="" class="wp-image-1929"/></figure>
+
+<p>また、利用してくださった方からの嬉しいメッセージをいただいたので、ここで紹介、というか自慢したい。</p>
+
+<div style="height:40px" aria-hidden="true" class="wp-block-spacer"></div>
+
+<h2>今後の目標</h2>
+
+<figure class="wp-block-image"><img src="https://kudoshu07.com/wp-content/uploads/2019/04/image-31-1024x683.png" alt="" class="wp-image-1925"/></figure>
+
+<p>ここまで１年を経て、やっとの思いで、レシピ投稿・レシピ検索・タイムライン・マイページの最小限の機能の「V-cook」の先行利用を開始することができた。</p>
+
+<p>そして、７月に正式リリースを行い、今年度で計画通りに進むことができれば、<strong>ユーザー数は10,000人を突破する。</strong>（ここを目標に行動する）インスタグラムのフォロワーはこのまま直線的に増えれば、20,000人を超える事になる。</p>
+
+<p>そして、数年先には、ヴィーガンの企業と消費者の橋渡しの役割を果たすまでに成長させ、ヴィーガン業界の成長速度を加速させる。そうすることで、ヴィーガンが実践しやすい社会を一年でも早く実現することができる。</p>
+
+<figure class="wp-block-image"><img src="https://kudoshu07.com/wp-content/uploads/2019/04/image-24.png" alt="" class="wp-image-1912"/></figure>
+
+<p>今後予測される日本のヴィーガン人口の増加や、サービスの英語対応など、「V-cook」は可能性を大いに秘めた事業だ。しかし、その可能性を発揮するためには、ヴィーガンレシピを投稿する方、サポーターとなり支援してくださる方、エンジニアの方など、様々な人たちの協力が不可欠である。</p>
+
+<div style="height:40px" aria-hidden="true" class="wp-block-spacer"></div>
+
+<h2>エンジニアの方へ</h2>
+
+<p>現在、日本ヴィーガンコミュニティは、<strong>「V-cook」の開発を担当するウェブエンジニアを募集しています。</strong>誰もがヴィーガンを実践できる"Hello Vegan!"な社会を共に創りましょう。</p>
+
+<figure class="wp-block-embed-twitter wp-block-embed is-type-rich is-provider-twitter"><div class="wp-block-embed__wrapper">
+https://twitter.com/npo_jvc/status/1124613386367406080
+</div></figure>
+
+<p>下のボタンから詳細ページに飛ぶことができます。ご連絡お待ちしています。</p>
+
+<div style="height:20px" aria-hidden="true" class="wp-block-spacer"></div>
+
+<div class="wp-block-button aligncenter"><a class="wp-block-button__link has-background has-vivid-green-cyan-background-color" href="https://hellovegan.jp/volunteer-engineer/">V-cookエンジニアに応募する</a></div>
+
+<div style="height:20px" aria-hidden="true" class="wp-block-spacer"></div>
+
+<p>また知人にエンジニアの方がいらっしゃる方は、ご紹介していただけると大変助かります。そうでない場合も、この記事の拡散にご協力いただけますとありがたいです。</p>
+
+<div style="height:40px" aria-hidden="true" class="wp-block-spacer"></div>
+
+<h2>共感し、応援してくださる方へ</h2>
+
+<p>日本ヴィーガンコミュニティはNPO法人、つまり市民団体です。当法人は、現在約80名のメンバーと、支援してくださるサポーターから構成され、事業が運営されています。</p>
+
+<p><strong>僕たちの理念に共感し、共に活動したいと思ってくださった方はメンバーへ、支援したいと思ってくださった方はサポーターになり、共に"Hello Vegan!"な社会を実現しましょう。</strong></p>
+
+<div style="height:20px" aria-hidden="true" class="wp-block-spacer"></div>
+
+<div class="wp-block-columns has-2-columns">
+<div class="wp-block-column">
+<div class="wp-block-button aligncenter"><a class="wp-block-button__link has-background has-vivid-green-cyan-background-color" href="https://hellovegan.jp/beamember/"><strong>メンバーになる</strong></a></div>
+</div>
+
+<div class="wp-block-column">
+<div class="wp-block-button aligncenter"><a class="wp-block-button__link has-background has-vivid-green-cyan-background-color" href="https://hellovegan.jp/lets-support/"><strong>サポーターになる</strong></a></div>
+</div>
+</div>
+
+<div style="height:40px" aria-hidden="true" class="wp-block-spacer"></div>
+
+<p></p>
+
+<h2>最後に</h2>
+
+<p>長くなりましたが、最後まで読んでくださりありがとうございます。この記事を書くにあたって、僕自身も１年間自分が進んできた道を振り返ることができました。</p>
+
+<p>改めて、「V-cook」をはじめ、<strong>日本ヴィーガンコミュニティの活動を通して"Hello Vegan!"な社会を実現し、優しい人が幸せに生きられる世界に少しでも近づけられるよう努力していきたいと思います。</strong></p>
+
+<p>繰り返しになりますが、メンバーやサポーターとなり、共に"Hello Vegan!"な社会を創る思いを持った方を歓迎しています。また、エンジニアの方からのご連絡も心からお待ちしています。</p>
+
+<div style="height:40px" aria-hidden="true" class="wp-block-spacer"></div>
+
+<p>では。</p>
