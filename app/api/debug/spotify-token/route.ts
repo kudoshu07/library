@@ -3,6 +3,10 @@ import { NextResponse } from "next/server"
 const SPOTIFY_WEB_USER_AGENT = "Mozilla/5.0"
 
 export async function GET() {
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json({ error: "Not found" }, { status: 404 })
+  }
+
   const clientId = process.env.SPOTIFY_CLIENT_ID?.trim() ?? ""
   const clientSecret = process.env.SPOTIFY_CLIENT_SECRET?.trim() ?? ""
 
@@ -66,4 +70,3 @@ export async function GET() {
     )
   }
 }
-

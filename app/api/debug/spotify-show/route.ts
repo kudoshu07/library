@@ -8,6 +8,10 @@ function extractInitialState(html: string): string | undefined {
 const SPOTIFY_WEB_USER_AGENT = "Mozilla/5.0"
 
 export async function GET(request: Request) {
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json({ error: "Not found" }, { status: 404 })
+  }
+
   const { searchParams } = new URL(request.url)
   const showId = (searchParams.get("id") ?? "").trim()
   if (!showId) {
