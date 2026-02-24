@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import {
@@ -197,6 +198,9 @@ function FeedCard({
     isInstagram && item.thumbnail && item.thumbnail.startsWith("http")
       ? `/api/thumbnail?src=${encodeURIComponent(item.thumbnail)}`
       : undefined
+  const lowQuality = 40
+  const canOptimizeThumbnail =
+    Boolean(item.thumbnail) && item.thumbnail.startsWith("/") && !item.thumbnail.includes("?")
 
   return (
     <article className="border-b border-slate-200 bg-white px-4 py-4 transition-colors hover:bg-slate-50/70">
@@ -307,17 +311,29 @@ function FeedCard({
                 aria-label={`${item.title} を開く`}
                 className="mt-3 block overflow-hidden rounded-2xl border border-slate-200"
               >
-                <img
-                  src={item.thumbnail}
-                  alt=""
-                  className="aspect-video w-full object-cover"
-                  loading="lazy"
-                  referrerPolicy="no-referrer"
-                  onError={(event) => {
-                    const target = event.currentTarget
-                    target.style.display = "none"
-                  }}
-                />
+                {canOptimizeThumbnail ? (
+                  <div className="relative aspect-video w-full">
+                    <Image
+                      src={item.thumbnail}
+                      alt=""
+                      fill
+                      sizes="(max-width: 799px) 100vw, 640px"
+                      quality={lowQuality}
+                      className="object-cover"
+                    />
+                  </div>
+                ) : (
+                  <img
+                    src={item.thumbnail}
+                    alt=""
+                    className="aspect-video w-full object-cover"
+                    loading="lazy"
+                    onError={(event) => {
+                      const target = event.currentTarget
+                      target.style.display = "none"
+                    }}
+                  />
+                )}
               </a>
             ) : (
               <Link
@@ -325,17 +341,29 @@ function FeedCard({
                 aria-label={`${item.title} を開く`}
                 className="mt-3 block overflow-hidden rounded-2xl border border-slate-200"
               >
-                <img
-                  src={item.thumbnail}
-                  alt=""
-                  className="aspect-video w-full object-cover"
-                  loading="lazy"
-                  referrerPolicy="no-referrer"
-                  onError={(event) => {
-                    const target = event.currentTarget
-                    target.style.display = "none"
-                  }}
-                />
+                {canOptimizeThumbnail ? (
+                  <div className="relative aspect-video w-full">
+                    <Image
+                      src={item.thumbnail}
+                      alt=""
+                      fill
+                      sizes="(max-width: 799px) 100vw, 640px"
+                      quality={lowQuality}
+                      className="object-cover"
+                    />
+                  </div>
+                ) : (
+                  <img
+                    src={item.thumbnail}
+                    alt=""
+                    className="aspect-video w-full object-cover"
+                    loading="lazy"
+                    onError={(event) => {
+                      const target = event.currentTarget
+                      target.style.display = "none"
+                    }}
+                  />
+                )}
               </Link>
             )
           )}
@@ -368,22 +396,37 @@ function PickupCard({ item }: { item: ContentItem }) {
   const lead = createLeadText(item)
   const className =
     "group m-0 block min-w-[250px] overflow-hidden rounded-2xl bg-white p-2 transition-colors hover:bg-slate-50 lg:min-w-0 lg:w-full"
+  const lowQuality = 40
+  const canOptimizeThumbnail =
+    Boolean(item.thumbnail) && item.thumbnail.startsWith("/") && !item.thumbnail.includes("?")
 
   const body = (
     <>
       {item.thumbnail && (
         <div className="mt-3 overflow-hidden rounded-xl">
-          <img
-            src={item.thumbnail}
-            alt=""
-            className="aspect-video w-full object-cover"
-            loading="lazy"
-            referrerPolicy="no-referrer"
-            onError={(event) => {
-              const target = event.currentTarget
-              target.style.display = "none"
-            }}
-          />
+          {canOptimizeThumbnail ? (
+            <div className="relative aspect-video w-full">
+              <Image
+                src={item.thumbnail}
+                alt=""
+                fill
+                sizes="280px"
+                quality={lowQuality}
+                className="object-cover"
+              />
+            </div>
+          ) : (
+            <img
+              src={item.thumbnail}
+              alt=""
+              className="aspect-video w-full object-cover"
+              loading="lazy"
+              onError={(event) => {
+                const target = event.currentTarget
+                target.style.display = "none"
+              }}
+            />
+          )}
         </div>
       )}
       <div className={cn("flex flex-wrap items-center gap-2", item.thumbnail ? "mt-3" : "")}>

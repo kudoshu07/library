@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server"
 const ALLOWED_SUFFIXES = [
   ".cdninstagram.com",
   ".fbcdn.net",
+  ".st-note.com",
+  ".note.com",
   ".scdn.co",
   ".spotifycdn.com",
   "unavatar.io",

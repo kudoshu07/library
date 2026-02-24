@@ -406,6 +406,11 @@ function toExternalItem(source: ContentSource, seed: ExternalSeed, index: number
   const summary = (seed.summary ?? "").trim()
   const url = normalizeUrl(seed.url)
   const tags = normalizeTags(seed.tags)
+  const rawThumbnail = (seed.thumbnail ?? "").trim()
+  const thumbnail =
+    rawThumbnail && /^https?:\/\//i.test(rawThumbnail)
+      ? `/api/thumbnail?src=${encodeURIComponent(rawThumbnail)}`
+      : rawThumbnail || undefined
 
   return {
     id:
@@ -419,7 +424,7 @@ function toExternalItem(source: ContentSource, seed: ExternalSeed, index: number
     url,
     summary,
     tags,
-    thumbnail: seed.thumbnail,
+    thumbnail,
     body: "",
     searchText: buildSearchText({ title, summary, tags }),
   }
@@ -443,7 +448,11 @@ async function loadBlogPosts(): Promise<ContentItem[]> {
       const date = normalizeDate(String(data.date ?? `${year}-${month}-${day}T00:00:00.000Z`))
       const summary = String(data.summary ?? makeSummary(body)).trim()
       const tags = normalizeTags(Array.isArray(data.tags) ? data.tags : [])
-      const thumbnail = typeof data.thumbnail === "string" ? data.thumbnail : undefined
+      const rawThumbnail = typeof data.thumbnail === "string" ? data.thumbnail.trim() : ""
+      const thumbnail =
+        rawThumbnail && /^https?:\/\//i.test(rawThumbnail)
+          ? `/api/thumbnail?src=${encodeURIComponent(rawThumbnail)}`
+          : rawThumbnail || undefined
       const url = `/${year}/${month}/${day}/${slug}/`
 
       const post: ContentItem = {

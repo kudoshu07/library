@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import Link from "next/link"
 import { useEffect, useMemo, useState, type FormEvent } from "react"
 import { useRouter } from "next/navigation"
@@ -155,6 +156,9 @@ function SearchResultCard({
     isInstagram && item.thumbnail && item.thumbnail.startsWith("http")
       ? `/api/thumbnail?src=${encodeURIComponent(item.thumbnail)}`
       : undefined
+  const lowQuality = 40
+  const canOptimizeThumbnail =
+    Boolean(item.thumbnail) && item.thumbnail.startsWith("/") && !item.thumbnail.includes("?")
 
   return (
     <article className="h-full rounded-2xl bg-white p-4 transition hover:bg-slate-50">
@@ -166,39 +170,65 @@ function SearchResultCard({
             rel="noopener noreferrer"
             className="mb-3 block overflow-hidden rounded-xl"
           >
-            <img
-              src={item.thumbnail}
-              alt=""
-              className="aspect-video w-full object-cover"
-              loading="lazy"
-              onError={(event) => {
-                const target = event.currentTarget
-                if (instagramProxyThumbnail && target.dataset.fallbackApplied !== "1") {
-                  target.dataset.fallbackApplied = "1"
-                  target.src = instagramProxyThumbnail
-                  return
-                }
-                target.style.display = "none"
-              }}
-            />
+            {canOptimizeThumbnail ? (
+              <div className="relative aspect-video w-full">
+                <Image
+                  src={item.thumbnail}
+                  alt=""
+                  fill
+                  sizes="(max-width: 799px) 100vw, 320px"
+                  quality={lowQuality}
+                  className="object-cover"
+                />
+              </div>
+            ) : (
+              <img
+                src={item.thumbnail}
+                alt=""
+                className="aspect-video w-full object-cover"
+                loading="lazy"
+                onError={(event) => {
+                  const target = event.currentTarget
+                  if (instagramProxyThumbnail && target.dataset.fallbackApplied !== "1") {
+                    target.dataset.fallbackApplied = "1"
+                    target.src = instagramProxyThumbnail
+                    return
+                  }
+                  target.style.display = "none"
+                }}
+              />
+            )}
           </a>
         ) : (
           <Link href={item.url} className="mb-3 block overflow-hidden rounded-xl">
-            <img
-              src={item.thumbnail}
-              alt=""
-              className="aspect-video w-full object-cover"
-              loading="lazy"
-              onError={(event) => {
-                const target = event.currentTarget
-                if (instagramProxyThumbnail && target.dataset.fallbackApplied !== "1") {
-                  target.dataset.fallbackApplied = "1"
-                  target.src = instagramProxyThumbnail
-                  return
-                }
-                target.style.display = "none"
-              }}
-            />
+            {canOptimizeThumbnail ? (
+              <div className="relative aspect-video w-full">
+                <Image
+                  src={item.thumbnail}
+                  alt=""
+                  fill
+                  sizes="(max-width: 799px) 100vw, 320px"
+                  quality={lowQuality}
+                  className="object-cover"
+                />
+              </div>
+            ) : (
+              <img
+                src={item.thumbnail}
+                alt=""
+                className="aspect-video w-full object-cover"
+                loading="lazy"
+                onError={(event) => {
+                  const target = event.currentTarget
+                  if (instagramProxyThumbnail && target.dataset.fallbackApplied !== "1") {
+                    target.dataset.fallbackApplied = "1"
+                    target.src = instagramProxyThumbnail
+                    return
+                  }
+                  target.style.display = "none"
+                }}
+              />
+            )}
           </Link>
         )
       )}
