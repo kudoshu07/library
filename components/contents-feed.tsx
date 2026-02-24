@@ -482,9 +482,10 @@ export function ContentsFeed({
 
               <div className="relative h-44 bg-gradient-to-r from-slate-900 via-slate-700 to-slate-800 sm:h-56">
                 <img
-                  src="/header.png"
+                  src="/header.jpg"
                   alt="Header"
                   className="h-full w-full object-cover"
+                  decoding="async"
                   onError={(event) => {
                     const target = event.currentTarget
                     target.style.display = "none"
