@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import { ContentsFeed } from "@/components/contents-feed"
-import { getAllContentItems, getInstagramProfileAvatar, getPickupItems } from "@/lib/content-loader"
+import { getAllContentItems, getPickupItems } from "@/lib/content-loader"
 
 export const metadata: Metadata = {
   title: "Home",
@@ -8,10 +8,8 @@ export const metadata: Metadata = {
 }
 
 export default async function HomeTimelinePage() {
-  const [allItems, profileAvatarUrl] = await Promise.all([
-    getAllContentItems(),
-    getInstagramProfileAvatar(process.env.IG_BUSINESS_USERNAME ?? "kudoshu_vcook"),
-  ])
+  const profileAvatarUrl = "/profile.jpg"
+  const allItems = await getAllContentItems()
   const pickupItems = await getPickupItems(allItems)
 
   return (
