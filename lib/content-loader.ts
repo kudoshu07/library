@@ -881,49 +881,56 @@ async function loadInstagramItems(
       return loadExternalFromFile(fallbackFile, source)
     }
 
-    const limit = Math.min(
-      Math.max(parseInteger(process.env.INSTAGRAM_FETCH_LIMIT, DEFAULT_INSTAGRAM_FETCH_LIMIT), 1),
-      MAX_INSTAGRAM_FETCH_LIMIT
+  const limit = Math.min(
+    Math.max(parseInteger(process.env.INSTAGRAM_FETCH_LIMIT, DEFAULT_INSTAGRAM_FETCH_LIMIT), 1),
+    MAX_INSTAGRAM_FETCH_LIMIT
+  )
+
+  try {
+    const headers = {
+      "User-Agent": INSTAGRAM_UA,
+      "x-ig-app-id": INSTAGRAM_APP_ID,
+      "x-asbd-id": INSTAGRAM_ASBD_ID,
+      Accept: "application/json",
+      "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
+      Referer: "https://www.instagram.com/",
+    } satisfies Record<string, string>
+
+    // Primary: "i.instagram.com" (often used for web_profile_info).
+    // On some hosting providers Instagram blocks bot-like headers; use a real browser UA above.
+    let response = await fetch(
+      `https://i.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(normalizedUsername)}`,
+      { next: { revalidate: 3600 }, headers }
     )
 
-    try {
-      const response = await fetch(
-        `https://i.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(normalizedUsername)}`,
-        {
-          next: { revalidate: 3600 },
-          headers: {
-            "User-Agent": "Mozilla/5.0 (compatible; KudoShuLibraryBot/1.0; +https://kudoshu07.com)",
-            "x-ig-app-id": INSTAGRAM_APP_ID,
-            Accept: "application/json",
-            "Sec-Fetch-Site": "none",
-            "Sec-Fetch-Mode": "navigate",
-            "Sec-Fetch-Dest": "document",
-          },
-        }
+    // Secondary: same endpoint on "www.instagram.com" (sometimes works when "i." is blocked).
+    if (!response.ok) {
+      response = await fetch(
+        `https://www.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(normalizedUsername)}`,
+        { next: { revalidate: 3600 }, headers }
       )
+    }
 
-      if (!response.ok) {
-        return loadExternalFromFile(fallbackFile, source)
-      }
+    if (!response.ok) return loadExternalFromFile(fallbackFile, source)
 
-      const data = (await response.json()) as InstagramProfileResponse
-      const nodes = data.data?.user?.edge_owner_to_timeline_media?.edges ?? []
+    const data = (await response.json()) as InstagramProfileResponse
+    const nodes = data.data?.user?.edge_owner_to_timeline_media?.edges ?? []
 
-      const items = nodes
-        .map((edge) => edge.node)
-        .map((node) => (node ? toInstagramItem(source, normalizedUsername, node) : null))
-        .filter((item): item is ContentItem => item !== null)
-        .slice(0, limit)
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    const items = nodes
+      .map((edge) => edge.node)
+      .map((node) => (node ? toInstagramItem(source, normalizedUsername, node) : null))
+      .filter((item): item is ContentItem => item !== null)
+      .slice(0, limit)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
-      if (items.length === 0) {
-        return loadExternalFromFile(fallbackFile, source)
-      }
-
-      return items
-    } catch {
+    if (items.length === 0) {
       return loadExternalFromFile(fallbackFile, source)
     }
+
+    return items
+  } catch {
+    return loadExternalFromFile(fallbackFile, source)
+  }
 }
 
 function extractInstagramOgImage(html: string): string | undefined {
