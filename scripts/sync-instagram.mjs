@@ -4,6 +4,7 @@ import path from "node:path"
 import { fileURLToPath } from "node:url"
 import { execFile } from "node:child_process"
 import { promisify } from "node:util"
+import dns from "node:dns/promises"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -33,6 +34,43 @@ function normalizeUsername(value) {
   return String(value ?? "").trim().replace(/^@/, "")
 }
 
+const resolveCache = new Map()
+
+async function resolveHost(hostname) {
+  const key = String(hostname).toLowerCase()
+  if (resolveCache.has(key)) return resolveCache.get(key)
+
+  let ip
+  try {
+    const result = await dns.lookup(hostname)
+    ip = result?.address
+  } catch {
+    ip = undefined
+  }
+
+  // Fallback to a public DNS-over-HTTPS resolver (useful if local DNS is flaky).
+  if (!ip) {
+    try {
+      const res = await fetch(
+        `https://dns.google/resolve?name=${encodeURIComponent(hostname)}&type=A`,
+        { headers: { "User-Agent": INSTAGRAM_UA, Accept: "application/json" } }
+      )
+      if (res.ok) {
+        const data = await res.json()
+        const answer = Array.isArray(data?.Answer) ? data.Answer : []
+        const aRecords = answer.filter((a) => a?.type === 1 && typeof a?.data === "string")
+        const first = aRecords[0]
+        if (first?.data) ip = first.data
+      }
+    } catch {
+      ip = undefined
+    }
+  }
+
+  resolveCache.set(key, ip)
+  return ip
+}
+
 async function fetchProfileInfo(username) {
   const headers = {
     "User-Agent": INSTAGRAM_UA,
@@ -44,24 +82,22 @@ async function fetchProfileInfo(username) {
   }
 
   const urls = [
-    `https://i.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(username)}`,
-    `https://www.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(username)}`,
+    new URL(
+      `https://i.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(username)}`
+    ),
+    new URL(
+      `https://www.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(username)}`
+    ),
   ]
 
   for (const url of urls) {
     try {
-      const res = await fetch(url, { headers })
-      if (res.ok) return res.json()
-    } catch {
-      // Fall back to curl below.
-    }
-
-    try {
-      const { stdout } = await execFileAsync("curl", [
+      const curlArgsBase = [
         "-sS",
         "-L",
         "-A",
         INSTAGRAM_UA,
+        "--compressed",
         "-H",
         `x-ig-app-id: ${INSTAGRAM_APP_ID}`,
         "-H",
@@ -72,9 +108,27 @@ async function fetchProfileInfo(username) {
         "Accept-Language: ja,en-US;q=0.9,en;q=0.8",
         "-H",
         "Referer: https://www.instagram.com/",
-        url,
-      ])
-      if (stdout && stdout.trim().startsWith("{")) return JSON.parse(stdout)
+      ]
+
+      try {
+        const { stdout } = await execFileAsync("curl", [...curlArgsBase, url.toString()], {
+          maxBuffer: 20 * 1024 * 1024,
+        })
+        if (stdout && stdout.trim().startsWith("{")) return JSON.parse(stdout)
+      } catch (err) {
+        // If DNS fails, try again with --resolve.
+        if (err && typeof err === "object" && "code" in err && err.code === 6) {
+          const resolved = await resolveHost(url.hostname)
+          if (resolved) {
+            const { stdout } = await execFileAsync(
+              "curl",
+              [...curlArgsBase, "--resolve", `${url.hostname}:443:${resolved}`, url.toString()],
+              { maxBuffer: 20 * 1024 * 1024 }
+            )
+            if (stdout && stdout.trim().startsWith("{")) return JSON.parse(stdout)
+          }
+        }
+      }
     } catch {
       // Ignore and try next URL.
     }
