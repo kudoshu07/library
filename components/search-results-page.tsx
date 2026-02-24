@@ -151,6 +151,10 @@ function SearchResultCard({
   const snippet = createSearchSnippet(item, query)
   const dateLabel = formatDateLabel(item.date)
   const tags = (item.tags ?? []).filter((tag) => Boolean(tag) && isCategoryTagVisible(tag))
+  const instagramProxyThumbnail =
+    isInstagram && item.thumbnail && item.thumbnail.startsWith("http")
+      ? `/api/thumbnail?src=${encodeURIComponent(item.thumbnail)}`
+      : undefined
 
   return (
     <article className="h-full rounded-2xl bg-white p-4 transition hover:bg-slate-50">
@@ -167,9 +171,13 @@ function SearchResultCard({
               alt=""
               className="aspect-video w-full object-cover"
               loading="lazy"
-              referrerPolicy="no-referrer"
               onError={(event) => {
                 const target = event.currentTarget
+                if (instagramProxyThumbnail && target.dataset.fallbackApplied !== "1") {
+                  target.dataset.fallbackApplied = "1"
+                  target.src = instagramProxyThumbnail
+                  return
+                }
                 target.style.display = "none"
               }}
             />
@@ -181,9 +189,13 @@ function SearchResultCard({
               alt=""
               className="aspect-video w-full object-cover"
               loading="lazy"
-              referrerPolicy="no-referrer"
               onError={(event) => {
                 const target = event.currentTarget
+                if (instagramProxyThumbnail && target.dataset.fallbackApplied !== "1") {
+                  target.dataset.fallbackApplied = "1"
+                  target.src = instagramProxyThumbnail
+                  return
+                }
                 target.style.display = "none"
               }}
             />

@@ -193,6 +193,10 @@ function FeedCard({
   const dateLabel = formatDateLabel(item.date)
   const lead = createLeadText(item)
   const canonicalUrl = getCanonicalUrl(item)
+  const instagramProxyThumbnail =
+    isInstagram && item.thumbnail && item.thumbnail.startsWith("http")
+      ? `/api/thumbnail?src=${encodeURIComponent(item.thumbnail)}`
+      : undefined
 
   return (
     <article className="border-b border-slate-200 bg-white px-4 py-4 transition-colors hover:bg-slate-50/70">
@@ -258,9 +262,13 @@ function FeedCard({
                           alt=""
                           className="h-full w-auto max-w-full object-contain"
                           loading="lazy"
-                          referrerPolicy="no-referrer"
                           onError={(event) => {
                             const target = event.currentTarget
+                            if (instagramProxyThumbnail && target.dataset.fallbackApplied !== "1") {
+                              target.dataset.fallbackApplied = "1"
+                              target.src = instagramProxyThumbnail
+                              return
+                            }
                             target.style.display = "none"
                           }}
                         />
@@ -276,9 +284,13 @@ function FeedCard({
                           alt=""
                           className="h-full w-auto max-w-full object-contain"
                           loading="lazy"
-                          referrerPolicy="no-referrer"
                           onError={(event) => {
                             const target = event.currentTarget
+                            if (instagramProxyThumbnail && target.dataset.fallbackApplied !== "1") {
+                              target.dataset.fallbackApplied = "1"
+                              target.src = instagramProxyThumbnail
+                              return
+                            }
                             target.style.display = "none"
                           }}
                         />
