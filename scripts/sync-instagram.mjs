@@ -2,6 +2,8 @@
 import fs from "node:fs/promises"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
+import { execFile } from "node:child_process"
+import { promisify } from "node:util"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -13,6 +15,8 @@ const INSTAGRAM_APP_ID = "936619743392459"
 const INSTAGRAM_ASBD_ID = "129477"
 const INSTAGRAM_UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+
+const execFileAsync = promisify(execFile)
 
 function env(name, fallback) {
   const v = process.env[name]
@@ -45,8 +49,35 @@ async function fetchProfileInfo(username) {
   ]
 
   for (const url of urls) {
-    const res = await fetch(url, { headers })
-    if (res.ok) return res.json()
+    try {
+      const res = await fetch(url, { headers })
+      if (res.ok) return res.json()
+    } catch {
+      // Fall back to curl below.
+    }
+
+    try {
+      const { stdout } = await execFileAsync("curl", [
+        "-sS",
+        "-L",
+        "-A",
+        INSTAGRAM_UA,
+        "-H",
+        `x-ig-app-id: ${INSTAGRAM_APP_ID}`,
+        "-H",
+        `x-asbd-id: ${INSTAGRAM_ASBD_ID}`,
+        "-H",
+        "Accept: application/json",
+        "-H",
+        "Accept-Language: ja,en-US;q=0.9,en;q=0.8",
+        "-H",
+        "Referer: https://www.instagram.com/",
+        url,
+      ])
+      if (stdout && stdout.trim().startsWith("{")) return JSON.parse(stdout)
+    } catch {
+      // Ignore and try next URL.
+    }
   }
 
   throw new Error(`Failed to fetch profile info for @${username}`)
@@ -113,4 +144,3 @@ run().catch((err) => {
   console.error("[sync-instagram] ERROR:", err?.message || err)
   process.exitCode = 1
 })
-

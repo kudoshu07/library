@@ -873,21 +873,22 @@ async function loadInstagramItems(
   fallbackFile: string
 ): Promise<ContentItem[]> {
     // Instagram frequently blocks serverless/data-center IPs (e.g., Vercel).
-    // In production, default to the semi-manual JSON seeds (MVP requirement) unless explicitly enabled.
-    const allowRuntimeFetch =
-      process.env.NODE_ENV !== "production" || process.env.INSTAGRAM_RUNTIME_FETCH === "1"
+    // Default to JSON seeds in production (MVP requirement), but if seeds are empty, try runtime fetch.
+    const seeds = await loadExternalFromFile(fallbackFile, source)
+    const forceRuntimeFetch = process.env.INSTAGRAM_RUNTIME_FETCH === "1"
+    const disableRuntimeFetch = process.env.INSTAGRAM_RUNTIME_FETCH === "0"
+    const isProd = process.env.NODE_ENV === "production"
 
-    if (!allowRuntimeFetch) {
-      return loadExternalFromFile(fallbackFile, source)
-    }
+    if (isProd && !forceRuntimeFetch && seeds.length > 0) return seeds
+    if (disableRuntimeFetch) return seeds
 
     if (!username) {
-      return loadExternalFromFile(fallbackFile, source)
+      return seeds
     }
 
     const normalizedUsername = username.trim().replace(/^@/, "")
     if (!normalizedUsername) {
-      return loadExternalFromFile(fallbackFile, source)
+      return seeds
     }
 
   const limit = Math.min(
@@ -933,12 +934,12 @@ async function loadInstagramItems(
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
     if (items.length === 0) {
-      return loadExternalFromFile(fallbackFile, source)
+      return seeds
     }
 
     return items
   } catch {
-    return loadExternalFromFile(fallbackFile, source)
+    return seeds
   }
 }
 
