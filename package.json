@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "import:wordpress": "node scripts/import-wordpress-xml.mjs"
+    "import:wordpress": "node scripts/import-wordpress-xml.mjs",
+    "sync:instagram": "node scripts/sync-instagram.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

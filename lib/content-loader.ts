@@ -872,6 +872,15 @@ async function loadInstagramItems(
   username: string | undefined,
   fallbackFile: string
 ): Promise<ContentItem[]> {
+    // Instagram frequently blocks serverless/data-center IPs (e.g., Vercel).
+    // In production, default to the semi-manual JSON seeds (MVP requirement) unless explicitly enabled.
+    const allowRuntimeFetch =
+      process.env.NODE_ENV !== "production" || process.env.INSTAGRAM_RUNTIME_FETCH === "1"
+
+    if (!allowRuntimeFetch) {
+      return loadExternalFromFile(fallbackFile, source)
+    }
+
     if (!username) {
       return loadExternalFromFile(fallbackFile, source)
     }
