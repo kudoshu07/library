@@ -612,7 +612,7 @@ async function getSpotifyAppAccessToken(): Promise<string | null> {
         "User-Agent": SPOTIFY_WEB_USER_AGENT,
       },
       body: new URLSearchParams({ grant_type: "client_credentials" }).toString(),
-      cache: "no-store",
+      next: { revalidate: 3300 },
     })
 
     if (!response.ok) return null
@@ -680,7 +680,7 @@ async function fetchSpotifyShowEpisodesViaApi(seed: PodcastSeed): Promise<Conten
     let data: SpotifyApiShowEpisodesResponse
     try {
       const response = await fetch(apiUrl, {
-        cache: "no-store",
+        next: { revalidate: 3600 },
         headers: {
           Authorization: `Bearer ${token}`,
           "User-Agent": SPOTIFY_WEB_USER_AGENT,
@@ -755,7 +755,7 @@ async function fetchSpotifyShowEpisodes(
 
   try {
     const response = await fetch(showUrl, {
-      cache: "no-store",
+      next: { revalidate: 3600 },
       headers: {
         "User-Agent": SPOTIFY_WEB_USER_AGENT,
         Accept: "text/html,application/xhtml+xml",
