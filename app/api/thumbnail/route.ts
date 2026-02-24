@@ -5,6 +5,7 @@ const ALLOWED_SUFFIXES = [
   ".fbcdn.net",
   ".scdn.co",
   ".spotifycdn.com",
+  "unavatar.io",
 ]
 
 function isAllowedHost(hostname: string): boolean {
@@ -47,11 +48,21 @@ export async function GET(request: NextRequest) {
 
   let upstream: Response
   try {
+    const needsInstagramReferer =
+      parsed.hostname.toLowerCase().endsWith(".cdninstagram.com") ||
+      parsed.hostname.toLowerCase().endsWith(".fbcdn.net")
+
+    const headers: Record<string, string> = {
+      "User-Agent":
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    }
+
+    if (needsInstagramReferer) {
+      headers.Referer = "https://www.instagram.com/"
+    }
+
     upstream = await fetch(parsed.toString(), {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; KudoShuLibraryBot/1.0; +https://kudoshu07.com)",
-        Referer: "https://www.instagram.com/",
-      },
+      headers,
       next: { revalidate: 3600 },
     })
   } catch {

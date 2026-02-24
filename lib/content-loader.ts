@@ -11,6 +11,9 @@ const BLOG_ROOT = path.join(CONTENT_ROOT, "blog")
 const EXTERNAL_ROOT = path.join(CONTENT_ROOT, "external")
 const PICKUP_FILE = path.join(CONTENT_ROOT, "pickup.json")
 const INSTAGRAM_APP_ID = "936619743392459"
+const INSTAGRAM_ASBD_ID = "129477"
+const INSTAGRAM_UA =
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 const DEFAULT_INSTAGRAM_FETCH_LIMIT = 12
 const MAX_INSTAGRAM_FETCH_LIMIT = 30
 
@@ -944,12 +947,11 @@ export const getInstagramProfileAvatar = cache(async (username: string | undefin
       {
         next: { revalidate: 3600 },
         headers: {
-          "User-Agent": "Mozilla/5.0 (compatible; KudoShuLibraryBot/1.0; +https://kudoshu07.com)",
+          "User-Agent": INSTAGRAM_UA,
           "x-ig-app-id": INSTAGRAM_APP_ID,
+          "x-asbd-id": INSTAGRAM_ASBD_ID,
           Accept: "application/json",
-          "Sec-Fetch-Site": "none",
-          "Sec-Fetch-Mode": "navigate",
-          "Sec-Fetch-Dest": "document",
+          "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
         },
       }
     )
@@ -967,8 +969,10 @@ export const getInstagramProfileAvatar = cache(async (username: string | undefin
     const htmlResponse = await fetch(`https://www.instagram.com/${encodeURIComponent(normalizedUsername)}/`, {
       next: { revalidate: 3600 },
       headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; KudoShuLibraryBot/1.0; +https://kudoshu07.com)",
+        "User-Agent": INSTAGRAM_UA,
         Accept: "text/html,application/xhtml+xml",
+        "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
+        Referer: "https://www.instagram.com/",
       },
     })
     if (!htmlResponse.ok) return undefined
@@ -977,7 +981,9 @@ export const getInstagramProfileAvatar = cache(async (username: string | undefin
     if (!ogImage) return undefined
     return `/api/thumbnail?src=${encodeURIComponent(ogImage)}`
   } catch {
-    return undefined
+    // Last resort: use a public avatar resolver. This keeps /home stable even if Instagram blocks server IPs.
+    // (Still cached via /api/thumbnail.)
+    return `/api/thumbnail?src=${encodeURIComponent(`https://unavatar.io/instagram/${encodeURIComponent(normalizedUsername)}`)}`
   }
 })
 
