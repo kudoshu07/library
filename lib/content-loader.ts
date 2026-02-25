@@ -16,6 +16,7 @@ const INSTAGRAM_UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 const DEFAULT_INSTAGRAM_FETCH_LIMIT = 12
 const MAX_INSTAGRAM_FETCH_LIMIT = 100
+const DEFAULT_INSTAGRAM_GRAPH_API_VERSION = "v24.0"
 
 type ExternalSeed = {
   id?: string
@@ -60,6 +61,32 @@ type InstagramProfileResponse = {
         }>
       }
     }
+  }
+}
+
+type InstagramGraphMediaChild = {
+  id?: string
+  media_type?: string
+  media_url?: string
+  thumbnail_url?: string
+}
+
+type InstagramGraphMedia = {
+  id?: string
+  caption?: string
+  media_type?: string
+  media_url?: string
+  thumbnail_url?: string
+  permalink?: string
+  timestamp?: string
+  children?: { data?: InstagramGraphMediaChild[] }
+}
+
+type InstagramGraphMediaResponse = {
+  data?: InstagramGraphMedia[]
+  paging?: {
+    cursors?: { after?: string }
+    next?: string
   }
 }
 
@@ -196,6 +223,24 @@ function parseInteger(input: string | undefined, fallback: number): number {
   const parsed = Number.parseInt(input, 10)
   if (Number.isNaN(parsed)) return fallback
   return parsed
+}
+
+function parseInstagramShortcodeFromPermalink(permalink: string | undefined): string | undefined {
+  const url = String(permalink ?? "").trim()
+  if (!url) return undefined
+
+  // Examples:
+  // https://www.instagram.com/p/SHORTCODE/
+  // https://www.instagram.com/reel/SHORTCODE/
+  const match = url.match(/instagram\.com\/(?:p|reel)\/([^/]+)/i)
+  return match?.[1]?.trim()
+}
+
+function proxyThumbnailUrl(raw: string | undefined): string | undefined {
+  const url = String(raw ?? "").trim()
+  if (!url) return undefined
+  if (/^https?:\/\//i.test(url)) return `/api/thumbnail?src=${encodeURIComponent(url)}`
+  return url
 }
 
 async function listMdxFiles(dir: string): Promise<string[]> {
@@ -876,6 +921,137 @@ async function loadNoteItems(): Promise<ContentItem[]> {
   }
 }
 
+function toInstagramGraphItem(
+  source: "ig_business" | "ig_photo",
+  username: string,
+  media: InstagramGraphMedia
+): ContentItem | null {
+  const permalink = (media.permalink ?? "").trim()
+  const shortcode = parseInstagramShortcodeFromPermalink(permalink)
+  const idPart = shortcode || (media.id ?? "").trim()
+  if (!idPart) return null
+
+  const caption = String(media.caption ?? "").trim()
+  const { title, summary, tags } = parseInstagramCaption(caption)
+
+  const date = normalizeDate(String(media.timestamp ?? ""))
+  const url = permalink || (shortcode ? `https://www.instagram.com/p/${shortcode}/` : "")
+  if (!url) return null
+
+  const mediaType = String(media.media_type ?? "").toUpperCase()
+  let rawThumb = ""
+
+  if (mediaType === "VIDEO") {
+    rawThumb = String(media.thumbnail_url ?? "").trim() || String(media.media_url ?? "").trim()
+  } else {
+    rawThumb = String(media.media_url ?? "").trim() || String(media.thumbnail_url ?? "").trim()
+  }
+
+  // CAROUSEL_ALBUM sometimes has a better image in children.
+  if (!rawThumb && Array.isArray(media.children?.data) && media.children?.data?.length) {
+    const child = media.children.data[0]
+    rawThumb =
+      String(child?.media_url ?? "").trim() ||
+      String(child?.thumbnail_url ?? "").trim()
+  }
+
+  const thumbnail = proxyThumbnailUrl(rawThumb)
+  const normalizedUsername = username.trim().replace(/^@/, "")
+
+  return {
+    id: `ig:${normalizedUsername || username || source}:${idPart}`,
+    source,
+    title,
+    date,
+    url,
+    summary,
+    tags,
+    thumbnail,
+    body: "",
+    searchText: buildSearchText({ title, summary, tags }),
+  }
+}
+
+async function fetchInstagramItemsViaGraphApi({
+  source,
+  username,
+  igUserId,
+  accessToken,
+  limit,
+  apiVersion = DEFAULT_INSTAGRAM_GRAPH_API_VERSION,
+}: {
+  source: "ig_business" | "ig_photo"
+  username: string
+  igUserId: string
+  accessToken: string
+  limit: number
+  apiVersion?: string
+}): Promise<ContentItem[]> {
+  const normalizedIgUserId = igUserId.trim()
+  const token = accessToken.trim()
+  if (!normalizedIgUserId || !token) return []
+
+  const fields = [
+    "id",
+    "caption",
+    "media_type",
+    "media_url",
+    "thumbnail_url",
+    "permalink",
+    "timestamp",
+    "children{media_type,media_url,thumbnail_url}",
+  ].join(",")
+
+  const items: ContentItem[] = []
+  const perPage = 50
+  let after: string | undefined
+  let guard = 0
+
+  while (items.length < limit && guard < 20) {
+    guard += 1
+
+    const url = new URL(
+      `https://graph.facebook.com/${encodeURIComponent(apiVersion)}/${encodeURIComponent(normalizedIgUserId)}/media`
+    )
+    url.searchParams.set("fields", fields)
+    url.searchParams.set("limit", String(perPage))
+    url.searchParams.set("access_token", token)
+    if (after) url.searchParams.set("after", after)
+
+    let data: InstagramGraphMediaResponse
+    try {
+      const response = await fetch(url.toString(), {
+        next: { revalidate: 3600 },
+        headers: {
+          Accept: "application/json",
+          "User-Agent": "KudoShuLibraryBot/1.0 (+https://kudoshu07.com)",
+        },
+      })
+      if (!response.ok) break
+      data = (await response.json()) as InstagramGraphMediaResponse
+    } catch {
+      break
+    }
+
+    const batch = (data.data ?? [])
+      .map((media) => toInstagramGraphItem(source, username, media))
+      .filter((item): item is ContentItem => item !== null)
+
+    items.push(...batch)
+
+    if (items.length >= limit) break
+
+    const nextAfter = data.paging?.cursors?.after?.trim()
+    if (!nextAfter) break
+    if (nextAfter === after) break
+    after = nextAfter
+  }
+
+  return items
+    .slice(0, limit)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+}
+
 async function loadInstagramItems(
   source: "ig_business" | "ig_photo",
   username: string | undefined,
@@ -887,9 +1063,6 @@ async function loadInstagramItems(
     const forceRuntimeFetch = process.env.INSTAGRAM_RUNTIME_FETCH === "1"
     const disableRuntimeFetch = process.env.INSTAGRAM_RUNTIME_FETCH === "0"
     const isProd = process.env.NODE_ENV === "production"
-
-    if (isProd && !forceRuntimeFetch && seeds.length > 0) return seeds
-    if (disableRuntimeFetch) return seeds
 
     if (!username) {
       return seeds
@@ -904,6 +1077,29 @@ async function loadInstagramItems(
     Math.max(parseInteger(process.env.INSTAGRAM_FETCH_LIMIT, DEFAULT_INSTAGRAM_FETCH_LIMIT), 1),
     MAX_INSTAGRAM_FETCH_LIMIT
   )
+
+  const graphAccessToken = process.env.INSTAGRAM_GRAPH_ACCESS_TOKEN?.trim()
+  const graphIgUserId =
+    source === "ig_business"
+      ? process.env.INSTAGRAM_GRAPH_BUSINESS_IG_USER_ID?.trim()
+      : process.env.INSTAGRAM_GRAPH_PHOTO_IG_USER_ID?.trim()
+  const graphApiVersion = process.env.INSTAGRAM_GRAPH_API_VERSION?.trim() || DEFAULT_INSTAGRAM_GRAPH_API_VERSION
+
+  // Prefer the official Instagram Graph API when configured (works reliably on Vercel).
+  if (graphAccessToken && graphIgUserId) {
+    const viaGraph = await fetchInstagramItemsViaGraphApi({
+      source,
+      username: normalizedUsername,
+      igUserId: graphIgUserId,
+      accessToken: graphAccessToken,
+      limit,
+      apiVersion: graphApiVersion,
+    })
+    if (viaGraph.length > 0) return viaGraph
+  }
+
+  if (isProd && !forceRuntimeFetch && seeds.length > 0) return seeds
+  if (disableRuntimeFetch) return seeds
 
   try {
     const headers = {
