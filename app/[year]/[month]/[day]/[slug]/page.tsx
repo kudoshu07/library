@@ -3,6 +3,7 @@ import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import { notFound } from "next/navigation"
 import { SourceBadge } from "@/components/source-badge"
+import { ContentActions } from "@/components/content-actions"
 import { Button } from "@/components/ui/button"
 import { getBlogPostByPath, getBlogStaticParams } from "@/lib/content-loader"
 
@@ -74,6 +75,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       })
   const body = post.body ?? ""
   const hasHtmlTags = /<\s*[a-z][^>]*>/i.test(body)
+  const canonicalUrl = `https://kudoshu07.com${post.url}`
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-12 lg:px-6">
@@ -106,6 +108,12 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 	            ))}
 	          </ul>
 	        )}
+          <ContentActions
+            contentId={post.id}
+            title={post.title}
+            canonicalUrl={canonicalUrl}
+            className="pt-2"
+          />
 	      </header>
 
 	      {post.thumbnail && (
@@ -129,6 +137,13 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 	          <div className="whitespace-pre-wrap text-[15px] leading-8 text-card-foreground">{body}</div>
 	        )}
 	      </div>
+
+        <ContentActions
+          contentId={post.id}
+          title={post.title}
+          canonicalUrl={canonicalUrl}
+          className="mt-6"
+        />
 
     </article>
   )

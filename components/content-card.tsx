@@ -2,22 +2,15 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { type ReactNode } from "react"
 import {
   ExternalLink,
   Heart,
-  Link2,
-  Share2,
 } from "lucide-react"
 import { type ContentItem, type ContentSource } from "@/lib/data"
 import { cn } from "@/lib/utils"
 import { SourceAvatar, SourceChip } from "@/components/source-ui"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { ShareActions } from "@/components/share-actions"
 
 function formatDateLabel(rawDate: string): string {
   const parsed = new Date(rawDate)
@@ -55,99 +48,7 @@ function getCanonicalUrl(item: ContentItem): string {
 
   return `https://kudoshu07.com${item.url}`
 }
-
-async function copyTextToClipboard(text: string) {
-  if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-    await navigator.clipboard.writeText(text)
-    return
-  }
-
-  const textarea = document.createElement("textarea")
-  textarea.value = text
-  textarea.setAttribute("readonly", "")
-  textarea.style.position = "absolute"
-  textarea.style.left = "-9999px"
-  document.body.appendChild(textarea)
-  textarea.select()
-  document.execCommand("copy")
-  document.body.removeChild(textarea)
-}
-
-function ShareActions({
-  title,
-  url,
-}: {
-  title: string
-  url: string
-}) {
-  const [copied, setCopied] = useState(false)
-  const [canNativeShare, setCanNativeShare] = useState(false)
-
-  useEffect(() => {
-    setCanNativeShare(typeof navigator !== "undefined" && typeof navigator.share === "function")
-  }, [])
-
-  const handleCopy = async () => {
-    try {
-      await copyTextToClipboard(url)
-      setCopied(true)
-      window.setTimeout(() => setCopied(false), 1600)
-    } catch {
-      setCopied(false)
-    }
-  }
-
-  const handleNativeShare = async () => {
-    if (!canNativeShare || typeof navigator === "undefined") return
-    try {
-      await navigator.share({
-        title,
-        text: title,
-        url,
-      })
-    } catch {
-      // User dismissed or device blocked sharing.
-    }
-  }
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          className="inline-flex items-center gap-1 text-xs transition-colors hover:text-sky-600"
-          aria-label="Share options"
-        >
-          <Share2 className="size-4" />
-          <span>Share</span>
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-64 rounded-2xl p-2">
-        <DropdownMenuItem
-          onSelect={(event) => {
-            event.preventDefault()
-            void handleCopy()
-          }}
-          className="rounded-xl px-3 py-3 text-base font-semibold"
-        >
-          <Link2 className="size-5" />
-          <span>{copied ? "リンクをコピーしました" : "リンクをコピー"}</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onSelect={(event) => {
-            event.preventDefault()
-            void handleNativeShare()
-          }}
-          disabled={!canNativeShare}
-          className="rounded-xl px-3 py-3 text-base font-semibold"
-        >
-          <Share2 className="size-5" />
-          <span>その他の方法で共有</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
-}
+// keep file as client component; ShareActions extracted to a shared component
 
 export function ContentCard({
   item,
@@ -194,13 +95,14 @@ function FeedCard({
   const dateLabel = formatDateLabel(item.date)
   const lead = createLeadText(item)
   const canonicalUrl = getCanonicalUrl(item)
+  const thumbnail = item.thumbnail
   const instagramProxyThumbnail =
-    isInstagram && item.thumbnail && item.thumbnail.startsWith("http")
-      ? `/api/thumbnail?src=${encodeURIComponent(item.thumbnail)}`
+    isInstagram && thumbnail && thumbnail.startsWith("http")
+      ? `/api/thumbnail?src=${encodeURIComponent(thumbnail)}`
       : undefined
   const lowQuality = 40
   const canOptimizeThumbnail =
-    Boolean(item.thumbnail) && item.thumbnail.startsWith("/") && !item.thumbnail.includes("?")
+    Boolean(thumbnail && thumbnail.startsWith("/") && !thumbnail.includes("?"))
 
   return (
     <article className="border-b border-slate-200 bg-white px-4 py-4 transition-colors hover:bg-slate-50/70">
@@ -248,7 +150,7 @@ function FeedCard({
               </p>
             ))}
 
-          {!isPodcast && item.thumbnail && (
+          {!isPodcast && thumbnail && (
             isInstagram ? (
               <div className="mt-3">
                 <div className="aspect-video w-full">
@@ -262,7 +164,7 @@ function FeedCard({
                         className="block h-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-50"
                       >
                         <img
-                          src={item.thumbnail}
+                          src={thumbnail}
                           alt=""
                           className="h-full w-auto max-w-full object-contain"
                           loading="lazy"
@@ -284,7 +186,7 @@ function FeedCard({
                         className="block h-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-50"
                       >
                         <img
-                          src={item.thumbnail}
+                          src={thumbnail}
                           alt=""
                           className="h-full w-auto max-w-full object-contain"
                           loading="lazy"
@@ -314,7 +216,7 @@ function FeedCard({
                 {canOptimizeThumbnail ? (
                   <div className="relative aspect-video w-full">
                     <Image
-                      src={item.thumbnail}
+                      src={thumbnail}
                       alt=""
                       fill
                       sizes="(max-width: 799px) 100vw, 640px"
@@ -324,7 +226,7 @@ function FeedCard({
                   </div>
                 ) : (
                   <img
-                    src={item.thumbnail}
+                    src={thumbnail}
                     alt=""
                     className="aspect-video w-full object-cover"
                     loading="lazy"
@@ -336,28 +238,28 @@ function FeedCard({
                 )}
               </a>
             ) : (
-              <Link
-                href={item.url}
-                aria-label={`${item.title} を開く`}
-                className="mt-3 block overflow-hidden rounded-2xl border border-slate-200"
-              >
-                {canOptimizeThumbnail ? (
-                  <div className="relative aspect-video w-full">
-                    <Image
-                      src={item.thumbnail}
-                      alt=""
-                      fill
-                      sizes="(max-width: 799px) 100vw, 640px"
-                      quality={lowQuality}
-                      className="object-cover"
-                    />
-                  </div>
-                ) : (
-                  <img
-                    src={item.thumbnail}
+            <Link
+              href={item.url}
+              aria-label={`${item.title} を開く`}
+              className="mt-3 block overflow-hidden rounded-2xl border border-slate-200"
+            >
+              {canOptimizeThumbnail ? (
+                <div className="relative aspect-video w-full">
+                  <Image
+                    src={thumbnail}
                     alt=""
-                    className="aspect-video w-full object-cover"
-                    loading="lazy"
+                    fill
+                    sizes="(max-width: 799px) 100vw, 640px"
+                    quality={lowQuality}
+                    className="object-cover"
+                  />
+                </div>
+              ) : (
+                <img
+                  src={thumbnail}
+                  alt=""
+                  className="aspect-video w-full object-cover"
+                  loading="lazy"
                     onError={(event) => {
                       const target = event.currentTarget
                       target.style.display = "none"
@@ -397,17 +299,18 @@ function PickupCard({ item }: { item: ContentItem }) {
   const className =
     "group m-0 block min-w-[250px] overflow-hidden rounded-2xl bg-white p-2 transition-colors hover:bg-slate-50 lg:min-w-0 lg:w-full"
   const lowQuality = 40
+  const thumbnail = item.thumbnail
   const canOptimizeThumbnail =
-    Boolean(item.thumbnail) && item.thumbnail.startsWith("/") && !item.thumbnail.includes("?")
+    Boolean(thumbnail && thumbnail.startsWith("/") && !thumbnail.includes("?"))
 
-  const body = (
+  const body: ReactNode = (
     <>
-      {item.thumbnail && (
+      {thumbnail && (
         <div className="mt-3 overflow-hidden rounded-xl">
           {canOptimizeThumbnail ? (
             <div className="relative aspect-video w-full">
               <Image
-                src={item.thumbnail}
+                src={thumbnail}
                 alt=""
                 fill
                 sizes="280px"
@@ -417,7 +320,7 @@ function PickupCard({ item }: { item: ContentItem }) {
             </div>
           ) : (
             <img
-              src={item.thumbnail}
+              src={thumbnail}
               alt=""
               className="aspect-video w-full object-cover"
               loading="lazy"
@@ -429,14 +332,14 @@ function PickupCard({ item }: { item: ContentItem }) {
           )}
         </div>
       )}
-      <div className={cn("flex flex-wrap items-center gap-2", item.thumbnail ? "mt-3" : "")}>
+      <div className={cn("flex flex-wrap items-center gap-2", thumbnail ? "mt-3" : "")}>
         <SourceChip source={item.source} withIcon iconPosition="left" />
         <p className="text-xs text-slate-500">{dateLabel}</p>
         {isExternal && <ExternalLink className="size-3 text-slate-400" aria-hidden="true" />}
       </div>
       {!isInstagram && <p className="mt-3 line-clamp-2 text-sm font-semibold leading-snug text-slate-900">{item.title}</p>}
       {lead && (
-        <p className={cn("text-xs leading-relaxed text-slate-600", item.thumbnail ? "mt-2" : isInstagram ? "mt-3" : "mt-3")}>
+        <p className={cn("text-xs leading-relaxed text-slate-600", thumbnail ? "mt-2" : isInstagram ? "mt-3" : "mt-3")}>
           {lead}
         </p>
       )}

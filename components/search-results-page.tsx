@@ -152,17 +152,18 @@ function SearchResultCard({
   const snippet = createSearchSnippet(item, query)
   const dateLabel = formatDateLabel(item.date)
   const tags = (item.tags ?? []).filter((tag) => Boolean(tag) && isCategoryTagVisible(tag))
+  const thumbnail = item.thumbnail
   const instagramProxyThumbnail =
-    isInstagram && item.thumbnail && item.thumbnail.startsWith("http")
-      ? `/api/thumbnail?src=${encodeURIComponent(item.thumbnail)}`
+    isInstagram && thumbnail && thumbnail.startsWith("http")
+      ? `/api/thumbnail?src=${encodeURIComponent(thumbnail)}`
       : undefined
   const lowQuality = 40
   const canOptimizeThumbnail =
-    Boolean(item.thumbnail) && item.thumbnail.startsWith("/") && !item.thumbnail.includes("?")
+    Boolean(thumbnail && thumbnail.startsWith("/") && !thumbnail.includes("?"))
 
   return (
     <article className="h-full rounded-2xl bg-white p-4 transition hover:bg-slate-50">
-      {item.thumbnail && (
+      {thumbnail && (
         isExternal ? (
           <a
             href={item.url}
@@ -173,7 +174,7 @@ function SearchResultCard({
             {canOptimizeThumbnail ? (
               <div className="relative aspect-video w-full">
                 <Image
-                  src={item.thumbnail}
+                  src={thumbnail}
                   alt=""
                   fill
                   sizes="(max-width: 799px) 100vw, 320px"
@@ -183,7 +184,7 @@ function SearchResultCard({
               </div>
             ) : (
               <img
-                src={item.thumbnail}
+                src={thumbnail}
                 alt=""
                 className="aspect-video w-full object-cover"
                 loading="lazy"
@@ -204,7 +205,7 @@ function SearchResultCard({
             {canOptimizeThumbnail ? (
               <div className="relative aspect-video w-full">
                 <Image
-                  src={item.thumbnail}
+                  src={thumbnail}
                   alt=""
                   fill
                   sizes="(max-width: 799px) 100vw, 320px"
@@ -214,7 +215,7 @@ function SearchResultCard({
               </div>
             ) : (
               <img
-                src={item.thumbnail}
+                src={thumbnail}
                 alt=""
                 className="aspect-video w-full object-cover"
                 loading="lazy"
