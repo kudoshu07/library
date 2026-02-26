@@ -1,0 +1,171 @@
+---
+title: "AIでブログを「Kudo Shu Library」にアップデートしました"
+date: "2026-02-26T10:00:00.000Z"
+slug: "kudoshulibrary"
+summary: "AIでブログ「そうは言っても工藤さん」から、工藤柊のコンテンツを集約したライブラリ「Kudo Shu Library」にアップデートしました"
+tags: ["product", "AI"]
+thumbnail: "/thumbnail_kudoshulibrary.png"
+---
+
+<p>大学1年生(2016年)の頃に始めたブログ「そうは言っても工藤さん」から、僕の各媒体での発信を集約したライブラリ「Kudo Shu Library(KSL)」にアップデートしました。</p>
+<p>最近はAIを使って、いわゆる <strong>バイブコーディング</strong> で遊んでいます。その一環でKSLの開発をしてみましたので、背景や方法などについて記録しておきたいと思います。</p>
+
+<h2>課題：なぜ開発するか</h2>
+<h3>1. コンテンツが散在し、検索性が低い</h3>
+<ul>
+  <li>ブログ、Instagram、note、podcastなど各媒体でコンテンツを発信している</li>
+  <li>そのため、全てのコンテンツを集約し、検索できるようにしたい</li>
+  <li>「ここを見とけばOK!!」という場所がほしい</li>
+</ul>
+
+<h3>2. 年間4万円のコスト</h3>
+<ul>
+  <li>じわじわとサーバー代とドメイン代がかかっていた</li>
+  <li>自主開発で使用しているVercelに統一して削減したい</li>
+  <li>今年は寄付たくさんしたいので、1,000円でも浮かしたい</li>
+</ul>
+<p>→確認したところ、お名前.comに何にも使っていないサーバー代を年30,000円も払っていたことが判明。即解約。</p>
+
+<h3>3. 通知機能がない</h3>
+<ul>
+  <li>Instagramストーリーズではブログ/noteの更新投稿はしているが、見逃しも多い</li>
+  <li>僕のコンテンツを待ってくださるレアな方々に、しっかり届くように通知機能をつけたい</li>
+</ul>
+<p>→ver1.0では、最小機能で出すべく、通知機能は一旦ステイした</p>
+
+
+<h2>方法：どう開発したか</h2>
+<p>最近、主にInstagramストーリーズで「在庫管理appつくった！」「シフトappつくってる！」など発信すると、興味を持ってくださる方からコメントいただくことが多いです。</p>
+<p>「私も作りたい！」</strong> という方のために、2026年2月27日現在の僕のバイブコーディング(AIを使ってコードを自分で書かずに開発することを指すらしい)の方法を記録しておきます。</p>
+<p>ほぼ2年前の2024年2月7日には「WordPress、ノーコードで作れるようになってる！すげぇ！」と言ってたのに、時代の進歩は本当に凄まじいです。</p>
+<a
+href="https://kudoshu07.com/2024/02/07/updateblog2024"
+target="_blank"
+rel="noopener noreferrer"
+style="display:block; border:1px solid #e2e8f0; border-radius:12px; padding:16px; text-decoration:none; color:inherit;"
+>
+<p style="margin:0; font-weight:700; font-size:16px;">WordPressでFigma気分で開発できた（ブログデザインをアプデしました）</p>
+<p style="margin:10px 0 0; color:#94a3b8; font-size:12px;">kudoshu07.com</p>
+</a>
+
+<h3>about me</h3>
+<ul>
+  <li>できること：webデザイン、簡単な要件定義</li>
+  <li>できないこと：コードの読み書き(本当に少しだけ読める)</li>
+</ul>
+
+<h3>各手順で使用するツール</h3>
+<div style="overflow-x:auto;">
+<table style="min-width: 720px;">
+  <thead>
+    <tr>
+      <th>手順</th>
+      <th>使用ツール</th>
+      <th>概要</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>課題書き出し</td>
+      <td>Notion</td>
+      <td>要件定義の元となる課題をバババとNotionに書き連ねました。</td>
+    </tr>
+    <tr>
+      <td>大まかな機能案</td>
+      <td>A4コピー用紙、Notion</td>
+      <td>A4コピー用紙に必要な機能構成を書き出して、Notionにテキストで文章をまとめました。</td>
+    </tr>
+    <tr>
+      <td>要件定義 for v0</td>
+      <td>ChatGPT</td>
+      <td>A4コピー用紙の写真とNotionにまとめた文章をChatGPTにおくり、「v0に送るために最適な要件定義のプロンプトを作って」をお願いさせていただきました。</td>
+    </tr>
+    <tr>
+      <td>大まかなコード生成</td>
+      <td>v0</td>
+      <td>v0にさっきのプロンプトを投げて、簡単なデザインとコードを作成していただきました</td>
+    </tr>
+    <tr>
+      <td>微修正していく</td>
+      <td>エディタ：Visual Studio Code<br/>エージェント：Codex</td>
+      <td>v0が作ってくださったコードをエクスポートし、VS Codeでファイルを開いて、Codex(ChatGPTのコードを手伝ってくださるモード?)に相談させていただきながら、微修正を重ねました。</td>
+    </tr>
+    <tr>
+      <td>管理・公開！</td>
+      <td>GitHub→Vercel</td>
+      <td>GitHubに微修正したコードをどんどんcommitしていき、最終的にVercel(v0と同じ会社?)で最新状態で公開してくれました</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<figure>
+  <img src="/KSL_problem.png" alt="課題の書き出し in Notion" />
+  <figcaption>Notionで課題を書き出す</figcaption>
+</figure>
+
+<figure>
+  <img src="/KSL_paper.webp" alt="紙に書いて機能構成をまとめる" />
+  <figcaption>A4コピー用紙に大まかな必要機能の構造みたいなものを書いてみる</figcaption>
+</figure>
+
+<figure>
+  <img src="/KSL_chatgpt.png" alt="ChatGPTに要件定義を依頼" />
+  <figcaption>ChatGPTに要件定義を依頼</figcaption>
+</figure>
+
+<figure>
+  <img src="/KSL_v0.png" alt="v0でコードの叩き台を作成" />
+  <figcaption>v0でコードの叩き台作成</figcaption>
+</figure>
+
+<figure>
+  <img src="/KSL_codex.png" alt="Codex先輩" />
+  <figcaption>VS CodeのCodex先輩</figcaption>
+</figure>
+
+<figure>
+  <img src="/KSL_vercel.png" alt="Vercel" />
+  <figcaption>VercelがGitHubにcommitした情報を自動で公開</figcaption>
+</figure>
+
+<h3>補足：BESTは分かりまへん</h3>
+<p>この方法は、僕が元々Shopifyの編集をVS Codeでしていたり、ChatGPTに課金していたりという文脈に沿って、大学の先輩でありCodatum COOの
+<a href="https://x.com/k01ke_ya" target="_blank" rel="noopener noreferrer">智哉さん</a>に教えていただきました。</p>
+<p>AIの進歩は凄まじく、もう情報を追いかけるのは諦めて、とりあえず <strong>”触ってみる"を優先</strong> しています。Geminiが良いやら、Claude Codeがすごいやら、色々と聞きますが、競争原理が全てのサービスを時間をかけながら一定ラインまで進化させるだろうと期待してます。</p>
+
+<figure>
+  <img src="/KSL_koike.png" alt="智哉さん" />
+  <figcaption>マジで感謝</figcaption>
+</figure>
+
+<h2>アウトプット</h2>
+<h3>HOME画面：Twitterライク</h3>
+<figure>
+  <img src="/KSL_likeX.png" alt="Xのようなコンテンツデザイン" />
+</figure>
+
+<p>中学の頃から大好きだったTwitter(今は離脱)を参考に、3カラムで構成。<br />
+中央のタイムラインで、ブログ・note・Instagram・podcastなど全てのコンテンツが時系列で表示される。</p>
+
+<h3>ブログ記事：noteライク</h3>
+<figure>
+  <img src="/KSL_likenote.png" alt="noteのようなコンテンツデザイン" />
+</figure>
+
+<p>ブログコンテンツは、noteのように余計なものを表示せず、文章に集中できるようにしています。<br />また、ノリでいいね機能も簡単につけてみました。（いいねしてみてね）</p>
+
+<h3>記事執筆：VS Codeで書く</h3>
+<figure>
+  <img src="/KSL_bloginvscode.png" alt="ブログの執筆" />
+</figure>
+
+<p>WordPressを失ったため、ブログの執筆はCS Code上で行っています。今回の記事もVS Code上で書いていますが、不慣れなため、慣れるまでは時間かかりそう。</p>
+
+
+<h2>バイブコーディングの感想</h2>
+<p> <strong>正直、めっっっっっちゃくちゃに楽しい！</strong><br />
+自分が作りたいものが、AIとの日本語のコミュニケーションでどんどんと形になっていく感覚は、本当に感動的です。</p>
+<p>非エンジニアの感覚としては、今までエンジニアメンバーと会話していた感覚でCodexと会話して、10-60秒後には実装までやってくれちゃってるような感覚です。<br />
+もちろん、セキュリティが求められる部分や運用コストが高い部分など、論点は色々あるのは理解しつつ、とにかくめちゃくちゃ楽しいです。</p>
+<p>興味ある人はぜひやってみてください...！多分、やり方に関しては、このブログよりもYouTubeとかで見た方がわかりやすいと思いますが、一事例としてここに残しておきます（いつかAIのご飯になって、お役に立てるはず）。</p>

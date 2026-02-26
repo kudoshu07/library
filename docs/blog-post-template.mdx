@@ -1,0 +1,103 @@
+---
+title: "記事タイトル"
+date: "2026-02-26T10:00:00.000Z"
+slug: "my-first-post"
+summary: "一覧に表示する要約（80〜140文字くらい推奨）"
+tags: ["essay", "startup"]
+thumbnail: "/wp-content/uploads/2026/02/my-first-post-thumbnail.png"
+---
+
+<p>導入文です。現在のブログ本文は、Markdownよりも <strong>HTMLで書く</strong> のが確実です。</p>
+
+<h2>見出しの例</h2>
+<p>段落の例です。途中で <strong>太文字</strong> を使えます。</p>
+
+<h2>箇条書きの例</h2>
+<ul>
+  <li>箇条書き1</li>
+  <li>箇条書き2</li>
+  <li>箇条書き3</li>
+</ul>
+
+<h2>表の例（シンプル）</h2>
+<table>
+  <thead>
+    <tr>
+      <th>項目</th>
+      <th>内容</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>目的</td>
+      <td>Kudo Shu Libraryへの移行</td>
+    </tr>
+    <tr>
+      <td>手段</td>
+      <td>AI + MDX + Vercel</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>表の例（スマホ対応 / 見やすい版）</h2>
+<div style="overflow-x:auto;">
+  <table style="width:100%; min-width:520px; border-collapse:collapse; font-size:14px;">
+    <thead>
+      <tr>
+        <th style="border:1px solid #e2e8f0; background:#f8fafc; padding:8px; text-align:left;">項目</th>
+        <th style="border:1px solid #e2e8f0; background:#f8fafc; padding:8px; text-align:left;">内容</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="border:1px solid #e2e8f0; padding:8px;">旧ブログ名</td>
+        <td style="border:1px solid #e2e8f0; padding:8px;">そうは言っても工藤さん</td>
+      </tr>
+      <tr>
+        <td style="border:1px solid #e2e8f0; padding:8px;">新サイト名</td>
+        <td style="border:1px solid #e2e8f0; padding:8px;">Kudo Shu Library</td>
+      </tr>
+      <tr>
+        <td style="border:1px solid #e2e8f0; padding:8px;">ホスティング</td>
+        <td style="border:1px solid #e2e8f0; padding:8px;">Vercel</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>画像挿入の例</h2>
+<p>画像は先に <code>public/...</code> に置いてから、絶対パスで参照します。</p>
+<figure>
+  <img src="/wp-content/uploads/2026/02/sample-image.jpg" alt="画像の説明" />
+  <figcaption>画像キャプション（任意）</figcaption>
+</figure>
+
+<h2>記事カード（リンクカード風）の例</h2>
+<p>現在は埋め込み専用コンポーネントではなく、HTMLのリンクボックスで表現するのが簡単です。</p>
+<a
+  href="https://example.com/article"
+  target="_blank"
+  rel="noopener noreferrer"
+  style="display:block; border:1px solid #e2e8f0; border-radius:12px; padding:16px; text-decoration:none; color:inherit;"
+>
+  <p style="margin:0; font-weight:700; font-size:16px;">参考記事タイトル</p>
+  <p style="margin:8px 0 0; color:#64748b; font-size:14px; line-height:1.6;">
+    記事の要約を1〜2文で書くと、カードっぽく見やすくなります。
+  </p>
+  <p style="margin:10px 0 0; color:#94a3b8; font-size:12px;">example.com</p>
+</a>
+
+<h2>通常リンクの例</h2>
+<p>
+  詳細はこちら：
+  <a href="https://example.com" target="_blank" rel="noopener noreferrer">https://example.com</a>
+</p>
+
+<h2>メモ（運用ルール）</h2>
+<ul>
+  <li><code>slug</code> はURLになるので英数字・ハイフン推奨</li>
+  <li><code>tags</code> は <code>#</code> なしで記載（例: <code>startup</code>）</li>
+  <li><code>thumbnail</code> の画像ファイル名はASCII推奨（日本語ファイル名は本番で壊れやすい）</li>
+  <li>保存先は <code>content/blog/YYYY/MM/DD/slug.mdx</code></li>
+  <li>公開URLは <code>/YYYY/MM/DD/slug/</code></li>
+</ul>
