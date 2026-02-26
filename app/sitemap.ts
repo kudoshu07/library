@@ -11,7 +11,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...(ENABLE_SUBSCRIBE_UI
       ? ([{ url: `${SITE_URL}/subscribe`, changeFrequency: "weekly", priority: 0.6 }] satisfies MetadataRoute.Sitemap)
       : []),
-    { url: `${SITE_URL}/about`, changeFrequency: "monthly", priority: 0.5 },
   ]
 
   const params = await getBlogStaticParams()

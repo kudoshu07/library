@@ -11,7 +11,6 @@ import { ENABLE_SUBSCRIBE_UI } from "@/lib/feature-flags"
 const navLinks = [
   { href: "/home", label: "Contents" },
   { href: "/subscribe", label: "Subscribe" },
-  { href: "/about", label: "About" },
 ].filter((link) => ENABLE_SUBSCRIBE_UI || link.href !== "/subscribe")
 
 export function SiteHeader() {

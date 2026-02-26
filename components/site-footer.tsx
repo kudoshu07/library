@@ -15,9 +15,6 @@ export function SiteFooter() {
               Subscribe
             </Link>
           )}
-          <Link href="/about" className="transition-colors hover:text-foreground">
-            About
-          </Link>
         </nav>
       </div>
     </footer>
