@@ -6,6 +6,21 @@ OUT_DIR="$ROOT/content/external"
 TMP_DIR="${TMPDIR:-/tmp}/ksl-instagram-sync"
 mkdir -p "$OUT_DIR" "$TMP_DIR"
 
+load_dotenv() {
+  # Make local sync convenient: respect values in .env.local/.env (e.g. INSTAGRAM_FETCH_LIMIT).
+  # This script is also used in CI/local dev; if these files don't exist, it's fine.
+  for envfile in "$ROOT/.env.local" "$ROOT/.env"; do
+    if [[ -f "$envfile" ]]; then
+      set -a
+      # shellcheck disable=SC1090
+      source "$envfile"
+      set +a
+    fi
+  done
+}
+
+load_dotenv
+
 UA='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
 APP_ID='936619743392459'
 ASBD_ID='129477'
@@ -186,10 +201,12 @@ for (const item of items) {
   const takenAt = item?.taken_at
   if (!code || !takenAt) continue
 
+  const productType = String(item?.product_type ?? "").toLowerCase()
+  const urlKind = productType === "clips" ? "reel" : "p"
   const caption = item?.caption?.text?.trim?.() ?? ""
   const title = (caption.split(/\r?\n/)[0] || "").trim() || `Instagram post ${code}`
   const summary = normalizeSentence(caption)
-  const url = `https://www.instagram.com/p/${code}/`
+  const url = `https://www.instagram.com/${urlKind}/${code}/`
   const date = new Date(takenAt * 1000).toISOString()
   const thumbnail = pickThumbnail(item)
 
@@ -238,18 +255,46 @@ deduped.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 const sliced = deduped.slice(0, limit)
 
 // If Instagram blocks feed access, we fall back to web_profile_info (~12 items).
-// Avoid overwriting an already-large seed file with a tiny fallback.
+// Avoid overwriting an already-large seed file with a tiny fallback, but still merge updates.
 let existingCount = 0
+let existing = []
 try {
   if (fs.existsSync(out)) {
     const prev = JSON.parse(fs.readFileSync(out, "utf8"))
-    if (Array.isArray(prev)) existingCount = prev.length
+    if (Array.isArray(prev)) {
+      existing = prev
+      existingCount = prev.length
+    }
   }
 } catch {}
 
 if (existingCount > 12 && sliced.length <= 12) {
+  // Replace matching items (by id/url) so latest items can be refreshed even during throttling.
+  const byKey = new Map()
+  for (const item of existing) {
+    const key = item?.id || item?.url
+    if (key) byKey.set(key, item)
+  }
+
+  let replaced = 0
+  for (const item of sliced) {
+    const key = item?.id || item?.url
+    if (!key) continue
+    if (byKey.has(key)) replaced += 1
+    byKey.set(key, item)
+  }
+
+  const merged = Array.from(byKey.values())
+    .filter(Boolean)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  // Keep as many items as we already have (up to 100) to avoid accidental shrinking
+  // when env vars aren't loaded (default limit=12).
+  const targetLen = Math.min(Math.max(existingCount, sliced.length, 1), 100)
+  const mergedFinal = merged.slice(0, targetLen)
+
+  fs.writeFileSync(out, JSON.stringify(mergedFinal, null, 2) + "\n", "utf8")
   console.log(
-    `[sync-instagram] WARNING: got only ${sliced.length} items (likely throttled). Keeping existing ${existingCount} items -> ${out}`
+    `[sync-instagram] WARNING: got only ${sliced.length} items (likely throttled). Merged ${replaced}/${sliced.length} into existing ${existingCount} -> ${out}`
   )
   process.exit(0)
 }
@@ -367,10 +412,12 @@ for (const edge of edges) {
   const takenAt = node?.taken_at_timestamp
   if (!code || !takenAt) continue
 
+  const productType = String(node?.product_type ?? "").toLowerCase()
+  const urlKind = productType === "clips" ? "reel" : "p"
   const caption = node?.edge_media_to_caption?.edges?.[0]?.node?.text?.trim?.() ?? ""
   const title = (caption.split(/\r?\n/)[0] || "").trim() || `Instagram post ${code}`
   const summary = normalizeSentence(caption)
-  const url = `https://www.instagram.com/p/${code}/`
+  const url = `https://www.instagram.com/${urlKind}/${code}/`
   const date = new Date(takenAt * 1000).toISOString()
   const thumbnail = node?.thumbnail_src?.trim?.() || node?.display_url?.trim?.() || ""
 

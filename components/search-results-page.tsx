@@ -157,6 +157,7 @@ function SearchResultCard({
     isInstagram && thumbnail && thumbnail.startsWith("http")
       ? `/api/thumbnail?src=${encodeURIComponent(thumbnail)}`
       : undefined
+  const instagramThumbnailSrc = isInstagram && instagramProxyThumbnail ? instagramProxyThumbnail : thumbnail
   const lowQuality = 40
   const canOptimizeThumbnail =
     Boolean(thumbnail && thumbnail.startsWith("/") && !thumbnail.includes("?"))
@@ -184,13 +185,13 @@ function SearchResultCard({
               </div>
             ) : (
               <img
-                src={thumbnail}
+                src={instagramThumbnailSrc}
                 alt=""
                 className="aspect-video w-full object-cover"
                 loading="lazy"
                 onError={(event) => {
                   const target = event.currentTarget
-                  if (instagramProxyThumbnail && target.dataset.fallbackApplied !== "1") {
+                  if (!instagramThumbnailSrc?.startsWith("/api/thumbnail") && instagramProxyThumbnail && target.dataset.fallbackApplied !== "1") {
                     target.dataset.fallbackApplied = "1"
                     target.src = instagramProxyThumbnail
                     return
@@ -215,13 +216,13 @@ function SearchResultCard({
               </div>
             ) : (
               <img
-                src={thumbnail}
+                src={instagramThumbnailSrc}
                 alt=""
                 className="aspect-video w-full object-cover"
                 loading="lazy"
                 onError={(event) => {
                   const target = event.currentTarget
-                  if (instagramProxyThumbnail && target.dataset.fallbackApplied !== "1") {
+                  if (!instagramThumbnailSrc?.startsWith("/api/thumbnail") && instagramProxyThumbnail && target.dataset.fallbackApplied !== "1") {
                     target.dataset.fallbackApplied = "1"
                     target.src = instagramProxyThumbnail
                     return

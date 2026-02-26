@@ -77,6 +77,11 @@ export async function GET(request: NextRequest) {
 
   const headers = new Headers()
   const contentType = pickHeader(upstream.headers, "content-type") ?? "image/jpeg"
+  // Instagram sometimes returns HTML (challenge/blocked) with 200 OK.
+  // Do not pass it through as an "image" response; show a safe placeholder instead.
+  if (!contentType.toLowerCase().startsWith("image/")) {
+    return fallbackImageResponse()
+  }
   headers.set("Content-Type", contentType)
   headers.set("Cache-Control", "public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400")
 
