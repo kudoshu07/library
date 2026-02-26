@@ -248,14 +248,14 @@ function SearchResultCard({
             href={item.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-3 block line-clamp-2 text-sm font-semibold leading-snug text-slate-900 transition-colors hover:text-sky-600"
+            className="mt-3 block line-clamp-2 text-sm font-semibold leading-snug text-slate-900 transition-colors hover:text-[#264F8B]"
           >
             <HighlightText text={title} query={query} />
           </a>
         ) : (
           <Link
             href={item.url}
-            className="mt-3 block line-clamp-2 text-sm font-semibold leading-snug text-slate-900 transition-colors hover:text-sky-600"
+            className="mt-3 block line-clamp-2 text-sm font-semibold leading-snug text-slate-900 transition-colors hover:text-[#264F8B]"
           >
             <HighlightText text={title} query={query} />
           </Link>
@@ -268,7 +268,7 @@ function SearchResultCard({
             target="_blank"
             rel="noopener noreferrer"
             className={cn(
-              "block text-xs leading-relaxed text-slate-600 transition-colors hover:text-sky-600",
+              "block text-xs leading-relaxed text-slate-600 transition-colors hover:text-[#264F8B]",
               isInstagram ? "mt-3" : "mt-2"
             )}
           >
@@ -465,7 +465,7 @@ export function SearchResultsPage({
                 value={queryInput}
                 onChange={(event) => setQueryInput(event.target.value)}
                 placeholder="タイトル・本文・要約を検索"
-                className="h-11 w-full rounded-full border border-slate-200 bg-slate-50 pl-11 pr-11 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white"
+                className="h-11 w-full rounded-full border border-slate-200 bg-slate-50 pl-11 pr-11 text-sm text-slate-900 outline-none transition focus:border-[#264F8B] focus:bg-white"
                 aria-label="Search query"
               />
               {queryInput && (
@@ -494,7 +494,7 @@ export function SearchResultsPage({
                 aria-pressed={isFilterActive(source.value)}
                 className={
                   isFilterActive(source.value)
-                    ? "rounded-full bg-slate-900 px-3.5 py-1.5 text-xs font-semibold text-white"
+                    ? "rounded-full bg-[#264F8B] px-3.5 py-1.5 text-xs font-semibold text-white"
                     : "rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100"
                 }
               >
@@ -518,7 +518,7 @@ export function SearchResultsPage({
                     aria-pressed={isTagFilterActive(tag)}
                     className={
                       isTagFilterActive(tag)
-                        ? "rounded-full bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white"
+                        ? "rounded-full bg-[#264F8B] px-3 py-1.5 text-xs font-semibold text-white"
                         : "rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100"
                     }
                   >
@@ -569,7 +569,7 @@ export function SearchResultsPage({
           <Link
             href="/search"
             aria-current="page"
-            className="flex h-[clamp(3.75rem,8svh,4.5rem)] flex-col items-center justify-center gap-1 px-1 text-[10px] font-semibold leading-none text-sky-600 sm:text-xs"
+            className="flex h-[clamp(3.75rem,8svh,4.5rem)] flex-col items-center justify-center gap-1 px-1 text-[10px] font-semibold leading-none text-[#264F8B] sm:text-xs"
           >
             <Search className="size-5" />
             検索

@@ -31,8 +31,8 @@ function NoteBrandIcon({ className }: { className?: string }) {
 export const sourceVisuals: Record<ContentSource, SourceVisual> = {
   blog: {
     icon: FilePenLine,
-    chipClass: "bg-slate-900 text-white",
-    avatarClass: "bg-slate-900 text-white",
+    chipClass: "bg-[#264F8B] text-white",
+    avatarClass: "bg-[#264F8B] text-white",
     short: "B",
   },
   note: {

@@ -10,7 +10,7 @@
   --card-foreground: oklch(0.13 0.01 260);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.13 0.01 260);
-  --primary: oklch(0.13 0.01 260);
+  --primary: #264F8B;
   --primary-foreground: oklch(0.98 0 0);
   --secondary: oklch(0.955 0.005 250);
   --secondary-foreground: oklch(0.30 0.01 260);
@@ -22,7 +22,7 @@
   --destructive-foreground: oklch(0.577 0.245 27.325);
   --border: oklch(0.92 0.005 250);
   --input: oklch(0.92 0.005 250);
-  --ring: oklch(0.62 0.17 175);
+  --ring: #264F8B;
   --chart-1: oklch(0.62 0.17 175);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -31,12 +31,12 @@
   --radius: 0.5rem;
   --sidebar: oklch(0.98 0.002 240);
   --sidebar-foreground: oklch(0.13 0.01 260);
-  --sidebar-primary: oklch(0.13 0.01 260);
+  --sidebar-primary: #264F8B;
   --sidebar-primary-foreground: oklch(0.98 0 0);
   --sidebar-accent: oklch(0.94 0.005 250);
   --sidebar-accent-foreground: oklch(0.13 0.01 260);
   --sidebar-border: oklch(0.92 0.005 250);
-  --sidebar-ring: oklch(0.62 0.17 175);
+  --sidebar-ring: #264F8B;
 }
 
 .dark {

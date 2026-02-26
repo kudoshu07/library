@@ -100,12 +100,14 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 	        {post.tags && post.tags.length > 0 && (
 	          <ul className="flex flex-wrap gap-2 pt-1">
 	            {post.tags.map((tag) => (
-	              <li
-	                key={tag}
-	                className="rounded-full border border-border bg-secondary px-2.5 py-1 text-xs text-muted-foreground"
-	              >
-	                #{tag}
-	              </li>
+	              <li key={tag}>
+                  <Link
+                    href={`/search?tag=${encodeURIComponent(tag)}`}
+                    className="inline-flex rounded-full border border-border bg-secondary px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground"
+                  >
+                    #{tag}
+                  </Link>
+                </li>
 	            ))}
 	          </ul>
 	        )}

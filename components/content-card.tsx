@@ -122,12 +122,12 @@ function FeedCard({
                 href={item.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-2 block text-lg font-semibold leading-snug text-slate-900 transition-colors hover:text-sky-600"
+                className="mt-2 block text-lg font-semibold leading-snug text-slate-900 transition-colors hover:text-[#264F8B]"
               >
                 {item.title}
               </a>
             ) : (
-              <Link href={item.url} className="mt-2 block text-lg font-semibold leading-snug text-slate-900 transition-colors hover:text-sky-600">
+              <Link href={item.url} className="mt-2 block text-lg font-semibold leading-snug text-slate-900 transition-colors hover:text-[#264F8B]">
                 {item.title}
               </Link>
             ))}
@@ -139,7 +139,7 @@ function FeedCard({
                 target="_blank"
                 rel="noopener noreferrer"
                 className={cn(
-                  "block text-sm leading-relaxed text-slate-600 transition-colors hover:text-sky-600",
+                  "block text-sm leading-relaxed text-slate-600 transition-colors hover:text-[#264F8B]",
                   isInstagram ? "mt-1" : "mt-2"
                 )}
               >

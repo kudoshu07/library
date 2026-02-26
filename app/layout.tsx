@@ -16,29 +16,36 @@ const notoSansJP = Noto_Sans_JP({
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://kudoshu07.com'),
+  icons: {
+    icon: '/favicon-ksl.png',
+    shortcut: '/favicon-ksl.png',
+    apple: '/favicon-ksl.png',
+  },
   title: {
-    default: 'Kudo Shu Library',
+    default: 'Kudo Shu Library (旧:そうは言っても工藤さん)',
     template: '%s | Kudo Shu Library',
   },
   description: 'Blog, note(個人), Instagram -- すべてのコンテンツを一箇所に集約したパーソナルライブラリー。',
   openGraph: {
-    title: 'Kudo Shu Library',
+    title: 'Kudo Shu Library (旧:そうは言っても工藤さん)',
     description:
       'Blog, note(個人), Instagram -- すべてのコンテンツを一箇所に集約したパーソナルライブラリー。',
     type: 'website',
     siteName: 'Kudo Shu Library',
     locale: 'ja_JP',
+    images: ['/thumbnail-ksl.png'],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Kudo Shu Library',
+    title: 'Kudo Shu Library (旧:そうは言っても工藤さん)',
     description:
       'Blog, note(個人), Instagram -- すべてのコンテンツを一箇所に集約したパーソナルライブラリー。',
+    images: ['/thumbnail-ksl.png'],
   },
 }
 
 export const viewport: Viewport = {
-  themeColor: '#000000',
+  themeColor: '#264F8B',
   width: 'device-width',
   initialScale: 1,
 }

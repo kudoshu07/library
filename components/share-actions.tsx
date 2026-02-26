@@ -62,7 +62,7 @@ export function ShareActions({ title, url }: { title: string; url: string }) {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="inline-flex items-center gap-1 text-xs transition-colors hover:text-sky-600"
+          className="inline-flex items-center gap-1 text-xs transition-colors hover:text-[#264F8B]"
           aria-label="Share options"
         >
           <Share2 className="size-4" />
@@ -95,4 +95,3 @@ export function ShareActions({ title, url }: { title: string; url: string }) {
     </DropdownMenu>
   )
 }
-

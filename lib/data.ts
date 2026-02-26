@@ -35,7 +35,7 @@ export const sourceLabels: Record<ContentSource, string> = {
 }
 
 export const sourceColors: Record<ContentSource, string> = {
-  blog: "bg-foreground text-background",
+  blog: "bg-[#264F8B] text-white",
   note: "bg-accent text-accent-foreground",
   ig_business: "bg-secondary text-secondary-foreground border border-border",
   ig_photo: "bg-muted text-foreground",
