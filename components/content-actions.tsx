@@ -4,33 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Heart } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ShareActions } from "@/components/share-actions"
-
-const LIKE_STORAGE_KEY = "ksl-content-likes-v1"
-
-function safeReadLikes(): Record<string, { count: number; liked: boolean }> {
-  try {
-    const raw = window.localStorage.getItem(LIKE_STORAGE_KEY)
-    if (!raw) return {}
-    const parsed = JSON.parse(raw) as Record<string, { count?: number; liked?: boolean }>
-    const sanitized: Record<string, { count: number; liked: boolean }> = {}
-    for (const [id, value] of Object.entries(parsed)) {
-      const count = Number.isFinite(value.count) ? Math.max(0, Math.floor(value.count ?? 0)) : 0
-      const liked = Boolean(value.liked) || count > 0
-      sanitized[id] = { count, liked }
-    }
-    return sanitized
-  } catch {
-    return {}
-  }
-}
-
-function writeLikes(value: Record<string, { count: number; liked: boolean }>) {
-  try {
-    window.localStorage.setItem(LIKE_STORAGE_KEY, JSON.stringify(value))
-  } catch {
-    // ignore
-  }
-}
+import { fetchLikeCounts, incrementLikeCount, readLocalLikes, writeLocalLikes } from "@/lib/likes-client"
 
 export function ContentActions({
   contentId,
@@ -47,14 +21,29 @@ export function ContentActions({
   const [likesById, setLikesById] = useState<Record<string, { count: number; liked: boolean }>>({})
 
   useEffect(() => {
-    setLikesById(safeReadLikes())
+    setLikesById(readLocalLikes())
     setReady(true)
   }, [])
 
   useEffect(() => {
     if (!ready) return
-    writeLikes(likesById)
+    writeLocalLikes(likesById)
   }, [likesById, ready])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    fetchLikeCounts([contentId], controller.signal)
+      .then((counts) => {
+        const count = counts[contentId]
+        if (!Number.isFinite(count)) return
+        setLikesById((prev) => {
+          const current = prev[contentId] ?? { count: 0, liked: false }
+          return { ...prev, [contentId]: { ...current, count } }
+        })
+      })
+      .catch(() => {})
+    return () => controller.abort()
+  }, [contentId])
 
   const entry = useMemo(() => likesById[contentId] ?? { count: 0, liked: false }, [likesById, contentId])
 
@@ -68,6 +57,19 @@ export function ContentActions({
           liked: true,
         },
       }
+    })
+    void incrementLikeCount(contentId).then((serverCount) => {
+      if (!Number.isFinite(serverCount)) return
+      setLikesById((prev) => {
+        const current = prev[contentId] ?? { count: 0, liked: false }
+        return {
+          ...prev,
+          [contentId]: {
+            count: Number(serverCount),
+            liked: current.liked,
+          },
+        }
+      })
     })
   }
 
@@ -89,4 +91,3 @@ export function ContentActions({
     </div>
   )
 }
-

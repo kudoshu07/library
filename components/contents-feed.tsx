@@ -18,11 +18,10 @@ import { type ContentItem, type ContentSource } from "@/lib/data"
 import { ContentCard } from "@/components/content-card"
 import { SourceInlineLabel, sourceFilterOptions } from "@/components/source-ui"
 import { ENABLE_SUBSCRIBE_UI } from "@/lib/feature-flags"
+import { fetchLikeCounts, incrementLikeCount, readLocalLikes, writeLocalLikes } from "@/lib/likes-client"
 
 const ITEMS_PER_PAGE = 20
 const DEBOUNCE_MS = 250
-const LIKE_STORAGE_KEY = "ksl-content-likes-v1"
-
 type RelatedLinkItem =
   | { kind: "source"; source: ContentSource; href: string; external: boolean }
   | {
@@ -168,6 +167,7 @@ export function ContentsFeed({
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showStickyMenuButton, setShowStickyMenuButton] = useState(false)
+  const [isSearchNavigating, setIsSearchNavigating] = useState(false)
   const [likesReady, setLikesReady] = useState(false)
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
   const [likesById, setLikesById] = useState<
@@ -196,21 +196,7 @@ export function ContentsFeed({
 
   useEffect(() => {
     try {
-      const raw = window.localStorage.getItem(LIKE_STORAGE_KEY)
-      if (raw) {
-        const parsed = JSON.parse(raw) as Record<
-          string,
-          { count?: number; liked?: boolean }
-        >
-
-        const sanitized: Record<string, { count: number; liked: boolean }> = {}
-        for (const [id, value] of Object.entries(parsed)) {
-          const count = Number.isFinite(value.count) ? Math.max(0, Math.floor(value.count ?? 0)) : 0
-          const liked = Boolean(value.liked) || count > 0
-          sanitized[id] = { count, liked }
-        }
-        setLikesById(sanitized)
-      }
+      setLikesById(readLocalLikes())
     } catch {
       setLikesById({})
     } finally {
@@ -220,7 +206,7 @@ export function ContentsFeed({
 
   useEffect(() => {
     if (!likesReady) return
-    window.localStorage.setItem(LIKE_STORAGE_KEY, JSON.stringify(likesById))
+    writeLocalLikes(likesById)
   }, [likesById, likesReady])
 
   useEffect(() => {
@@ -308,6 +294,35 @@ export function ContentsFeed({
 
   const visibleItems = filteredItems.slice(0, visibleCount)
   const hasMore = visibleItems.length < filteredItems.length
+  const visibleItemIds = useMemo(() => visibleItems.map((item) => item.id), [visibleItems])
+  const visibleItemIdsKey = useMemo(() => visibleItemIds.join("|"), [visibleItemIds])
+
+  useEffect(() => {
+    const ids = visibleItemIds
+    if (ids.length === 0) return
+
+    const controller = new AbortController()
+    fetchLikeCounts(ids, controller.signal)
+      .then((counts) => {
+        setLikesById((prev) => {
+          const next = { ...prev }
+          let changed = false
+          for (const id of ids) {
+            const serverCount = counts[id]
+            if (!Number.isFinite(serverCount)) continue
+            const current = next[id] ?? { count: 0, liked: false }
+            if (current.count !== serverCount) {
+              next[id] = { count: serverCount, liked: current.liked }
+              changed = true
+            }
+          }
+          return changed ? next : prev
+        })
+      })
+      .catch(() => {})
+
+    return () => controller.abort()
+  }, [visibleItemIdsKey])
 
   const toggleLike = (id: string) => {
     setLikesById((prev) => {
@@ -320,6 +335,19 @@ export function ContentsFeed({
         },
       }
     })
+    void incrementLikeCount(id).then((serverCount) => {
+      if (!Number.isFinite(serverCount)) return
+      setLikesById((prev) => {
+        const current = prev[id] ?? { count: 0, liked: false }
+        return {
+          ...prev,
+          [id]: {
+            count: Number(serverCount),
+            liked: current.liked,
+          },
+        }
+      })
+    })
   }
 
   const buildSearchHref = (query: string) => {
@@ -329,6 +357,7 @@ export function ContentsFeed({
   }
 
   const goToSearchPage = () => {
+    setIsSearchNavigating(true)
     router.push(buildSearchHref(searchInput))
   }
 
@@ -377,6 +406,10 @@ export function ContentsFeed({
     observer.observe(node)
     return () => observer.disconnect()
   }, [hasMore, filteredItems.length])
+
+  useEffect(() => {
+    setIsSearchNavigating(false)
+  }, [pathname])
 
   return (
     <div className="min-h-svh bg-[#f7f9f9] pb-[calc(clamp(3.75rem,8svh,4.5rem)+env(safe-area-inset-bottom))] min-[800px]:h-full min-[800px]:min-h-0 min-[800px]:overflow-hidden min-[800px]:overscroll-none min-[800px]:pb-0">
@@ -903,6 +936,15 @@ export function ContentsFeed({
                 </div>
               )}
             </section>
+          </div>
+        </div>
+      )}
+
+      {isSearchNavigating && (
+        <div className="pointer-events-none fixed inset-x-0 top-4 z-[70] flex justify-center px-4">
+          <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/95 px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm backdrop-blur">
+            <span className="inline-block size-3 animate-spin rounded-full border-2 border-slate-300 border-t-slate-700" />
+            検索結果を読み込み中...
           </div>
         </div>
       )}
