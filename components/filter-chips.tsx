@@ -8,7 +8,7 @@ const filters: { value: ContentSource | "all"; label: string }[] = [
   { value: "blog", label: "Blog" },
   { value: "note", label: "note(個人)" },
   { value: "ig_business", label: "kudoshu_vcook" },
-  { value: "ig_photo", label: "0n0shu(写真)" },
+  { value: "ig_photo", label: "onoshuphoto(写真)" },
 ]
 
 export function FilterChips({

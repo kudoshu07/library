@@ -29,7 +29,7 @@ export const sourceLabels: Record<ContentSource, string> = {
   blog: "Blog",
   note: "note(個人)",
   ig_business: "kudoshu_vcook",
-  ig_photo: "0n0shu(写真)",
+  ig_photo: "onoshuphoto(写真)",
   pod_yonakoi: "よな恋ラジオ",
   pod_vegan: "ヴィーガンの裏側",
 }

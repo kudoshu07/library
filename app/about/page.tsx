@@ -11,7 +11,7 @@ const links = [
   { label: "Blog", href: "https://kudoshu07.com/home" },
   { label: "note(個人)", href: "https://note.com/onoshu1127" },
   { label: "kudoshu_vcook", href: "https://www.instagram.com/kudoshu_vcook/" },
-  { label: "0n0shu(写真)", href: "https://www.instagram.com/0n0shu/" },
+  { label: "onoshuphoto(写真)", href: "https://www.instagram.com/onoshuphoto/" },
   { label: "Prairie", href: "https://my.prairie.cards/u/kudoshu" },
 ]
 

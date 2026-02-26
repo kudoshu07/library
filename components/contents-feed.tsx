@@ -36,7 +36,7 @@ const relatedLinks: RelatedLinkItem[] = [
   { kind: "source", source: "blog", href: "/search?source=blog", external: false },
   { kind: "source", source: "note", href: "https://note.com/onoshu1127", external: true },
   { kind: "source", source: "ig_business", href: "https://www.instagram.com/kudoshu_vcook/", external: true },
-  { kind: "source", source: "ig_photo", href: "https://www.instagram.com/0n0shu/", external: true },
+  { kind: "source", source: "ig_photo", href: "https://www.instagram.com/onoshuphoto/", external: true },
   {
     kind: "source",
     source: "pod_yonakoi",

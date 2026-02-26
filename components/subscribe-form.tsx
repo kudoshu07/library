@@ -10,7 +10,7 @@ const sources = [
   { id: "blog", label: "Blog" },
   { id: "note", label: "note(個人)" },
   { id: "ig_business", label: "kudoshu_vcook" },
-  { id: "ig_photo", label: "0n0shu(写真)" },
+  { id: "ig_photo", label: "onoshuphoto(写真)" },
 ]
 
 export function SubscribeForm() {
