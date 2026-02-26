@@ -32,7 +32,7 @@ HOME_IP="157.240.209.174"
 BUSINESS_USERNAME="${IG_BUSINESS_USERNAME:-kudoshu_vcook}"
 PHOTO_USERNAME="${IG_PHOTO_USERNAME:-onoshu_photo}"
 LIMIT="${INSTAGRAM_FETCH_LIMIT:-12}"
-SYNC_ONLY="${INSTAGRAM_SYNC_ONLY:-both}" # both|business|photo
+SYNC_ONLY="${INSTAGRAM_SYNC_ONLY:-${SYNC_ONLY:-both}}" # both|business|photo (SYNC_ONLY alias supported)
 
 normalize_username() {
   echo "$1" | sed -E 's/^@//' | tr -d '[:space:]'
@@ -245,7 +245,8 @@ for (const line of lines) {
 const seen = new Set()
 const deduped = []
 for (const item of items) {
-  const key = item?.id || item?.url
+  // Prefer URL over id so username changes do not break dedupe.
+  const key = item?.url || item?.id
   if (!key || seen.has(key)) continue
   seen.add(key)
   deduped.push(item)
@@ -269,16 +270,16 @@ try {
 } catch {}
 
 if (existingCount > 12 && sliced.length <= 12) {
-  // Replace matching items (by id/url) so latest items can be refreshed even during throttling.
+  // Replace matching items (prefer url, then id) so username changes still merge correctly.
   const byKey = new Map()
   for (const item of existing) {
-    const key = item?.id || item?.url
+    const key = item?.url || item?.id
     if (key) byKey.set(key, item)
   }
 
   let replaced = 0
   for (const item of sliced) {
-    const key = item?.id || item?.url
+    const key = item?.url || item?.id
     if (!key) continue
     if (byKey.has(key)) replaced += 1
     byKey.set(key, item)

@@ -1,5 +1,7 @@
 import type { Metadata } from "next"
+import { redirect } from "next/navigation"
 import { SubscribeForm } from "@/components/subscribe-form"
+import { ENABLE_SUBSCRIBE_UI } from "@/lib/feature-flags"
 
 export const metadata: Metadata = {
   title: "Subscribe",
@@ -7,6 +9,10 @@ export const metadata: Metadata = {
 }
 
 export default function SubscribePage() {
+  if (!ENABLE_SUBSCRIBE_UI) {
+    redirect("/home")
+  }
+
   return (
     <div className="mx-auto max-w-lg px-4 py-12 lg:px-6">
       <div className="mb-8 text-center">

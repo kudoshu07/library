@@ -404,9 +404,7 @@ export function SearchResultsPage({
     }
 
     setSelectedSources((prev) => {
-      const next = prev.includes(value)
-        ? prev.filter((source) => source !== value)
-        : [...prev, value]
+      const next = prev.length === 1 && prev[0] === value ? [] : [value]
       router.push(buildSearchHref(queryInput, selectedTags, next))
       return next
     })

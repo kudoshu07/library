@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { ENABLE_SUBSCRIBE_UI } from "@/lib/feature-flags"
 
 export function SiteFooter() {
   return (
@@ -9,9 +10,11 @@ export function SiteFooter() {
           <Link href="/home" className="transition-colors hover:text-foreground">
             Contents
           </Link>
-          <Link href="/subscribe" className="transition-colors hover:text-foreground">
-            Subscribe
-          </Link>
+          {ENABLE_SUBSCRIBE_UI && (
+            <Link href="/subscribe" className="transition-colors hover:text-foreground">
+              Subscribe
+            </Link>
+          )}
           <Link href="/about" className="transition-colors hover:text-foreground">
             About
           </Link>

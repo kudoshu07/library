@@ -1,13 +1,16 @@
 import type { MetadataRoute } from "next"
 import { getBlogStaticParams, getBlogPostByPath } from "@/lib/content-loader"
 import { type ContentItem } from "@/lib/data"
+import { ENABLE_SUBSCRIBE_UI } from "@/lib/feature-flags"
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://kudoshu07.com"
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages: MetadataRoute.Sitemap = [
     { url: `${SITE_URL}/home`, changeFrequency: "daily", priority: 1 },
-    { url: `${SITE_URL}/subscribe`, changeFrequency: "weekly", priority: 0.6 },
+    ...(ENABLE_SUBSCRIBE_UI
+      ? ([{ url: `${SITE_URL}/subscribe`, changeFrequency: "weekly", priority: 0.6 }] satisfies MetadataRoute.Sitemap)
+      : []),
     { url: `${SITE_URL}/about`, changeFrequency: "monthly", priority: 0.5 },
   ]
 

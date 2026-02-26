@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import {
   Carrot,
   Handshake,
@@ -17,6 +17,7 @@ import {
 import { type ContentItem, type ContentSource } from "@/lib/data"
 import { ContentCard } from "@/components/content-card"
 import { SourceInlineLabel, sourceFilterOptions } from "@/components/source-ui"
+import { ENABLE_SUBSCRIBE_UI } from "@/lib/feature-flags"
 
 const ITEMS_PER_PAGE = 20
 const DEBOUNCE_MS = 250
@@ -158,6 +159,7 @@ export function ContentsFeed({
   profileAvatarUrl?: string
 }) {
   const router = useRouter()
+  const pathname = usePathname()
   const [resolvedProfileAvatarUrl, setResolvedProfileAvatarUrl] = useState(profileAvatarUrl)
   const [searchInput, setSearchInput] = useState("")
   const [search, setSearch] = useState("")
@@ -246,6 +248,7 @@ export function ContentsFeed({
   const selectedSourceSet = useMemo(() => new Set(selectedSources), [selectedSources])
   const isAllSelected = selectedSourceSet.size === 0
   const selectedTagSet = useMemo(() => new Set(selectedTags), [selectedTags])
+  const isHomeNavActive = pathname === "/" || pathname === "/home" || pathname === "/contents"
 
   const tagOptions = useMemo(() => {
     const counts = new Map<string, number>()
@@ -335,11 +338,7 @@ export function ContentsFeed({
       return
     }
 
-    setSelectedSources((prev) =>
-      prev.includes(value)
-        ? prev.filter((source) => source !== value)
-        : [...prev, value]
-    )
+    setSelectedSources((prev) => (prev.length === 1 && prev[0] === value ? [] : [value]))
   }
 
   const isFilterActive = (value: ContentSource | "all") => {
@@ -435,7 +434,12 @@ export function ContentsFeed({
                   <nav className="mt-6 space-y-2" aria-label="Main menu">
                     <Link
                       href="/home"
-                      className="flex items-center gap-3 rounded-full px-3 py-2 text-base font-semibold text-slate-900 transition hover:bg-slate-200 min-[800px]:max-[1024px]:mx-auto min-[800px]:max-[1024px]:h-10 min-[800px]:max-[1024px]:w-10 min-[800px]:max-[1024px]:justify-center min-[800px]:max-[1024px]:px-0 min-[800px]:max-[1024px]:py-0"
+                      aria-current={isHomeNavActive ? "page" : undefined}
+                      className={`flex items-center gap-3 rounded-full px-3 py-2 text-base font-semibold transition min-[800px]:max-[1024px]:mx-auto min-[800px]:max-[1024px]:h-10 min-[800px]:max-[1024px]:w-10 min-[800px]:max-[1024px]:justify-center min-[800px]:max-[1024px]:px-0 min-[800px]:max-[1024px]:py-0 ${
+                        isHomeNavActive
+                          ? "bg-slate-900 text-white hover:bg-slate-900"
+                          : "text-slate-900 hover:bg-slate-200"
+                      }`}
                     >
                       <Home className="size-5" />
                       <span className="min-[800px]:max-[1024px]:hidden">ホーム</span>
@@ -460,13 +464,15 @@ export function ContentsFeed({
                   </nav>
                 </div>
 
-                <a
-                  href="/subscribe"
-                  className="inline-flex h-12 items-center justify-center rounded-full bg-slate-900 text-sm font-semibold text-white transition hover:bg-slate-800 min-[800px]:max-[1024px]:mx-auto min-[800px]:max-[1024px]:h-10 min-[800px]:max-[1024px]:w-10 min-[800px]:max-[1024px]:px-0 min-[1025px]:w-full min-[1025px]:px-5"
-                >
-                  <Mail className="size-4 min-[1025px]:hidden" />
-                  <span className="min-[800px]:max-[1024px]:hidden">メール通知</span>
-                </a>
+                {ENABLE_SUBSCRIBE_UI && (
+                  <a
+                    href="/subscribe"
+                    className="inline-flex h-12 items-center justify-center rounded-full bg-slate-900 text-sm font-semibold text-white transition hover:bg-slate-800 min-[800px]:max-[1024px]:mx-auto min-[800px]:max-[1024px]:h-10 min-[800px]:max-[1024px]:w-10 min-[800px]:max-[1024px]:px-0 min-[1025px]:w-full min-[1025px]:px-5"
+                  >
+                    <Mail className="size-4 min-[1025px]:hidden" />
+                    <span className="min-[800px]:max-[1024px]:hidden">メール通知</span>
+                  </a>
+                )}
               </div>
             </div>
           </aside>
@@ -515,17 +521,19 @@ export function ContentsFeed({
                 </a>
               </div>
 
-              <div className="px-6 pt-4">
-                <div className="flex justify-end">
-                  <Link
-                    href="/subscribe"
-                    className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-50"
-                  >
-                    <Mail className="size-4" />
-                    <span className="whitespace-nowrap">メール通知する</span>
-                  </Link>
+              {ENABLE_SUBSCRIBE_UI && (
+                <div className="px-6 pt-4">
+                  <div className="flex justify-end">
+                    <Link
+                      href="/subscribe"
+                      className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-50"
+                    >
+                      <Mail className="size-4" />
+                      <span className="whitespace-nowrap">メール通知する</span>
+                    </Link>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="px-6 pb-5 pt-2 sm:pt-3">
                 <div className="mt-4 sm:mt-5">
@@ -726,28 +734,34 @@ export function ContentsFeed({
         style={{ paddingBottom: "max(env(safe-area-inset-bottom), 0px)" }}
         aria-label="Bottom navigation"
       >
-        <div className="grid grid-cols-4">
+        <div className={ENABLE_SUBSCRIBE_UI ? "grid grid-cols-4" : "grid grid-cols-3"}>
           <Link
             href="/home"
-            className="flex h-[clamp(3.75rem,8svh,4.5rem)] flex-col items-center justify-center gap-1 px-1 text-[10px] font-semibold leading-none text-slate-700 sm:text-xs"
+            aria-current={isHomeNavActive ? "page" : undefined}
+            className={`flex h-[clamp(3.75rem,8svh,4.5rem)] flex-col items-center justify-center gap-1 px-1 text-[10px] font-semibold leading-none transition sm:text-xs ${
+              isHomeNavActive ? "bg-slate-100 text-slate-900" : "text-slate-700"
+            }`}
           >
             <Home className="size-5" />
             ホーム
           </Link>
-          <a
-            href="#timeline-search"
+          <button
+            type="button"
+            onClick={goToSearchPage}
             className="flex h-[clamp(3.75rem,8svh,4.5rem)] flex-col items-center justify-center gap-1 px-1 text-[10px] font-semibold leading-none text-slate-700 sm:text-xs"
           >
             <Search className="size-5" />
             検索
-          </a>
-          <Link
-            href="/subscribe"
-            className="flex h-[clamp(3.75rem,8svh,4.5rem)] flex-col items-center justify-center gap-1 px-1 text-[10px] font-semibold leading-none text-slate-700 sm:text-xs"
-          >
-            <Mail className="size-5" />
-            通知
-          </Link>
+          </button>
+          {ENABLE_SUBSCRIBE_UI && (
+            <Link
+              href="/subscribe"
+              className="flex h-[clamp(3.75rem,8svh,4.5rem)] flex-col items-center justify-center gap-1 px-1 text-[10px] font-semibold leading-none text-slate-700 sm:text-xs"
+            >
+              <Mail className="size-5" />
+              通知
+            </Link>
+          )}
           <a
             href="https://www.instagram.com/kudoshu_vcook/"
             target="_blank"
@@ -795,14 +809,16 @@ export function ContentsFeed({
                 <Search className="size-4" />
                 検索
               </a>
-              <Link
-                href="/subscribe"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-100"
-              >
-                <Mail className="size-4" />
-                メール通知
-              </Link>
+              {ENABLE_SUBSCRIBE_UI && (
+                <Link
+                  href="/subscribe"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-100"
+                >
+                  <Mail className="size-4" />
+                  メール通知
+                </Link>
+              )}
               <a
                 href="https://www.instagram.com/kudoshu_vcook/"
                 target="_blank"
