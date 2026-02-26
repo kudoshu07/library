@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react"
 import { notFound } from "next/navigation"
 import { SourceBadge } from "@/components/source-badge"
 import { ContentActions } from "@/components/content-actions"
+import { BlogHeroImage } from "@/components/blog-hero-image"
 import { Button } from "@/components/ui/button"
 import { getBlogPostByPath, getBlogStaticParams } from "@/lib/content-loader"
 
@@ -116,16 +117,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           />
 	      </header>
 
-	      {post.thumbnail && (
-	        <div className="mb-8 overflow-hidden rounded-2xl border border-border bg-card">
-	          <img
-	            src={post.thumbnail}
-	            alt=""
-	            className="aspect-video w-full object-cover"
-	            loading="eager"
-	          />
-	        </div>
-	      )}
+	      {post.thumbnail && <BlogHeroImage src={post.thumbnail} title={post.title} />}
 
 	      <div className="rounded-xl border border-border bg-card p-5 md:p-8">
 	        {hasHtmlTags ? (
