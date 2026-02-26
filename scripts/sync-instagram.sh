@@ -11,13 +11,42 @@ APP_ID='936619743392459'
 ASBD_ID='129477'
 FEED_HOST="i.instagram.com"
 FEED_IP="157.240.209.63"
+HOME_HOST="www.instagram.com"
+HOME_IP="157.240.209.174"
 
 BUSINESS_USERNAME="${IG_BUSINESS_USERNAME:-kudoshu_vcook}"
 PHOTO_USERNAME="${IG_PHOTO_USERNAME:-0n0shu}"
 LIMIT="${INSTAGRAM_FETCH_LIMIT:-12}"
+SYNC_ONLY="${INSTAGRAM_SYNC_ONLY:-both}" # both|business|photo
 
 normalize_username() {
   echo "$1" | sed -E 's/^@//' | tr -d '[:space:]'
+}
+
+COOKIE_JAR="$TMP_DIR/cookies.txt"
+CSRF_TOKEN_FILE="$TMP_DIR/csrftoken.txt"
+
+ensure_anonymous_cookies() {
+  # Refresh per run to avoid stale/blocked cookies.
+  rm -f "$COOKIE_JAR" "$CSRF_TOKEN_FILE"
+
+  curl -sS -L --connect-timeout 10 --max-time 60 \
+    --resolve "${HOME_HOST}:443:${HOME_IP}" \
+    -A "$UA" \
+    -c "$COOKIE_JAR" \
+    "https://${HOME_HOST}/" >/dev/null
+
+  local csrf=""
+  csrf="$(awk '$6=="csrftoken"{print $7}' "$COOKIE_JAR" | tail -n 1)"
+  if [[ -n "$csrf" ]]; then
+    printf '%s' "$csrf" >"$CSRF_TOKEN_FILE"
+  fi
+}
+
+get_csrf_token() {
+  if [[ -f "$CSRF_TOKEN_FILE" ]]; then
+    cat "$CSRF_TOKEN_FILE"
+  fi
 }
 
 fetch_profile_json() {
@@ -70,16 +99,24 @@ fetch_feed_page() {
   local max_id="${2:-}"
   local outfile="$3"
 
+  if [[ ! -f "$COOKIE_JAR" || ! -f "$CSRF_TOKEN_FILE" ]]; then
+    ensure_anonymous_cookies
+  fi
+  local csrf=""
+  csrf="$(get_csrf_token)"
+
   local url="https://${FEED_HOST}/api/v1/feed/user/${user_id}/?count=50"
   if [[ -n "$max_id" ]]; then
     url="${url}&max_id=${max_id}"
   fi
 
-  curl -sS -L --max-time 25 \
+  curl -sS -L --connect-timeout 10 --max-time 60 \
     --resolve "${FEED_HOST}:443:${FEED_IP}" \
     -A "$UA" \
+    -b "$COOKIE_JAR" \
     -H "x-ig-app-id: $APP_ID" \
     -H "x-asbd-id: $ASBD_ID" \
+    -H "x-csrftoken: $csrf" \
     -H "Accept: application/json" \
     -H "Accept-Language: ja,en-US;q=0.9,en;q=0.8" \
     -H "Referer: https://www.instagram.com/" \
@@ -199,6 +236,24 @@ for (const item of items) {
 
 deduped.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 const sliced = deduped.slice(0, limit)
+
+// If Instagram blocks feed access, we fall back to web_profile_info (~12 items).
+// Avoid overwriting an already-large seed file with a tiny fallback.
+let existingCount = 0
+try {
+  if (fs.existsSync(out)) {
+    const prev = JSON.parse(fs.readFileSync(out, "utf8"))
+    if (Array.isArray(prev)) existingCount = prev.length
+  }
+} catch {}
+
+if (existingCount > 12 && sliced.length <= 12) {
+  console.log(
+    `[sync-instagram] WARNING: got only ${sliced.length} items (likely throttled). Keeping existing ${existingCount} items -> ${out}`
+  )
+  process.exit(0)
+}
+
 fs.writeFileSync(out, JSON.stringify(sliced, null, 2) + "\n", "utf8")
 console.log(`[sync-instagram] wrote ${sliced.length} items -> ${out}`)
 NODE
@@ -209,13 +264,26 @@ sync_user() {
   local profile_json="$2"
   local out="$3"
 
-  fetch_profile_json "$username" "$profile_json"
+  if ! fetch_profile_json "$username" "$profile_json"; then
+    if [[ -f "$out" ]]; then
+      echo "[sync-instagram] WARNING: failed to refresh @$username. Keeping existing seeds -> $out" >&2
+      return 0
+    fi
+    return 1
+  fi
   local user_id
   user_id="$(extract_user_id "$profile_json")"
   if [[ -z "$user_id" ]]; then
+    if [[ -f "$out" ]]; then
+      echo "[sync-instagram] WARNING: failed to extract user id for @$username. Keeping existing seeds -> $out" >&2
+      return 0
+    fi
     echo "[sync-instagram] ERROR: failed to extract user id for @$username" >&2
     return 1
   fi
+
+  # Refresh anonymous cookies per user to reduce cross-user throttling.
+  ensure_anonymous_cookies
 
   local ndjson="$TMP_DIR/feed-${username}.ndjson"
   : >"$ndjson"
@@ -248,6 +316,7 @@ sync_user() {
       fi
 
       if [[ "$require_login" == "true" || "$message" == *"数分"* ]]; then
+        ensure_anonymous_cookies
         sleep 30
       else
         sleep $((attempt * 3))
@@ -275,6 +344,8 @@ sync_user() {
       # safety stop
       break
     fi
+
+    sleep 2
   done
 
   if [[ ! -s "$ndjson" ]]; then
@@ -327,7 +398,11 @@ TMP_BUSINESS="$TMP_DIR/profile-business.json"
 TMP_PHOTO="$TMP_DIR/profile-photo.json"
 
 echo "[sync-instagram] Fetching @$BUSINESS_USERNAME..."
-sync_user "$BUSINESS_USERNAME" "$TMP_BUSINESS" "$OUT_DIR/instagram-business.json"
+if [[ "$SYNC_ONLY" == "both" || "$SYNC_ONLY" == "business" ]]; then
+  sync_user "$BUSINESS_USERNAME" "$TMP_BUSINESS" "$OUT_DIR/instagram-business.json" || true
+fi
 
 echo "[sync-instagram] Fetching @$PHOTO_USERNAME..."
-sync_user "$PHOTO_USERNAME" "$TMP_PHOTO" "$OUT_DIR/instagram-photo.json"
+if [[ "$SYNC_ONLY" == "both" || "$SYNC_ONLY" == "photo" ]]; then
+  sync_user "$PHOTO_USERNAME" "$TMP_PHOTO" "$OUT_DIR/instagram-photo.json" || true
+fi
