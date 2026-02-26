@@ -1219,7 +1219,7 @@ export async function getAllContentItems(): Promise<ContentItem[]> {
     loadBlogPosts(),
     loadNoteItems(),
     loadInstagramItems("ig_business", process.env.IG_BUSINESS_USERNAME ?? "kudoshu_vcook", "instagram-business.json"),
-    loadInstagramItems("ig_photo", process.env.IG_PHOTO_USERNAME ?? "onoshuphoto", "instagram-photo.json"),
+    loadInstagramItems("ig_photo", process.env.IG_PHOTO_USERNAME ?? "onoshu_photo", "instagram-photo.json"),
     loadPodcastEpisodes(),
   ])
 

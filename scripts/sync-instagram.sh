@@ -30,7 +30,7 @@ HOME_HOST="www.instagram.com"
 HOME_IP="157.240.209.174"
 
 BUSINESS_USERNAME="${IG_BUSINESS_USERNAME:-kudoshu_vcook}"
-PHOTO_USERNAME="${IG_PHOTO_USERNAME:-onoshuphoto}"
+PHOTO_USERNAME="${IG_PHOTO_USERNAME:-onoshu_photo}"
 LIMIT="${INSTAGRAM_FETCH_LIMIT:-12}"
 SYNC_ONLY="${INSTAGRAM_SYNC_ONLY:-both}" # both|business|photo
 
