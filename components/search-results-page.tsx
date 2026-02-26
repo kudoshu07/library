@@ -4,10 +4,11 @@ import Image from "next/image"
 import Link from "next/link"
 import { useEffect, useMemo, useState, type FormEvent } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, ExternalLink, Search, X } from "lucide-react"
+import { ArrowLeft, ExternalLink, Home, Instagram, Mail, Search, X } from "lucide-react"
 import { type ContentItem, type ContentSource } from "@/lib/data"
 import { cn } from "@/lib/utils"
 import { SourceChip, SourceInlineLabel, sourceFilterOptions } from "@/components/source-ui"
+import { ENABLE_SUBSCRIBE_UI } from "@/lib/feature-flags"
 
 function decodeTagLabel(tag: string): string {
   try {
@@ -439,7 +440,7 @@ export function SearchResultsPage({
   }, [filteredItems.length, queryInput, selectedTags])
 
   return (
-    <div className="min-h-svh bg-[#f7f9f9]">
+    <div className="min-h-svh bg-[#f7f9f9] pb-[calc(clamp(3.75rem,8svh,4.5rem)+env(safe-area-inset-bottom))] min-[800px]:pb-0">
       <div className="mx-auto w-full max-w-[1520px] px-4 py-4 sm:px-6">
         <header className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
           <div className="flex items-center gap-3">
@@ -551,6 +552,48 @@ export function SearchResultsPage({
           )}
         </section>
       </div>
+
+      <nav
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur min-[800px]:hidden"
+        style={{ paddingBottom: "max(env(safe-area-inset-bottom), 0px)" }}
+        aria-label="Bottom navigation"
+      >
+        <div className={ENABLE_SUBSCRIBE_UI ? "grid grid-cols-4" : "grid grid-cols-3"}>
+          <Link
+            href="/home"
+            className="flex h-[clamp(3.75rem,8svh,4.5rem)] flex-col items-center justify-center gap-1 px-1 text-[10px] font-semibold leading-none text-slate-700 sm:text-xs"
+          >
+            <Home className="size-5" />
+            ホーム
+          </Link>
+          <Link
+            href="/search"
+            aria-current="page"
+            className="flex h-[clamp(3.75rem,8svh,4.5rem)] flex-col items-center justify-center gap-1 px-1 text-[10px] font-semibold leading-none text-sky-600 sm:text-xs"
+          >
+            <Search className="size-5" />
+            検索
+          </Link>
+          {ENABLE_SUBSCRIBE_UI && (
+            <Link
+              href="/subscribe"
+              className="flex h-[clamp(3.75rem,8svh,4.5rem)] flex-col items-center justify-center gap-1 px-1 text-[10px] font-semibold leading-none text-slate-700 sm:text-xs"
+            >
+              <Mail className="size-5" />
+              通知
+            </Link>
+          )}
+          <a
+            href="https://www.instagram.com/kudoshu_vcook/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex h-[clamp(3.75rem,8svh,4.5rem)] flex-col items-center justify-center gap-1 px-1 text-[10px] font-semibold leading-none text-slate-700 sm:text-xs"
+          >
+            <Instagram className="size-5" />
+            DMする
+          </a>
+        </div>
+      </nav>
     </div>
   )
 }

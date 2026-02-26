@@ -436,9 +436,7 @@ export function ContentsFeed({
                       href="/home"
                       aria-current={isHomeNavActive ? "page" : undefined}
                       className={`flex items-center gap-3 rounded-full px-3 py-2 text-base font-semibold transition min-[800px]:max-[1024px]:mx-auto min-[800px]:max-[1024px]:h-10 min-[800px]:max-[1024px]:w-10 min-[800px]:max-[1024px]:justify-center min-[800px]:max-[1024px]:px-0 min-[800px]:max-[1024px]:py-0 ${
-                        isHomeNavActive
-                          ? "bg-slate-900 text-white hover:bg-slate-900"
-                          : "text-slate-900 hover:bg-slate-200"
+                        isHomeNavActive ? "text-sky-600 hover:bg-slate-200" : "text-slate-900 hover:bg-slate-200"
                       }`}
                     >
                       <Home className="size-5" />
@@ -532,6 +530,11 @@ export function ContentsFeed({
                       <span className="whitespace-nowrap">メール通知する</span>
                     </Link>
                   </div>
+                </div>
+              )}
+              {!ENABLE_SUBSCRIBE_UI && (
+                <div className="px-6 pt-4" aria-hidden="true">
+                  <div className="h-10" />
                 </div>
               )}
 
@@ -739,7 +742,7 @@ export function ContentsFeed({
             href="/home"
             aria-current={isHomeNavActive ? "page" : undefined}
             className={`flex h-[clamp(3.75rem,8svh,4.5rem)] flex-col items-center justify-center gap-1 px-1 text-[10px] font-semibold leading-none transition sm:text-xs ${
-              isHomeNavActive ? "bg-slate-100 text-slate-900" : "text-slate-700"
+              isHomeNavActive ? "text-sky-600" : "text-slate-700"
             }`}
           >
             <Home className="size-5" />
