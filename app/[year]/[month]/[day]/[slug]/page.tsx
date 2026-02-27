@@ -94,7 +94,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 	            {dateLabel}
 	          </time>
 	        </div>
-	        <h1 className="text-2xl font-bold leading-tight tracking-tight text-foreground md:text-3xl text-balance">
+	        <h1 className="text-[22px] font-bold leading-tight tracking-tight text-foreground md:text-3xl text-balance">
 	          {post.title}
 	        </h1>
 	        {post.tags && post.tags.length > 0 && (
