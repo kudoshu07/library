@@ -4,6 +4,7 @@ export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
 type LikeStore = Map<string, number>
+type StorageMode = "kv" | "memory"
 
 function getMemoryStore(): LikeStore {
   const g = globalThis as typeof globalThis & { __kslLikeStore?: LikeStore }
@@ -49,21 +50,43 @@ function likeKey(id: string) {
   return `like:count:${id}`
 }
 
-async function getCount(id: string): Promise<number> {
-  const kv = await kvGet(likeKey(id))
-  if (kv !== null) return kv
-
-  return getMemoryStore().get(id) ?? 0
+function isKvConfigured() {
+  return Boolean(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN)
 }
 
-async function incrementCount(id: string): Promise<number> {
-  const kv = await kvIncr(likeKey(id))
-  if (kv !== null) return kv
+async function getCount(id: string): Promise<{ count: number; mode: StorageMode; kvError: boolean }> {
+  if (isKvConfigured()) {
+    try {
+      const kv = await kvGet(likeKey(id))
+      if (kv !== null) return { count: kv, mode: "kv", kvError: false }
+    } catch {
+      // Fallback to memory to keep endpoint available even if KV is temporarily down.
+      const fallbackCount = getMemoryStore().get(id) ?? 0
+      return { count: fallbackCount, mode: "memory", kvError: true }
+    }
+  }
+
+  return { count: getMemoryStore().get(id) ?? 0, mode: "memory", kvError: false }
+}
+
+async function incrementCount(id: string): Promise<{ count: number; mode: StorageMode; kvError: boolean }> {
+  if (isKvConfigured()) {
+    try {
+      const kv = await kvIncr(likeKey(id))
+      if (kv !== null) return { count: kv, mode: "kv", kvError: false }
+    } catch {
+      // Fallback to memory to keep endpoint available even if KV is temporarily down.
+      const store = getMemoryStore()
+      const nextFallback = (store.get(id) ?? 0) + 1
+      store.set(id, nextFallback)
+      return { count: nextFallback, mode: "memory", kvError: true }
+    }
+  }
 
   const store = getMemoryStore()
   const next = (store.get(id) ?? 0) + 1
   store.set(id, next)
-  return next
+  return { count: next, mode: "memory", kvError: false }
 }
 
 export async function GET(req: Request) {
@@ -79,17 +102,33 @@ export async function GET(req: Request) {
   const uniqueIds = Array.from(new Set(ids.filter(Boolean))).slice(0, 200)
 
   const counts: Record<string, number> = {}
+  let usedKv = false
+  let usedMemory = false
+  let kvErrorFallback = false
   await Promise.all(
     uniqueIds.map(async (id) => {
       try {
-        counts[id] = await getCount(id)
+        const result = await getCount(id)
+        counts[id] = result.count
+        if (result.mode === "kv") usedKv = true
+        if (result.mode === "memory") usedMemory = true
+        if (result.kvError) kvErrorFallback = true
       } catch {
         counts[id] = 0
+        usedMemory = true
       }
     })
   )
 
-  return NextResponse.json({ counts })
+  const storageMode: StorageMode | "mixed" =
+    usedKv && usedMemory ? "mixed" : usedKv ? "kv" : "memory"
+
+  return NextResponse.json({
+    counts,
+    storageMode,
+    kvConfigured: isKvConfigured(),
+    kvErrorFallback,
+  })
 }
 
 export async function POST(req: Request) {
@@ -100,10 +139,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "id is required" }, { status: 400 })
     }
 
-    const count = await incrementCount(id)
-    return NextResponse.json({ id, count })
+    const result = await incrementCount(id)
+    return NextResponse.json({
+      id,
+      count: result.count,
+      storageMode: result.mode,
+      kvConfigured: isKvConfigured(),
+      kvErrorFallback: result.kvError,
+    })
   } catch {
     return NextResponse.json({ error: "failed to increment like" }, { status: 500 })
   }
 }
-
