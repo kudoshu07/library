@@ -1,11 +1,9 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { ArrowLeft } from "lucide-react"
 import { notFound } from "next/navigation"
 import { SourceBadge } from "@/components/source-badge"
 import { ContentActions } from "@/components/content-actions"
 import { BlogHeroImage } from "@/components/blog-hero-image"
-import { Button } from "@/components/ui/button"
 import { getBlogPostByPath, getBlogStaticParams } from "@/lib/content-loader"
 
 interface BlogPostPageProps {
@@ -80,16 +78,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-12 lg:px-6">
-      <Button variant="ghost" size="sm" asChild className="mb-8 -ml-2 text-muted-foreground">
-        <Link href="/home">
-          <ArrowLeft className="size-4" />
-          Back to Contents
-        </Link>
-      </Button>
-
-	      <header className="mb-8 flex flex-col gap-3">
-	        <div className="flex items-center gap-3">
-	          <SourceBadge source="blog" />
+		      <header className="mb-8 flex flex-col gap-3">
+		        <div className="flex items-center gap-3">
+		          <SourceBadge source="blog" />
 	          <time className="text-sm text-muted-foreground" dateTime={post.date}>
 	            {dateLabel}
 	          </time>
