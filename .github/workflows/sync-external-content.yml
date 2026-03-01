@@ -1,0 +1,60 @@
+name: Sync External Content
+
+on:
+  workflow_dispatch:
+  schedule:
+    # JST 04:15 / 10:15 / 16:15 / 22:15
+    - cron: "15 */6 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Sync Instagram
+        run: |
+          export INSTAGRAM_FETCH_LIMIT="${INSTAGRAM_FETCH_LIMIT:-100}"
+          pnpm run sync:instagram
+        env:
+          IG_BUSINESS_USERNAME: ${{ vars.IG_BUSINESS_USERNAME }}
+          IG_PHOTO_USERNAME: ${{ vars.IG_PHOTO_USERNAME }}
+          INSTAGRAM_FETCH_LIMIT: ${{ vars.INSTAGRAM_FETCH_LIMIT }}
+
+      - name: Sync note RSS fallback
+        run: pnpm run sync:note
+        env:
+          NOTE_RSS_URL: ${{ vars.NOTE_RSS_URL }}
+
+      - name: Commit and push when changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add content/external/instagram-business.json content/external/instagram-photo.json content/external/note-fallback.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "chore: sync external content"
+          git push

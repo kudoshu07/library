@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint .",
     "import:wordpress": "node scripts/import-wordpress-xml.mjs",
-    "sync:instagram": "bash scripts/sync-instagram.sh"
+    "sync:instagram": "bash scripts/sync-instagram.sh",
+    "sync:note": "node scripts/sync-note.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
