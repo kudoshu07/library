@@ -128,14 +128,31 @@ function TimelineSearch({
   )
 }
 
-function ExpandableProfileText({ text }: { text: string }) {
+function ExpandableProfileTextBlock({ lines }: { lines: readonly string[] }) {
   const [expanded, setExpanded] = useState(false)
-  const chars = Array.from(text)
+  const fullText = lines.join("")
+  const chars = Array.from(fullText)
   const shouldTruncate = chars.length > PROFILE_PREVIEW_LENGTH
-  const truncated = shouldTruncate ? chars.slice(0, PROFILE_PREVIEW_LENGTH).join("") : text
+  const truncated = shouldTruncate ? chars.slice(0, PROFILE_PREVIEW_LENGTH).join("") : fullText
 
-  if (expanded || !shouldTruncate) {
-    return <p>{text}</p>
+  if (!shouldTruncate) {
+    return (
+      <>
+        {lines.map((line) => (
+          <p key={line}>{line}</p>
+        ))}
+      </>
+    )
+  }
+
+  if (expanded) {
+    return (
+      <>
+        {lines.map((line) => (
+          <p key={line}>{line}</p>
+        ))}
+      </>
+    )
   }
 
   return (
@@ -143,7 +160,7 @@ function ExpandableProfileText({ text }: { text: string }) {
       type="button"
       onClick={() => setExpanded(true)}
       className="block w-full text-left text-inherit"
-      aria-label="続きを読む"
+      aria-label="プロフィール全文を表示"
     >
       {truncated}
       <span className="ml-1 align-baseline text-[#264F8B] underline-offset-2 transition hover:underline">
@@ -611,9 +628,7 @@ export function ContentsFeed({
                 <div className="mt-4 sm:mt-5">
                   <p className="text-2xl font-bold text-slate-900">工藤 柊 / Kudo Shu</p>
                   <div className="mt-2 space-y-2 text-sm leading-relaxed text-slate-600">
-                    {profileLines.map((line) => (
-                      <ExpandableProfileText key={line} text={line} />
-                    ))}
+                    <ExpandableProfileTextBlock lines={profileLines} />
                   </div>
                 </div>
               </div>
