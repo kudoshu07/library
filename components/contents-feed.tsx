@@ -22,6 +22,17 @@ import { fetchLikeCounts, incrementLikeCount, readLocalLikes, writeLocalLikes } 
 
 const ITEMS_PER_PAGE = 20
 const DEBOUNCE_MS = 250
+const PROFILE_PREVIEW_LENGTH = 80
+
+const profileLines = [
+  "株式会社ブイクック代表取締役CEO",
+  "1999年2月28日大阪生まれ。2024年入籍し小野に名字変更（仕事は工藤のまま）。",
+  "高校3年生で環境問題・動物倫理からヴィーガン生活を開始。",
+  "神戸大学国際人間科学部環境共生学科に入学後、学食へヴィーガンメニュー導入、ヴィーガンカフェThallo店長など活動。",
+  "学生起業しNPO法人設立後、事業拡大のため2020年4月に株式会社ブイクックを創業。2024年東京初ヴィーガン専門店「Vegan Sushi Tokyo」を開店。",
+  "夢は世界平和。趣味は恋バナと漫画・アニメ。",
+] as const
+
 type RelatedLinkItem =
   | { kind: "source"; source: ContentSource; href: string; external: boolean }
   | {
@@ -114,6 +125,29 @@ function TimelineSearch({
         </button>
       )}
     </form>
+  )
+}
+
+function ExpandableProfileText({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false)
+  const chars = Array.from(text)
+  const shouldTruncate = chars.length > PROFILE_PREVIEW_LENGTH
+  const truncated = shouldTruncate ? chars.slice(0, PROFILE_PREVIEW_LENGTH).join("") : text
+
+  return (
+    <p>
+      {expanded ? text : truncated}
+      {!expanded && shouldTruncate && (
+        <button
+          type="button"
+          onClick={() => setExpanded(true)}
+          className="ml-1 align-baseline text-[#264F8B] underline-offset-2 transition hover:underline"
+          aria-label="続きを読む"
+        >
+          ...続きを読む
+        </button>
+      )}
+    </p>
   )
 }
 
@@ -575,12 +609,9 @@ export function ContentsFeed({
                 <div className="mt-4 sm:mt-5">
                   <p className="text-2xl font-bold text-slate-900">工藤 柊 / Kudo Shu</p>
                   <div className="mt-2 space-y-2 text-sm leading-relaxed text-slate-600">
-                    <p>株式会社ブイクック代表取締役CEO</p>
-                    <p>1999年2月28日大阪生まれ。2024年入籍し小野に名字変更（仕事は工藤のまま）。</p>
-                    <p>高校3年生で環境問題・動物倫理からヴィーガン生活を開始。</p>
-                    <p>神戸大学国際人間科学部環境共生学科に入学後、学食へヴィーガンメニュー導入、ヴィーガンカフェThallo店長など活動。</p>
-                    <p>学生起業しNPO法人設立後、事業拡大のため2020年4月に株式会社ブイクックを創業。2024年東京初ヴィーガン専門店「Vegan Sushi Tokyo」を開店。</p>
-                    <p>夢は世界平和。趣味は恋バナと漫画・アニメ。</p>
+                    {profileLines.map((line) => (
+                      <ExpandableProfileText key={line} text={line} />
+                    ))}
                   </div>
                 </div>
               </div>
