@@ -134,20 +134,22 @@ function ExpandableProfileText({ text }: { text: string }) {
   const shouldTruncate = chars.length > PROFILE_PREVIEW_LENGTH
   const truncated = shouldTruncate ? chars.slice(0, PROFILE_PREVIEW_LENGTH).join("") : text
 
+  if (expanded || !shouldTruncate) {
+    return <p>{text}</p>
+  }
+
   return (
-    <p>
-      {expanded ? text : truncated}
-      {!expanded && shouldTruncate && (
-        <button
-          type="button"
-          onClick={() => setExpanded(true)}
-          className="ml-1 align-baseline text-[#264F8B] underline-offset-2 transition hover:underline"
-          aria-label="続きを読む"
-        >
-          ...続きを読む
-        </button>
-      )}
-    </p>
+    <button
+      type="button"
+      onClick={() => setExpanded(true)}
+      className="block w-full text-left text-inherit"
+      aria-label="続きを読む"
+    >
+      {truncated}
+      <span className="ml-1 align-baseline text-[#264F8B] underline-offset-2 transition hover:underline">
+        ...続きを読む
+      </span>
+    </button>
   )
 }
 
