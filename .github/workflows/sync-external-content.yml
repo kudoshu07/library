@@ -3,8 +3,8 @@ name: Sync External Content
 on:
   workflow_dispatch:
   schedule:
-    # JST 04:15 / 10:15 / 16:15 / 22:15
-    - cron: "15 */6 * * *"
+    # Every hour at :15 UTC (JST: every hour at :15)
+    - cron: "15 * * * *"
 
 permissions:
   contents: write
