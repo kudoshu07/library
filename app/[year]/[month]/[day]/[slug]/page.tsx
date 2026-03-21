@@ -171,7 +171,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const canonicalUrl = `https://kudoshu07.com${post.url}`
 
   return (
-    <article className="mx-auto max-w-3xl px-4 py-12 lg:px-6">
+    <article className="mx-auto max-w-xl px-4 py-12 lg:px-6">
       <header className="mb-8 flex flex-col gap-3">
         <div className="flex items-center gap-3">
           <SourceBadge source="blog" />
