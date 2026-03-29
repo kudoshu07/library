@@ -6,6 +6,8 @@ import { ContentActions } from "@/components/content-actions"
 import { BlogHeroImage } from "@/components/blog-hero-image"
 import { getBlogPostByPath, getBlogStaticParams } from "@/lib/content-loader"
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://kudoshu07.com"
+
 interface BlogPostPageProps {
   params: Promise<{
     year: string
@@ -121,8 +123,10 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
   }
 
   const description = post.summary ?? `${post.title} - Kudo Shu Library blog post.`
-  const ogImage = post.thumbnail
-    ? `/_next/image?url=${encodeURIComponent(post.thumbnail)}&w=1200&q=75`
+  const absoluteUrl = new URL(post.url, SITE_URL).toString()
+  const absoluteThumbnail = post.thumbnail ? new URL(post.thumbnail, SITE_URL).toString() : undefined
+  const ogImage = absoluteThumbnail
+    ? new URL(`/_next/image?url=${encodeURIComponent(absoluteThumbnail)}&w=1200&q=75`, SITE_URL).toString()
     : undefined
   const images = ogImage ? [ogImage] : undefined
 
@@ -130,13 +134,13 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
     title: post.title,
     description,
     alternates: {
-      canonical: post.url,
+      canonical: absoluteUrl,
     },
     openGraph: {
       title: post.title,
       description,
       type: "article",
-      url: post.url,
+      url: absoluteUrl,
       images,
       siteName: "Kudo Shu Library",
     },
@@ -168,7 +172,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const body = post.body ?? ""
   const hasHtmlTags = /<\s*[a-z][^>]*>/i.test(body)
   const renderedBodyHtml = hasHtmlTags ? linkifyHtmlContent(body) : linkifyPlainTextContent(body)
-  const canonicalUrl = `https://kudoshu07.com${post.url}`
+  const canonicalUrl = new URL(post.url, SITE_URL).toString()
 
   return (
     <article className="mx-auto max-w-xl px-4 py-12 lg:px-6">
