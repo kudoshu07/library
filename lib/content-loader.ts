@@ -17,7 +17,6 @@ const INSTAGRAM_UA =
 const DEFAULT_INSTAGRAM_FETCH_LIMIT = 12
 const MAX_INSTAGRAM_FETCH_LIMIT = 100
 const DEFAULT_INSTAGRAM_GRAPH_API_VERSION = "v24.0"
-
 type ExternalSeed = {
   id?: string
   title: string
@@ -174,6 +173,13 @@ function normalizeTags(tags: string[] | undefined): string[] {
   if (!tags || tags.length === 0) return []
   const normalized = tags.map((tag) => normalizeTagValue(tag)).filter((tag): tag is string => Boolean(tag))
   return Array.from(new Set(normalized))
+}
+
+function buildFallbackThumbnail(title: string): string {
+  const safeTitle = title?.trim() || "Kudo Shu Library"
+  const params = new URLSearchParams({ title: safeTitle })
+  // Background色はAPI側のデフォルトで #264F8B。
+  return `/api/og-image?${params.toString()}`
 }
 
 function stripHtml(input: string): string {
@@ -499,6 +505,7 @@ async function loadBlogPosts(): Promise<ContentItem[]> {
           ? `/api/thumbnail?src=${encodeURIComponent(rawThumbnail)}`
           : rawThumbnail || undefined
       const url = `/${year}/${month}/${day}/${slug}/`
+      const resolvedThumbnail = thumbnail ?? buildFallbackThumbnail(title)
 
       const post: ContentItem = {
         id: `blog:${year}${month}${day}:${slug}`,
@@ -512,7 +519,7 @@ async function loadBlogPosts(): Promise<ContentItem[]> {
         slug,
         summary,
         tags,
-        thumbnail,
+        thumbnail: resolvedThumbnail,
         body,
         searchText: buildSearchText({ title, summary, tags, body: stripMarkdown(body) }),
       }
