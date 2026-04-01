@@ -4,6 +4,7 @@ import { notFound } from "next/navigation"
 import { SourceBadge } from "@/components/source-badge"
 import { ContentActions } from "@/components/content-actions"
 import { BlogHeroImage } from "@/components/blog-hero-image"
+import { PodcastLetterForm } from "@/components/podcast-letter-form"
 import { getBlogPostByPath, getBlogStaticParams } from "@/lib/content-loader"
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://kudoshu07.com"
@@ -173,6 +174,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const hasHtmlTags = /<\s*[a-z][^>]*>/i.test(body)
   const renderedBodyHtml = hasHtmlTags ? linkifyHtmlContent(body) : linkifyPlainTextContent(body)
   const canonicalUrl = new URL(post.url, SITE_URL).toString()
+  const showPodcastLetterForm = post.slug === "ochi-nashi-podcast"
 
   return (
     <article className="mx-auto max-w-xl px-4 py-12 lg:px-6">
@@ -223,6 +225,18 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         canonicalUrl={canonicalUrl}
         className="mt-6"
       />
+
+      {showPodcastLetterForm && (
+        <section className="mt-10">
+          <div className="mb-4 flex flex-col gap-1">
+            <p className="text-sm font-semibold text-foreground">Podcast「工藤柊のオチのない話」へのお便り</p>
+            <p className="text-sm text-muted-foreground">
+              感想・質問・話してほしいテーマを気軽に送ってください。Notionに届き次第、次回以降の収録で取り上げます。
+            </p>
+          </div>
+          <PodcastLetterForm />
+        </section>
+      )}
     </article>
   )
 }
