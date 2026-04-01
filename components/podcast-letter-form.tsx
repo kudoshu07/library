@@ -70,15 +70,20 @@ export function PodcastLetterForm() {
 
   if (submitted) {
     return (
-      <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-card p-6 text-center shadow-sm">
-        <div className="flex size-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+      <div className="flex flex-col items-center gap-3 rounded-2xl border border-transparent bg-gradient-to-br from-[#E0FFF4] via-white to-[#E8F6FF] p-7 text-center shadow-md ring-1 ring-[#00C48C]/20">
+        <div className="flex size-12 items-center justify-center rounded-full bg-[#00C48C]/10 text-[#00A777]">
           <CheckCircle2 className="size-6" />
         </div>
-        <p className="text-sm font-medium text-card-foreground">お便りを受け付けました！</p>
+        <p className="text-base font-semibold text-card-foreground">お便りを受け付けました！</p>
         <p className="text-sm text-muted-foreground">
           ありがとうございました。気軽にまた送ってください。
         </p>
-        <Button variant="outline" size="sm" onClick={() => setSubmitted(false)}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="border-[#00C48C]/40 text-[#00A777] hover:bg-[#00C48C]/10"
+          onClick={() => setSubmitted(false)}
+        >
           もう1通送る
         </Button>
       </div>
@@ -88,11 +93,11 @@ export function PodcastLetterForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col gap-4 rounded-xl border border-border bg-card p-6 shadow-sm"
+      className="flex flex-col gap-5 rounded-2xl border border-transparent bg-white/90 p-6 shadow-xl ring-1 ring-[#5E4AE3]/10 backdrop-blur"
     >
       <div className="flex flex-col gap-2">
         <label htmlFor="podcast-name" className="text-sm font-medium text-card-foreground">
-          お名前（ニックネーム可）<span className="ml-1 text-destructive">*</span>
+          ラジオネーム<span className="ml-1 text-destructive">*</span>
         </label>
         <Input
           id="podcast-name"
@@ -121,7 +126,11 @@ export function PodcastLetterForm() {
         />
       </div>
 
-      <Button type="submit" disabled={submitting || !name.trim() || !message.trim()}>
+      <Button
+        type="submit"
+        disabled={submitting || !name.trim() || !message.trim()}
+        className="h-11 rounded-xl bg-gradient-to-r from-[#264F8B] via-[#3B70C9] to-[#5AA5FF] text-base font-semibold text-white shadow-lg transition hover:brightness-110 disabled:opacity-60"
+      >
         {submitting ? (
           <>
             <Loader2 className="size-4 animate-spin" />
@@ -135,7 +144,7 @@ export function PodcastLetterForm() {
       {errorMessage && <p className="text-sm text-destructive">{errorMessage}</p>}
 
       <p className="text-xs leading-relaxed text-muted-foreground">
-        送信内容はNotionのデータベースに保存されます。個人情報は返信目的以外では利用しません。
+        個人情報はpodacastを盛り上げる以外の目的では利用しません。
       </p>
     </form>
   )

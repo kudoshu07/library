@@ -13,18 +13,29 @@ export const metadata: Metadata = {
 
 export default function PodcastFormPage() {
   return (
-    <div className="mx-auto max-w-xl px-4 py-12 lg:px-6">
-      <header className="mb-6 space-y-2">
-        <p className="text-sm font-semibold text-foreground">Podcast「工藤柊のオチのない話」</p>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
-          お便りフォーム
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          感想・質問・話してほしいテーマなど、気軽に送ってください。Notionに届き次第、次回以降の収録で取り上げます。
-        </p>
-      </header>
+    <div className="relative overflow-hidden bg-gradient-to-b from-[#E7F0FF] via-[#F1F6FF] to-white">
+      <div className="pointer-events-none absolute -left-20 -top-24 size-64 rounded-full bg-[#4F7BFF]/25 blur-3xl" />
+      <div className="pointer-events-none absolute -right-16 top-6 size-72 rounded-full bg-[#7EC8FF]/30 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-0 left-1/3 h-24 w-2/3 rotate-3 bg-[#DDE9FF]/60 blur-2xl" />
 
-      <PodcastLetterForm />
+      <div className="relative mx-auto flex min-h-[calc(100vh-4rem)] max-w-3xl flex-col px-4 py-14 lg:px-10">
+        <header className="mb-8 space-y-3 text-left">
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-[#5E4AE3] shadow-sm ring-1 ring-[#5E4AE3]/10">
+            <span>🎙️ Podcast</span>
+            <span className="text-[#5E4AE3]">「工藤柊のオチのない話」</span>
+          </div>
+          <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-[#1D1B3A] md:text-4xl">
+            お便りフォーム
+          </h1>
+          <p className="max-w-2xl text-sm leading-relaxed text-[#3F3D56]/80 md:text-base">
+            感想・質問・話してほしいテーマを気軽に送ってください🫶 ちょっとした「思いつき」でも大歓迎です！
+          </p>
+        </header>
+
+        <div className="relative">
+          <PodcastLetterForm />
+        </div>
+      </div>
     </div>
   )
 }
