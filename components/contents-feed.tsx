@@ -50,6 +50,12 @@ const relatedLinks: RelatedLinkItem[] = [
   { kind: "source", source: "ig_photo", href: "https://www.instagram.com/onoshu_photo/", external: true },
   {
     kind: "source",
+    source: "pod_ochinashi",
+    href: "https://open.spotify.com/show/1Z0fz8tzQIag8CbxigTRqo?si=fcaa4222306643b4",
+    external: true,
+  },
+  {
+    kind: "source",
     source: "pod_yonakoi",
     href: "https://open.spotify.com/show/2AYAehcs0kEV6kU1HqX7wP?si=3691bce5c532431f",
     external: true,

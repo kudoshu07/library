@@ -90,7 +90,7 @@ function FeedCard({
 }) {
   const isExternal = item.source !== "blog"
   const isInstagram = item.source === "ig_business" || item.source === "ig_photo"
-  const isPodcast = item.source === "pod_yonakoi" || item.source === "pod_vegan"
+  const isPodcast = item.source === "pod_yonakoi" || item.source === "pod_vegan" || item.source === "pod_ochinashi"
   const isExternalLeadLink = isExternal
   const dateLabel = formatDateLabel(item.date)
   const lead = createLeadText(item)
@@ -295,6 +295,7 @@ function FeedCard({
 function PickupCard({ item }: { item: ContentItem }) {
   const isExternal = item.source !== "blog"
   const isInstagram = item.source === "ig_business" || item.source === "ig_photo"
+  const isPodcast = item.source === "pod_yonakoi" || item.source === "pod_vegan" || item.source === "pod_ochinashi"
   const dateLabel = formatDateLabel(item.date)
   const lead = createLeadText(item)
   const className =
@@ -306,7 +307,7 @@ function PickupCard({ item }: { item: ContentItem }) {
 
   const body: ReactNode = (
     <>
-      {thumbnail && (
+      {thumbnail && !isPodcast && (
         <div className="mt-3 overflow-hidden rounded-xl">
           {canOptimizeThumbnail ? (
             <div className="relative aspect-video w-full">

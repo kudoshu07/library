@@ -5,6 +5,7 @@ export type ContentSource =
   | "ig_photo"
   | "pod_yonakoi"
   | "pod_vegan"
+  | "pod_ochinashi"
 
 export interface ContentItem {
   id: string
@@ -32,6 +33,7 @@ export const sourceLabels: Record<ContentSource, string> = {
   ig_photo: "onoshu_photo(写真)",
   pod_yonakoi: "よな恋ラジオ",
   pod_vegan: "ヴィーガンの裏側",
+  pod_ochinashi: "工藤柊のオチのない話",
 }
 
 export const sourceColors: Record<ContentSource, string> = {
@@ -41,4 +43,5 @@ export const sourceColors: Record<ContentSource, string> = {
   ig_photo: "bg-muted text-foreground",
   pod_yonakoi: "bg-emerald-50 text-emerald-900 border border-emerald-100",
   pod_vegan: "bg-emerald-50 text-emerald-900 border border-emerald-100",
+  pod_ochinashi: "bg-[#E8EEFF] text-[#1C2C5C] border border-[#C5D7FF]",
 }
