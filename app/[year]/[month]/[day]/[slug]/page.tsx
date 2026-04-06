@@ -126,10 +126,7 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
   const description = post.summary ?? `${post.title} - Kudo Shu Library blog post.`
   const absoluteUrl = new URL(post.url, SITE_URL).toString()
   const absoluteThumbnail = post.thumbnail ? new URL(post.thumbnail, SITE_URL).toString() : undefined
-  const ogImage = absoluteThumbnail
-    ? new URL(`/_next/image?url=${encodeURIComponent(absoluteThumbnail)}&w=1200&q=75`, SITE_URL).toString()
-    : undefined
-  const images = ogImage ? [ogImage] : undefined
+  const images = absoluteThumbnail ? [absoluteThumbnail] : undefined
 
   return {
     title: post.title,
