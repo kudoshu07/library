@@ -6,8 +6,9 @@ import { ContentActions } from "@/components/content-actions"
 import { BlogHeroImage } from "@/components/blog-hero-image"
 import { PodcastLetterForm } from "@/components/podcast-letter-form"
 import { getBlogPostByPath, getBlogStaticParams } from "@/lib/content-loader"
+import { getSiteUrl, resolveSocialImageUrls, toAbsoluteUrl } from "@/lib/social-metadata"
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://kudoshu07.com"
+const SITE_URL = getSiteUrl()
 
 interface BlogPostPageProps {
   params: Promise<{
@@ -124,9 +125,8 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
   }
 
   const description = post.summary ?? `${post.title} - Kudo Shu Library blog post.`
-  const absoluteUrl = new URL(post.url, SITE_URL).toString()
-  const absoluteThumbnail = post.thumbnail ? new URL(post.thumbnail, SITE_URL).toString() : undefined
-  const images = absoluteThumbnail ? [absoluteThumbnail] : undefined
+  const absoluteUrl = toAbsoluteUrl(post.url, SITE_URL)
+  const images = resolveSocialImageUrls([post.thumbnail], SITE_URL)
 
   return {
     title: post.title,
@@ -170,7 +170,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const body = post.body ?? ""
   const hasHtmlTags = /<\s*[a-z][^>]*>/i.test(body)
   const renderedBodyHtml = hasHtmlTags ? linkifyHtmlContent(body) : linkifyPlainTextContent(body)
-  const canonicalUrl = new URL(post.url, SITE_URL).toString()
+  const canonicalUrl = toAbsoluteUrl(post.url, SITE_URL)
   const showPodcastLetterForm = post.slug === "ochi-nashi-podcast"
 
   return (
