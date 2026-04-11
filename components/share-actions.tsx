@@ -26,9 +26,24 @@ async function copyTextToClipboard(text: string) {
   document.body.removeChild(textarea)
 }
 
+function normalizeShareUrl(rawUrl: string): string {
+  try {
+    const parsed = new URL(rawUrl)
+    if (parsed.pathname !== "/") {
+      parsed.pathname = parsed.pathname.replace(/\/+$/, "")
+    }
+    return parsed.toString()
+  } catch {
+    return rawUrl
+  }
+}
+
 export function ShareActions({ title, url }: { title: string; url: string }) {
   const [copied, setCopied] = useState(false)
   const [canNativeShare, setCanNativeShare] = useState(false)
+  const shareUrl = normalizeShareUrl(url)
+  const xShareText = `${title}｜Kudo Shu Library @kudoshu_vcook`
+  const facebookShareText = `${title}｜Kudo Shu Library ${shareUrl}`
 
   useEffect(() => {
     setCanNativeShare(typeof navigator !== "undefined" && typeof navigator.share === "function")
@@ -49,12 +64,22 @@ export function ShareActions({ title, url }: { title: string; url: string }) {
     try {
       await navigator.share({
         title,
-        text: title,
-        url,
+        text: xShareText,
+        url: shareUrl,
       })
     } catch {
       // User dismissed or device blocked sharing.
     }
+  }
+
+  const handleXShare = () => {
+    const intentUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(xShareText)}&url=${encodeURIComponent(shareUrl)}`
+    window.open(intentUrl, "_blank", "noopener,noreferrer")
+  }
+
+  const handleFacebookShare = () => {
+    const intentUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(facebookShareText)}`
+    window.open(intentUrl, "_blank", "noopener,noreferrer")
   }
 
   return (
@@ -79,6 +104,26 @@ export function ShareActions({ title, url }: { title: string; url: string }) {
         >
           <Link2 className="size-5" />
           <span>{copied ? "リンクをコピーしました" : "リンクをコピー"}</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onSelect={(event) => {
+            event.preventDefault()
+            handleXShare()
+          }}
+          className="rounded-xl px-3 py-3 text-base font-semibold"
+        >
+          <Share2 className="size-5" />
+          <span>Xで共有</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onSelect={(event) => {
+            event.preventDefault()
+            handleFacebookShare()
+          }}
+          className="rounded-xl px-3 py-3 text-base font-semibold"
+        >
+          <Share2 className="size-5" />
+          <span>Facebookで共有</span>
         </DropdownMenuItem>
         <DropdownMenuItem
           onSelect={(event) => {
