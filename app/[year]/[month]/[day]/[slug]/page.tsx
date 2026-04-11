@@ -21,6 +21,7 @@ interface BlogPostPageProps {
 
 const URL_PATTERN = /https?:\/\/[^\s<>"']+/gi
 const HTML_TAG_PATTERN = /(<[^>]+>)/g
+const INLINE_IMAGE_WITH_CAPTION_PATTERN = /^(\s*)(<img\b[^>]*\/?>)\s*([^\n<].*?)\s*$/gimu
 
 function escapeHtml(value: string): string {
   return value
@@ -79,8 +80,23 @@ function linkifyTextSegment(rawText: string): string {
   })
 }
 
+function promoteInlineImageCaption(html: string): string {
+  return html.replace(
+    INLINE_IMAGE_WITH_CAPTION_PATTERN,
+    (matched, indent: string, imageTag: string, rawCaption: string) => {
+      const caption = rawCaption.trim()
+      if (!caption) return matched
+      return `${indent}<figure>
+${indent}  ${imageTag}
+${indent}  <figcaption>${escapeHtml(caption)}</figcaption>
+${indent}</figure>`
+    },
+  )
+}
+
 function linkifyHtmlContent(html: string): string {
-  const segments = html.split(HTML_TAG_PATTERN)
+  const normalizedHtml = promoteInlineImageCaption(html)
+  const segments = normalizedHtml.split(HTML_TAG_PATTERN)
   let insideAnchorDepth = 0
 
   return segments
