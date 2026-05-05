@@ -220,25 +220,35 @@ export function SubscribeForm({ embedded = false }: { embedded?: boolean } = {})
         </fieldset>
       ) : null}
 
-      <Button
-        type="submit"
-        className="w-full"
-        disabled={
-          !email.trim() ||
-          !displayName.trim() ||
-          selected.length === 0 ||
-          isSubmitting
-        }
-      >
-        {isSubmitting ? (
-          <>
-            <Loader2 className="size-4 animate-spin" />
-            送信中…
-          </>
-        ) : (
-          "Subscribe"
-        )}
-      </Button>
+      <div className="flex flex-col items-center gap-2">
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={
+            !email.trim() ||
+            !displayName.trim() ||
+            selected.length === 0 ||
+            isSubmitting
+          }
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="size-4 animate-spin" />
+              送信中…
+            </>
+          ) : (
+            "Subscribe"
+          )}
+        </Button>
+        <a
+          href="/privacy"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+        >
+          プライバシーポリシー
+        </a>
+      </div>
 
       {status.kind === "error" ? (
         <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">

@@ -15,6 +15,9 @@ export function SiteFooter() {
               Subscribe
             </Link>
           )}
+          <Link href="/privacy" className="transition-colors hover:text-foreground">
+            Privacy
+          </Link>
         </nav>
       </div>
     </footer>
