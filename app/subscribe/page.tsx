@@ -5,7 +5,7 @@ import { ENABLE_SUBSCRIBE_UI } from "@/lib/feature-flags"
 
 export const metadata: Metadata = {
   title: "Subscribe",
-  description: "Weekly digest を購読して、最新コンテンツを受け取りましょう。",
+  description: "Kudo Shu Library の更新通知を受け取りましょう。",
 }
 
 export default function SubscribePage() {
@@ -20,7 +20,7 @@ export default function SubscribePage() {
           Subscribe
         </h1>
         <p className="mt-2 text-sm text-muted-foreground text-pretty">
-          Get a weekly digest. Choose the sources you want.
+          新しいコンテンツが追加されたタイミングで、メールでお知らせします。受け取りたいソースを選んでください。
         </p>
       </div>
       <SubscribeForm />

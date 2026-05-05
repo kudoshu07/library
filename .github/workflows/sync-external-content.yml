@@ -58,3 +58,16 @@ jobs:
           fi
           git commit -m "chore: sync external content"
           git push
+
+      - name: Notify subscribers of new content
+        # Runs after the sync commit. The script reads current content + Supabase
+        # notifications_log to detect new items and emails confirmed subscribers.
+        # No-ops gracefully if SUPABASE_URL / RESEND_API_KEY are not set.
+        run: pnpm run notify:newsletter
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+          NEWSLETTER_FROM_EMAIL: ${{ vars.NEWSLETTER_FROM_EMAIL }}
+          NEWSLETTER_REPLY_TO: ${{ vars.NEWSLETTER_REPLY_TO }}
