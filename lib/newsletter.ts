@@ -221,6 +221,59 @@ export function renderLoginEmail(opts: {
   }
 }
 
+export function renderReplyNotificationEmail(opts: {
+  recipientDisplayName: string | null
+  replierDisplayName: string
+  replyBody: string
+  postUrl: string
+  accountUrl: string
+  unsubscribeUrl: string
+}): { subject: string; html: string; text: string } {
+  const subject = `[Kudo Shu Library] ${opts.replierDisplayName} さんから返信が届きました`
+  const previewText = `${opts.replierDisplayName} さんがあなたのコメントに返信しました。`
+  const greeting = opts.recipientDisplayName
+    ? `<p style="margin:0 0 16px;font-size:14px;line-height:1.7;"><strong>${escapeHtml(opts.recipientDisplayName)}</strong> さんへ</p>`
+    : ""
+  const truncated =
+    opts.replyBody.length > 280
+      ? `${opts.replyBody.slice(0, 280)}…`
+      : opts.replyBody
+  const bodyHtml = `
+    <h1 style="margin:0 0 12px;font-size:20px;line-height:1.4;">返信が届きました</h1>
+    ${greeting}
+    <p style="margin:0 0 16px;font-size:14px;line-height:1.7;">
+      <strong>${escapeHtml(opts.replierDisplayName)}</strong> さんがあなたのコメントに返信しました。
+    </p>
+    <blockquote style="margin:0 0 20px;padding:12px 16px;border-left:3px solid ${PALETTE.border};color:${PALETTE.text};font-size:14px;line-height:1.7;background:${PALETTE.background};border-radius:0 8px 8px 0;white-space:pre-wrap;">${escapeHtml(truncated)}</blockquote>
+    <p style="margin:0 0 24px;">
+      <a href="${escapeHtml(opts.postUrl)}" style="display:inline-block;background:${PALETTE.primary};color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:600;font-size:14px;">返信を確認する</a>
+    </p>
+    <hr style="border:0;border-top:1px solid ${PALETTE.border};margin:24px 0;" />
+    <p style="margin:0;font-size:12px;line-height:1.7;color:${PALETTE.muted};">
+      返信メール通知の設定は
+      <a href="${escapeHtml(opts.accountUrl)}" style="color:${PALETTE.muted};text-decoration:underline;">アカウント画面</a>
+      から変更できます。メルマガ自体を停止する場合は
+      <a href="${escapeHtml(opts.unsubscribeUrl)}" style="color:${PALETTE.muted};text-decoration:underline;">こちら</a>
+      から。
+    </p>`
+  const text = [
+    `${opts.replierDisplayName} さんからの返信`,
+    "",
+    truncated,
+    "",
+    `返信を見る: ${opts.postUrl}`,
+    "",
+    "---",
+    `通知設定の変更: ${opts.accountUrl}`,
+    `メルマガを停止する: ${opts.unsubscribeUrl}`,
+  ].join("\n")
+  return {
+    subject,
+    html: emailLayout({ previewText, bodyHtml }),
+    text,
+  }
+}
+
 export type NotificationContentItem = {
   source: string
   title: string
