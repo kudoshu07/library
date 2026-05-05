@@ -166,7 +166,7 @@ function LoginCta({ postId }: { postId: string }) {
       <LoginDialog
         next={next}
         trigger={
-          <Button type="button" className="w-full">
+          <Button type="button" className="mb-6 w-full">
             ログイン
           </Button>
         }
@@ -174,7 +174,7 @@ function LoginCta({ postId }: { postId: string }) {
 
       <div className="flex items-center gap-4" role="separator">
         <span className="h-px flex-1 bg-border" aria-hidden />
-        <span className="text-xs font-medium text-muted-foreground">新規登録</span>
+        <span className="text-xs font-medium text-muted-foreground">メルマガ新規登録</span>
         <span className="h-px flex-1 bg-border" aria-hidden />
       </div>
 
