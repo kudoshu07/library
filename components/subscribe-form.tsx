@@ -5,12 +5,17 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { CheckCircle2, AlertTriangle, Loader2 } from "lucide-react"
+import { SourceInlineLabel } from "@/components/source-ui"
+import type { ContentSource } from "@/lib/data"
 
-const sources = [
-  { id: "blog", label: "Blog" },
-  { id: "note", label: "note(個人)" },
-  { id: "ig_business", label: "kudoshu_vcook" },
-  { id: "ig_photo", label: "onoshu_photo(写真)" },
+const sources: { id: ContentSource }[] = [
+  { id: "blog" },
+  { id: "note" },
+  { id: "ig_business" },
+  { id: "ig_photo" },
+  { id: "pod_ochinashi" },
+  { id: "pod_yonakoi" },
+  { id: "pod_vegan" },
 ]
 
 type Status =
@@ -24,6 +29,9 @@ const ERROR_MESSAGES: Record<string, string> = {
   invalid_input: "入力内容に誤りがあります。",
   invalid_json: "送信に失敗しました。もう一度お試しください。",
   invalid_email: "メールアドレスの形式が正しくありません。",
+  display_name_required: "表示名を入力してください。",
+  display_name_too_long: "表示名は30文字以内で入力してください。",
+  display_name_invalid: "表示名に改行・タブは使えません。",
   sources_required: "購読対象を1つ以上選択してください。",
   database_error: "データベースエラーが発生しました。時間をおいてお試しください。",
   email_send_failed: "確認メールの送信に失敗しました。時間をおいてお試しください。",
@@ -39,8 +47,9 @@ function explainError(payload: { error?: string; issues?: Array<{ message?: stri
   return "送信に失敗しました。時間をおいてお試しください。"
 }
 
-export function SubscribeForm() {
+export function SubscribeForm({ embedded = false }: { embedded?: boolean } = {}) {
   const [email, setEmail] = useState("")
+  const [displayName, setDisplayName] = useState("")
   const [selected, setSelected] = useState<string[]>(["blog", "note"])
   const [status, setStatus] = useState<Status>({ kind: "idle" })
 
@@ -53,19 +62,24 @@ export function SubscribeForm() {
   const reset = () => {
     setStatus({ kind: "idle" })
     setEmail("")
+    setDisplayName("")
     setSelected(["blog", "note"])
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!email.trim() || selected.length === 0) return
+    if (!email.trim() || !displayName.trim() || selected.length === 0) return
     setStatus({ kind: "submitting" })
 
     try {
       const res = await fetch("/api/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), sources: selected }),
+        body: JSON.stringify({
+          email: email.trim(),
+          displayName: displayName.trim(),
+          sources: selected,
+        }),
       })
       const data = (await res.json().catch(() => ({}))) as {
         ok?: boolean
@@ -92,9 +106,16 @@ export function SubscribeForm() {
     }
   }
 
+  const surfaceClass = embedded
+    ? "flex flex-col items-center gap-4 text-center"
+    : "flex flex-col items-center gap-4 rounded-xl border border-border bg-card p-8 text-center shadow-sm"
+  const formClass = embedded
+    ? "flex flex-col gap-6"
+    : "flex flex-col gap-6 rounded-xl border border-border bg-card p-6 shadow-sm md:p-8"
+
   if (status.kind === "confirmation_sent") {
     return (
-      <div className="flex flex-col items-center gap-4 rounded-xl border border-border bg-card p-8 text-center shadow-sm">
+      <div className={surfaceClass}>
         <div className="flex size-12 items-center justify-center rounded-full bg-accent/10">
           <CheckCircle2 className="size-6 text-accent" />
         </div>
@@ -111,7 +132,7 @@ export function SubscribeForm() {
 
   if (status.kind === "updated") {
     return (
-      <div className="flex flex-col items-center gap-4 rounded-xl border border-border bg-card p-8 text-center shadow-sm">
+      <div className={surfaceClass}>
         <div className="flex size-12 items-center justify-center rounded-full bg-accent/10">
           <CheckCircle2 className="size-6 text-accent" />
         </div>
@@ -131,49 +152,83 @@ export function SubscribeForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col gap-6 rounded-xl border border-border bg-card p-6 shadow-sm md:p-8"
+      className={formClass}
     >
       <div className="flex flex-col gap-2">
-        <label htmlFor="subscribe-email" className="text-sm font-medium text-card-foreground">
-          Email
+        <label htmlFor="subscribe-display-name" className="text-sm font-medium text-card-foreground">
+          表示名
         </label>
         <Input
-          id="subscribe-email"
-          type="email"
-          placeholder="you@example.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          id="subscribe-display-name"
+          type="text"
+          placeholder="工藤 柊"
+          value={displayName}
+          onChange={(e) => setDisplayName(e.target.value)}
           required
+          maxLength={30}
           disabled={isSubmitting}
           className="h-10"
+          aria-describedby="subscribe-display-name-help"
         />
+        <p id="subscribe-display-name-help" className="text-xs text-muted-foreground">
+          ブログ記事へのコメント時に表示される名前です（30文字以内、後から変更できます）。
+        </p>
       </div>
 
-      <fieldset disabled={isSubmitting}>
-        <legend className="mb-3 text-sm font-medium text-card-foreground">
-          Sources
-        </legend>
-        <div className="flex flex-col gap-3">
-          {sources.map((source) => (
-            <label
-              key={source.id}
-              className="flex cursor-pointer items-center gap-3"
-            >
-              <Checkbox
-                checked={selected.includes(source.id)}
-                onCheckedChange={() => toggleSource(source.id)}
-                aria-label={source.label}
-              />
-              <span className="text-sm text-card-foreground">{source.label}</span>
-            </label>
-          ))}
+      {displayName.trim().length > 0 ? (
+        <div className="flex flex-col gap-2">
+          <label htmlFor="subscribe-email" className="text-sm font-medium text-card-foreground">
+            Email
+          </label>
+          <Input
+            id="subscribe-email"
+            type="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            disabled={isSubmitting}
+            className="h-10"
+          />
         </div>
-      </fieldset>
+      ) : null}
+
+      {displayName.trim().length > 0 && email.trim().length > 0 ? (
+        <fieldset disabled={isSubmitting}>
+          <legend className="mb-3 text-sm font-medium text-card-foreground">
+            通知対象
+          </legend>
+          <div className="flex flex-col gap-3">
+            {sources.map((source) => (
+              <label
+                key={source.id}
+                className="flex cursor-pointer items-center gap-3"
+              >
+                <Checkbox
+                  checked={selected.includes(source.id)}
+                  onCheckedChange={() => toggleSource(source.id)}
+                  aria-label={source.id}
+                />
+                <SourceInlineLabel
+                  source={source.id}
+                  className="text-sm text-card-foreground"
+                  iconClassName="size-4"
+                />
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      ) : null}
 
       <Button
         type="submit"
         className="w-full"
-        disabled={!email.trim() || selected.length === 0 || isSubmitting}
+        disabled={
+          !email.trim() ||
+          !displayName.trim() ||
+          selected.length === 0 ||
+          isSubmitting
+        }
       >
         {isSubmitting ? (
           <>

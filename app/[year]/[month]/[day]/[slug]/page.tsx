@@ -5,6 +5,7 @@ import { SourceBadge } from "@/components/source-badge"
 import { ContentActions } from "@/components/content-actions"
 import { BlogHeroImage } from "@/components/blog-hero-image"
 import { PodcastLetterForm } from "@/components/podcast-letter-form"
+import { CommentsSection } from "@/components/comments/comments-section"
 import { getBlogPostByPath, getBlogStaticParams } from "@/lib/content-loader"
 import { getSiteUrl, resolveSocialImageUrls, toAbsoluteUrl } from "@/lib/social-metadata"
 
@@ -219,6 +220,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           contentId={post.id}
           title={post.title}
           canonicalUrl={canonicalUrl}
+          commentPostId={post.url}
           className="pt-2"
         />
       </header>
@@ -236,6 +238,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         contentId={post.id}
         title={post.title}
         canonicalUrl={canonicalUrl}
+        commentPostId={post.url}
         className="mt-6"
       />
 
@@ -250,6 +253,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           <PodcastLetterForm />
         </section>
       )}
+
+      <CommentsSection postId={post.url} />
     </article>
   )
 }
