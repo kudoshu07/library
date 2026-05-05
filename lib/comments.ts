@@ -8,6 +8,12 @@ import {
   getSupabaseClient,
   renderReplyNotificationEmail,
 } from "@/lib/newsletter"
+import {
+  postSlackMessage,
+  resolveBlogPostTitle,
+  slackEscape,
+  slackLink,
+} from "@/lib/slack"
 import type { Session } from "@/lib/auth"
 
 const POST_RATE_WINDOW_MS = 60 * 1000
@@ -227,6 +233,14 @@ export async function createComment(opts: {
     })
   }
 
+  void notifyNewCommentToSlack({
+    displayName: opts.session.displayName,
+    postId: opts.postId,
+    body,
+  }).catch((err) => {
+    console.error("notifyNewCommentToSlack error", err)
+  })
+
   return { ok: true, comment }
 }
 
@@ -394,6 +408,24 @@ export async function setLike(opts: {
     .eq("comment_id", opts.commentId)
 
   return { ok: true, liked: opts.liked, likeCount: count ?? 0 }
+}
+
+async function notifyNewCommentToSlack(opts: {
+  displayName: string
+  postId: string
+  body: string
+}): Promise<void> {
+  const site = getSiteUrl()
+  const postUrl = `${site}${opts.postId}#comments`
+  const title = (await resolveBlogPostTitle(opts.postId)) ?? opts.postId
+  const link = slackLink(postUrl, title)
+  const text = [
+    "KudoShuLibraryにコメントが来たよ🎉",
+    `・${slackEscape(opts.displayName)}さん`,
+    `・${link}`,
+    `・${slackEscape(opts.body)}`,
+  ].join("\n")
+  await postSlackMessage(text)
 }
 
 async function notifyReplyAuthor(opts: {
