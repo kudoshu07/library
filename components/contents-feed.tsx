@@ -221,7 +221,7 @@ export function ContentsFeed({
   const [resolvedProfileAvatarUrl, setResolvedProfileAvatarUrl] = useState(profileAvatarUrl)
   const [searchInput, setSearchInput] = useState("")
   const [search, setSearch] = useState("")
-  const [selectedSources, setSelectedSources] = useState<ContentSource[]>([])
+  const [selectedSources, setSelectedSources] = useState<ContentSource[]>(["blog"])
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
