@@ -31,6 +31,8 @@ export async function GET(req: Request) {
       isLoggedIn: !!session,
       needsDisplayName: !!session && !session.displayName,
       displayName: session?.displayName ?? null,
+      banned: !!session?.banned,
+      isOwner: !!session?.isOwner,
     },
   })
 }
@@ -81,11 +83,13 @@ export async function POST(req: Request) {
         ? 429
         : result.reason === "display_name_required"
           ? 409
-          : result.reason === "parent_not_found" ||
-              result.reason === "nesting_too_deep" ||
-              result.reason === "invalid_body"
-            ? 400
-            : 500
+          : result.reason === "banned"
+            ? 403
+            : result.reason === "parent_not_found" ||
+                result.reason === "nesting_too_deep" ||
+                result.reason === "invalid_body"
+              ? 400
+              : 500
     return NextResponse.json({ error: result.reason }, { status })
   }
 

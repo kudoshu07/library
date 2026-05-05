@@ -38,12 +38,6 @@ export type CommentsViewerInfo = {
 
 const FALLBACK_DISPLAY_NAME = "ゲスト"
 
-export function isOwnerEmail(email: string | null | undefined): boolean {
-  const owner = process.env.OWNER_EMAIL?.trim().toLowerCase()
-  if (!owner || !email) return false
-  return owner === email.toLowerCase()
-}
-
 export function sanitizeBody(input: string): string {
   // Normalize newlines, trim leading/trailing whitespace, collapse 3+ newlines.
   return input
@@ -128,6 +122,7 @@ export type CreateCommentResult =
         | "nesting_too_deep"
         | "display_name_required"
         | "invalid_body"
+        | "banned"
         | "error"
     }
 
@@ -137,6 +132,9 @@ export async function createComment(opts: {
   parentId: string | null
   body: string
 }): Promise<CreateCommentResult> {
+  if (opts.session.banned) {
+    return { ok: false, reason: "banned" }
+  }
   if (!opts.session.displayName || !opts.session.displayName.trim()) {
     return { ok: false, reason: "display_name_required" }
   }
@@ -236,7 +234,7 @@ export type UpdateCommentResult =
   | { ok: true; comment: CommentListItem }
   | {
       ok: false
-      reason: "not_found" | "forbidden" | "invalid_body" | "error"
+      reason: "not_found" | "forbidden" | "invalid_body" | "banned" | "error"
     }
 
 export async function updateOwnComment(opts: {
@@ -244,6 +242,9 @@ export async function updateOwnComment(opts: {
   commentId: string
   body: string
 }): Promise<UpdateCommentResult> {
+  if (opts.session.banned) {
+    return { ok: false, reason: "banned" }
+  }
   const body = sanitizeBody(opts.body)
   if (body.length === 0 || body.length > COMMENT_BODY_MAX) {
     return { ok: false, reason: "invalid_body" }
@@ -310,7 +311,7 @@ export type DeleteCommentResult =
   | { ok: true }
   | { ok: false; reason: "not_found" | "forbidden" | "error" }
 
-export async function deleteOwnComment(opts: {
+export async function deleteCommentByAuthorOrOwner(opts: {
   session: Session
   commentId: string
 }): Promise<DeleteCommentResult> {
@@ -328,7 +329,9 @@ export async function deleteOwnComment(opts: {
     .maybeSingle()
   if (selectError) return { ok: false, reason: "error" }
   if (!existing) return { ok: false, reason: "not_found" }
-  if (existing.subscriber_id !== opts.session.subscriberId) {
+
+  const isAuthor = existing.subscriber_id === opts.session.subscriberId
+  if (!isAuthor && !opts.session.isOwner) {
     return { ok: false, reason: "forbidden" }
   }
 
@@ -342,13 +345,16 @@ export async function deleteOwnComment(opts: {
 
 export type LikeResult =
   | { ok: true; liked: boolean; likeCount: number }
-  | { ok: false; reason: "not_found" | "error" }
+  | { ok: false; reason: "not_found" | "banned" | "error" }
 
 export async function setLike(opts: {
   session: Session
   commentId: string
   liked: boolean
 }): Promise<LikeResult> {
+  if (opts.session.banned) {
+    return { ok: false, reason: "banned" }
+  }
   let supabase
   try {
     supabase = getSupabaseClient()

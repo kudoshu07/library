@@ -17,7 +17,12 @@ async function toggle(
   }
   const result = await setLike({ session, commentId: id, liked })
   if (!result.ok) {
-    const status = result.reason === "not_found" ? 404 : 500
+    const status =
+      result.reason === "not_found"
+        ? 404
+        : result.reason === "banned"
+          ? 403
+          : 500
     return NextResponse.json({ error: result.reason }, { status })
   }
   return NextResponse.json({

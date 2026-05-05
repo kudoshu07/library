@@ -3,7 +3,7 @@ import { z } from "zod"
 import { getSession } from "@/lib/auth"
 import {
   COMMENT_BODY_MAX,
-  deleteOwnComment,
+  deleteCommentByAuthorOrOwner,
   updateOwnComment,
 } from "@/lib/comments"
 
@@ -49,7 +49,7 @@ export async function PATCH(
     const status =
       result.reason === "not_found"
         ? 404
-        : result.reason === "forbidden"
+        : result.reason === "forbidden" || result.reason === "banned"
           ? 403
           : result.reason === "invalid_body"
             ? 400
@@ -70,7 +70,7 @@ export async function DELETE(
     return NextResponse.json({ error: "unauthorized" }, { status: 401 })
   }
 
-  const result = await deleteOwnComment({ session, commentId: id })
+  const result = await deleteCommentByAuthorOrOwner({ session, commentId: id })
   if (!result.ok) {
     const status =
       result.reason === "not_found" ? 404 : result.reason === "forbidden" ? 403 : 500

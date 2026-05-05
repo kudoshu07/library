@@ -18,6 +18,8 @@ const INITIAL_VIEWER: Viewer = {
   isLoggedIn: false,
   needsDisplayName: false,
   displayName: null,
+  banned: false,
+  isOwner: false,
 }
 
 export function CommentsSection({ postId }: { postId: string }) {
@@ -109,7 +111,9 @@ export function CommentsSection({ postId }: { postId: string }) {
           読み込み中…
         </div>
       ) : state.viewer.isLoggedIn ? (
-        state.viewer.needsDisplayName ? (
+        state.viewer.banned ? (
+          <BannedNotice />
+        ) : state.viewer.needsDisplayName ? (
           <NeedsDisplayNameNotice />
         ) : (
           <ComposeForm postId={postId} onSuccess={addComment} />
@@ -172,6 +176,14 @@ function NeedsDisplayNameNotice() {
         アカウント画面
       </Link>
       で表示名を設定してください。
+    </div>
+  )
+}
+
+function BannedNotice() {
+  return (
+    <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900">
+      このアカウントは現在コメントを投稿できません。
     </div>
   )
 }

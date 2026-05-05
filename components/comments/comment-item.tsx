@@ -12,6 +12,8 @@ export type Viewer = {
   isLoggedIn: boolean
   needsDisplayName: boolean
   displayName: string | null
+  banned: boolean
+  isOwner: boolean
 }
 
 export function CommentItem({
@@ -42,7 +44,7 @@ export function CommentItem({
   const [error, setError] = useState<string | null>(null)
 
   const handleLike = async () => {
-    if (!viewer.isLoggedIn || busy) return
+    if (!viewer.isLoggedIn || viewer.banned || busy) return
     const nextLiked = !comment.likedByViewer
     setBusy("like")
     try {
@@ -168,7 +170,7 @@ export function CommentItem({
               <button
                 type="button"
                 onClick={handleLike}
-                disabled={!viewer.isLoggedIn || busy !== null}
+                disabled={!viewer.isLoggedIn || viewer.banned || busy !== null}
                 aria-label={comment.likedByViewer ? "いいねを取り消す" : "いいね"}
                 className="inline-flex items-center gap-1 rounded-full px-2 py-1 hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
               >
@@ -178,7 +180,10 @@ export function CommentItem({
                 {comment.likeCount > 0 ? <span>{comment.likeCount}</span> : null}
               </button>
 
-              {!isReply && viewer.isLoggedIn && !viewer.needsDisplayName ? (
+              {!isReply &&
+              viewer.isLoggedIn &&
+              !viewer.needsDisplayName &&
+              !viewer.banned ? (
                 <button
                   type="button"
                   onClick={() => setReplying((r) => !r)}
@@ -189,31 +194,32 @@ export function CommentItem({
                 </button>
               ) : null}
 
-              {comment.isMine ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => setEditing(true)}
-                    disabled={busy !== null}
-                    className="inline-flex items-center gap-1 rounded-full px-2 py-1 hover:bg-muted disabled:opacity-50"
-                  >
-                    <Pencil className="size-3.5" />
-                    編集
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleDelete}
-                    disabled={busy !== null}
-                    className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-rose-600 hover:bg-rose-50 disabled:opacity-50"
-                  >
-                    {busy === "delete" ? (
-                      <Loader2 className="size-3.5 animate-spin" />
-                    ) : (
-                      <Trash2 className="size-3.5" />
-                    )}
-                    削除
-                  </button>
-                </>
+              {comment.isMine && !viewer.banned ? (
+                <button
+                  type="button"
+                  onClick={() => setEditing(true)}
+                  disabled={busy !== null}
+                  className="inline-flex items-center gap-1 rounded-full px-2 py-1 hover:bg-muted disabled:opacity-50"
+                >
+                  <Pencil className="size-3.5" />
+                  編集
+                </button>
+              ) : null}
+
+              {comment.isMine || viewer.isOwner ? (
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={busy !== null}
+                  className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-rose-600 hover:bg-rose-50 disabled:opacity-50"
+                >
+                  {busy === "delete" ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <Trash2 className="size-3.5" />
+                  )}
+                  {viewer.isOwner && !comment.isMine ? "削除（オーナー）" : "削除"}
+                </button>
               ) : null}
             </div>
           ) : null}

@@ -187,6 +187,14 @@ export type Session = {
   email: string
   displayName: string | null
   notifyOnReply: boolean
+  banned: boolean
+  isOwner: boolean
+}
+
+export function isOwnerEmail(email: string | null | undefined): boolean {
+  const owner = process.env.OWNER_EMAIL?.trim().toLowerCase()
+  if (!owner || !email) return false
+  return owner === email.toLowerCase()
 }
 
 export async function getSession(): Promise<Session | null> {
@@ -211,7 +219,7 @@ export async function getSession(): Promise<Session | null> {
 
   const { data: subscriber } = await supabase
     .from("subscribers")
-    .select("id, email, display_name, notify_on_reply, unsubscribed_at")
+    .select("id, email, display_name, notify_on_reply, unsubscribed_at, banned")
     .eq("id", session.subscriber_id)
     .maybeSingle()
   if (!subscriber) return null
@@ -222,6 +230,8 @@ export async function getSession(): Promise<Session | null> {
     email: subscriber.email,
     displayName: subscriber.display_name,
     notifyOnReply: subscriber.notify_on_reply ?? true,
+    banned: subscriber.banned ?? false,
+    isOwner: isOwnerEmail(subscriber.email),
   }
 }
 
