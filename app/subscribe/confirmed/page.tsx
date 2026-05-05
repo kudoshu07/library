@@ -20,8 +20,8 @@ function resolveStatus(value: string | undefined): Status {
 const messages: Record<Status, { icon: "ok" | "warn"; title: string; body: string }> = {
   ok: {
     icon: "ok",
-    title: "登録が完了しました",
-    body: "新しいコンテンツが追加されたタイミングでメールをお届けします。",
+    title: "登録が完了しました☺️",
+    body: "楽しみにしてくださる人がいること、とても励みになります。今後も、気に入った文章があればコメントなどでリアクションいただけると嬉しいです🫶 工藤柊",
   },
   already: {
     icon: "ok",
@@ -49,17 +49,27 @@ export default async function SubscribeConfirmedPage({
   const resolved = resolveStatus(status)
   const message = messages[resolved]
   const Icon = message.icon === "ok" ? CheckCircle2 : AlertTriangle
+  const isCelebration = resolved === "ok"
 
   return (
     <div className="mx-auto max-w-lg px-4 py-16 lg:px-6">
       <div className="flex flex-col items-center gap-4 rounded-xl border border-border bg-card p-8 text-center shadow-sm">
-        <div className="flex size-12 items-center justify-center rounded-full bg-accent/10">
-          <Icon
-            className={`size-6 ${message.icon === "ok" ? "text-accent" : "text-amber-600"}`}
-          />
-        </div>
+        {isCelebration ? (
+          <div
+            className="flex size-12 items-center justify-center text-4xl leading-none"
+            aria-hidden="true"
+          >
+            🎉
+          </div>
+        ) : (
+          <div className="flex size-12 items-center justify-center rounded-full bg-accent/10">
+            <Icon
+              className={`size-6 ${message.icon === "ok" ? "text-accent" : "text-amber-600"}`}
+            />
+          </div>
+        )}
         <h1 className="text-xl font-semibold text-card-foreground">{message.title}</h1>
-        <p className="text-sm text-muted-foreground">{message.body}</p>
+        <p className="text-sm leading-relaxed text-muted-foreground">{message.body}</p>
         <Button asChild variant="outline" size="sm">
           <Link href="/home">Back to Home</Link>
         </Button>

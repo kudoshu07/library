@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { ContentsFeed } from "@/components/contents-feed"
 import { getAllContentItems, getPickupItems } from "@/lib/content-loader"
+import { getSession } from "@/lib/auth"
 
 export const metadata: Metadata = {
   title: {
@@ -22,16 +23,27 @@ export const metadata: Metadata = {
   },
 }
 
+export const dynamic = "force-dynamic"
+
 export default async function HomeTimelinePage() {
   const profileAvatarUrl = "/profile.jpg"
-  const allItems = await getAllContentItems()
+  const [allItems, session] = await Promise.all([getAllContentItems(), getSession()])
   const pickupItems = await getPickupItems(allItems)
+
+  const sessionInfo = session
+    ? {
+        email: session.email,
+        displayName: session.displayName ?? "",
+        notifyOnReply: session.notifyOnReply,
+      }
+    : null
 
   return (
     <ContentsFeed
       allItems={allItems}
       pickupItems={pickupItems}
       profileAvatarUrl={profileAvatarUrl}
+      sessionInfo={sessionInfo}
     />
   )
 }

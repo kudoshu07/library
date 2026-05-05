@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -47,11 +47,23 @@ function explainError(payload: { error?: string; issues?: Array<{ message?: stri
   return "送信に失敗しました。時間をおいてお試しください。"
 }
 
-export function SubscribeForm({ embedded = false }: { embedded?: boolean } = {}) {
+export type SubscribeFormStatusKind = Status["kind"]
+
+export function SubscribeForm({
+  embedded = false,
+  onStatusChange,
+}: {
+  embedded?: boolean
+  onStatusChange?: (status: SubscribeFormStatusKind) => void
+} = {}) {
   const [email, setEmail] = useState("")
   const [displayName, setDisplayName] = useState("")
   const [selected, setSelected] = useState<string[]>(["blog", "note"])
   const [status, setStatus] = useState<Status>({ kind: "idle" })
+
+  useEffect(() => {
+    onStatusChange?.(status.kind)
+  }, [status.kind, onStatusChange])
 
   const toggleSource = (id: string) => {
     setSelected((prev) =>
@@ -119,13 +131,10 @@ export function SubscribeForm({ embedded = false }: { embedded?: boolean } = {})
         <div className="flex size-12 items-center justify-center rounded-full bg-accent/10">
           <CheckCircle2 className="size-6 text-accent" />
         </div>
-        <h3 className="text-lg font-semibold text-card-foreground">確認メールをお送りしました</h3>
+        <h3 className="text-lg font-semibold text-card-foreground">確認メールを確認してください👀</h3>
         <p className="text-sm text-muted-foreground">
           <strong className="text-foreground">{email}</strong> 宛に確認メールを送信しました。メール内のリンクをクリックして登録を完了してください。
         </p>
-        <Button variant="outline" size="sm" onClick={reset}>
-          別のメールアドレスを登録する
-        </Button>
       </div>
     )
   }
@@ -140,9 +149,6 @@ export function SubscribeForm({ embedded = false }: { embedded?: boolean } = {})
         <p className="text-sm text-muted-foreground">
           <strong className="text-foreground">{email}</strong> の購読対象を更新しました。
         </p>
-        <Button variant="outline" size="sm" onClick={reset}>
-          別のメールアドレスを登録する
-        </Button>
       </div>
     )
   }
@@ -171,7 +177,7 @@ export function SubscribeForm({ embedded = false }: { embedded?: boolean } = {})
           aria-describedby="subscribe-display-name-help"
         />
         <p id="subscribe-display-name-help" className="text-xs text-muted-foreground">
-          ブログ記事へのコメント時に表示される名前です（30文字以内、後から変更できます）。
+          ブログへのコメントなどに表示されます
         </p>
       </div>
 
@@ -258,7 +264,7 @@ export function SubscribeForm({ embedded = false }: { embedded?: boolean } = {})
       ) : null}
 
       <p className="text-xs leading-relaxed text-muted-foreground">
-        登録後に確認メールが届きます。リンクをクリックすると、新しいコンテンツが追加されたタイミングでメールをお届けします。配信停止はメール内のリンクからいつでも可能です。
+        確認メールのリンクをクリックして登録完了します。配信停止はメール内のリンクからいつでもできます。
       </p>
     </form>
   )

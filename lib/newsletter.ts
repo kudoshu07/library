@@ -133,20 +133,20 @@ export function renderConfirmEmail(opts: {
   const labels = opts.sources.map((s) => sourceLabel(s)).join(", ")
   const previewText = "登録を完了するには、ボタンをクリックしてください。"
   const greeting = opts.displayName
-    ? `<p style="margin:0 0 16px;font-size:14px;line-height:1.7;"><strong>${escapeHtml(opts.displayName)}</strong> さん、ご登録ありがとうございます。</p>`
+    ? `<p style="margin:0 0 16px;font-size:14px;line-height:1.7;"><strong>${escapeHtml(opts.displayName)}</strong> さん、ご登録ありがとうございます🥺🎉</p>`
     : ""
   const bodyHtml = `
     <h1 style="margin:0 0 12px;font-size:20px;line-height:1.4;">登録の確認</h1>
     ${greeting}
     <p style="margin:0 0 16px;font-size:14px;line-height:1.7;">
       Kudo Shu Library の更新通知を <strong>${escapeHtml(opts.email)}</strong> 宛に登録しようとしています。
-      下のボタンをクリックして登録を完了してください。
+      下のボタンをクリックして登録を完了してください🙏
     </p>
     <p style="margin:0 0 20px;font-size:13px;line-height:1.7;color:${PALETTE.muted};">
       購読対象: ${escapeHtml(labels) || "(未選択)"}
     </p>
     <p style="margin:0 0 24px;">
-      <a href="${escapeHtml(opts.confirmUrl)}" style="display:inline-block;background:${PALETTE.primary};color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:600;font-size:14px;">登録を確定する</a>
+      <a href="${escapeHtml(opts.confirmUrl)}" style="display:inline-block;background:${PALETTE.primary};color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:600;font-size:14px;">登録を確定する✅</a>
     </p>
     <p style="margin:0 0 8px;font-size:12px;line-height:1.7;color:${PALETTE.muted};">
       ボタンが動作しない場合は、以下の URL をブラウザで開いてください。
@@ -158,7 +158,7 @@ export function renderConfirmEmail(opts: {
       心当たりがない場合は、このメールを破棄してください。確認しない限り登録は完了しません。
     </p>`
   const textGreeting = opts.displayName
-    ? `${opts.displayName} さん、ご登録ありがとうございます。\n\n`
+    ? `${opts.displayName} さん、ご登録ありがとうございます🥺🎉\n\n`
     : ""
   const text = [
     "Kudo Shu Library の更新通知の登録",
@@ -172,7 +172,7 @@ export function renderConfirmEmail(opts: {
     "心当たりがない場合は、このメールを破棄してください。",
   ].join("\n")
   return {
-    subject: "[Kudo Shu Library] 登録の確認",
+    subject: "【メアド確認メール👀💌】Kudo Shu Library",
     html: emailLayout({ previewText, bodyHtml }),
     text,
   }
