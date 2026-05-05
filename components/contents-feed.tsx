@@ -19,6 +19,14 @@ import { ContentCard } from "@/components/content-card"
 import { SourceInlineLabel, sourceFilterOptions } from "@/components/source-ui"
 import { ENABLE_SUBSCRIBE_UI } from "@/lib/feature-flags"
 import { fetchLikeCounts, incrementLikeCount, readLocalLikes, writeLocalLikes } from "@/lib/likes-client"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { SubscribeForm } from "@/components/subscribe-form"
 
 const ITEMS_PER_PAGE = 20
 const DEBOUNCE_MS = 250
@@ -225,6 +233,7 @@ export function ContentsFeed({
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [subscribeOpen, setSubscribeOpen] = useState(false)
   const [showStickyMenuButton, setShowStickyMenuButton] = useState(false)
   const [isSearchNavigating, setIsSearchNavigating] = useState(false)
   const [likesReady, setLikesReady] = useState(false)
@@ -555,13 +564,14 @@ export function ContentsFeed({
                 </div>
 
                 {ENABLE_SUBSCRIBE_UI && (
-                  <a
-                    href="/subscribe"
+                  <button
+                    type="button"
+                    onClick={() => setSubscribeOpen(true)}
                     className="inline-flex h-12 items-center justify-center rounded-full bg-[#264F8B] text-sm font-semibold text-white transition hover:bg-[#1f4376] min-[800px]:max-[1024px]:mx-auto min-[800px]:max-[1024px]:h-10 min-[800px]:max-[1024px]:w-10 min-[800px]:max-[1024px]:px-0 min-[1025px]:w-full min-[1025px]:px-5"
                   >
                     <Mail className="size-4 min-[1025px]:hidden" />
-                    <span className="min-[800px]:max-[1024px]:hidden">メール通知</span>
-                  </a>
+                    <span className="min-[800px]:max-[1024px]:hidden">メルマガ登録</span>
+                  </button>
                 )}
               </div>
             </div>
@@ -614,13 +624,14 @@ export function ContentsFeed({
               {ENABLE_SUBSCRIBE_UI && (
                 <div className="px-6 pt-4">
                   <div className="flex justify-end">
-                    <Link
-                      href="/subscribe"
+                    <button
+                      type="button"
+                      onClick={() => setSubscribeOpen(true)}
                       className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-50"
                     >
                       <Mail className="size-4" />
-                      <span className="whitespace-nowrap">メール通知する</span>
-                    </Link>
+                      <span className="whitespace-nowrap">メルマガ登録</span>
+                    </button>
                   </div>
                 </div>
               )}
@@ -844,13 +855,14 @@ export function ContentsFeed({
             検索
           </button>
           {ENABLE_SUBSCRIBE_UI && (
-            <Link
-              href="/subscribe"
+            <button
+              type="button"
+              onClick={() => setSubscribeOpen(true)}
               className="flex h-[clamp(3.75rem,8svh,4.5rem)] flex-col items-center justify-center gap-1 px-1 text-[10px] font-semibold leading-none text-slate-700 sm:text-xs"
             >
               <Mail className="size-5" />
-              通知
-            </Link>
+              メルマガ
+            </button>
           )}
           <a
             href="https://www.instagram.com/kudoshu_vcook/"
@@ -900,14 +912,17 @@ export function ContentsFeed({
                 検索
               </a>
               {ENABLE_SUBSCRIBE_UI && (
-                <Link
-                  href="/subscribe"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-100"
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false)
+                    setSubscribeOpen(true)
+                  }}
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-semibold text-slate-800 hover:bg-slate-100"
                 >
                   <Mail className="size-4" />
-                  メール通知
-                </Link>
+                  メルマガ登録
+                </button>
               )}
               <a
                 href="https://www.instagram.com/kudoshu_vcook/"
@@ -1001,6 +1016,20 @@ export function ContentsFeed({
             検索結果を読み込み中...
           </div>
         </div>
+      )}
+
+      {ENABLE_SUBSCRIBE_UI && (
+        <Dialog open={subscribeOpen} onOpenChange={setSubscribeOpen}>
+          <DialogContent className="max-h-[90svh] overflow-y-auto sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>メルマガ登録</DialogTitle>
+              <DialogDescription>
+                新しいコンテンツが追加されたタイミングで、メールでお知らせします。受け取りたいソースを選んでください。
+              </DialogDescription>
+            </DialogHeader>
+            <SubscribeForm embedded />
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   )
