@@ -175,6 +175,52 @@ export function renderConfirmEmail(opts: {
   }
 }
 
+export function renderLoginEmail(opts: {
+  email: string
+  displayName: string | null
+  verifyUrl: string
+}): { subject: string; html: string; text: string } {
+  const previewText = "ログインリンクをお送りします。"
+  const greeting = opts.displayName
+    ? `<p style="margin:0 0 16px;font-size:14px;line-height:1.7;"><strong>${escapeHtml(opts.displayName)}</strong> さん、いつもありがとうございます。</p>`
+    : ""
+  const bodyHtml = `
+    <h1 style="margin:0 0 12px;font-size:20px;line-height:1.4;">ログインリンク</h1>
+    ${greeting}
+    <p style="margin:0 0 16px;font-size:14px;line-height:1.7;">
+      <strong>${escapeHtml(opts.email)}</strong> 宛のログインリンクです。
+      下のボタンをクリックして Kudo Shu Library にログインしてください。
+    </p>
+    <p style="margin:0 0 24px;">
+      <a href="${escapeHtml(opts.verifyUrl)}" style="display:inline-block;background:${PALETTE.primary};color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:600;font-size:14px;">ログインする</a>
+    </p>
+    <p style="margin:0 0 8px;font-size:12px;line-height:1.7;color:${PALETTE.muted};">
+      このリンクは 15 分で失効し、一度しか使えません。
+    </p>
+    <p style="margin:0 0 8px;font-size:12px;line-height:1.7;color:${PALETTE.muted};">
+      ボタンが動作しない場合は、以下の URL をブラウザで開いてください。
+    </p>
+    <p style="margin:0;font-size:12px;line-height:1.7;color:${PALETTE.muted};word-break:break-all;">
+      ${escapeHtml(opts.verifyUrl)}
+    </p>
+    <p style="margin:24px 0 0;font-size:12px;line-height:1.7;color:${PALETTE.muted};">
+      心当たりがない場合は、このメールを破棄してください。
+    </p>`
+  const text = [
+    "Kudo Shu Library のログインリンク",
+    "",
+    "以下の URL を 15 分以内に開いてログインしてください。リンクは一度しか使えません。",
+    opts.verifyUrl,
+    "",
+    "心当たりがない場合は、このメールを破棄してください。",
+  ].join("\n")
+  return {
+    subject: "[Kudo Shu Library] ログインリンク",
+    html: emailLayout({ previewText, bodyHtml }),
+    text,
+  }
+}
+
 export type NotificationContentItem = {
   source: string
   title: string
