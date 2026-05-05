@@ -23,8 +23,12 @@ export async function GET(req: Request) {
   if (!postId) {
     return NextResponse.json({ error: "invalid_post_id" }, { status: 400 })
   }
+  const countOnly = url.searchParams.get("count_only") === "1"
   const session = await getSession()
   const comments = await fetchCommentsForPost(postId, session?.subscriberId ?? null)
+  if (countOnly) {
+    return NextResponse.json({ count: comments.length })
+  }
   return NextResponse.json({
     comments,
     viewer: {

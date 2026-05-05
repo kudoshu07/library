@@ -220,6 +220,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           contentId={post.id}
           title={post.title}
           canonicalUrl={canonicalUrl}
+          commentPostId={post.url}
           className="pt-2"
         />
       </header>
@@ -237,6 +238,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         contentId={post.id}
         title={post.title}
         canonicalUrl={canonicalUrl}
+        commentPostId={post.url}
         className="mt-6"
       />
 

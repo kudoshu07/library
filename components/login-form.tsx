@@ -40,9 +40,11 @@ function explainError(payload: { error?: string }): string {
 export function LoginForm({
   next,
   status: bannerStatus,
+  embedded = false,
 }: {
   next?: string
   status?: string
+  embedded?: boolean
 }) {
   const [email, setEmail] = useState("")
   const [status, setStatus] = useState<Status>({ kind: "idle" })
@@ -74,9 +76,16 @@ export function LoginForm({
     }
   }
 
+  const surfaceClass = embedded
+    ? "flex flex-col items-center gap-4 text-center"
+    : "flex flex-col items-center gap-4 rounded-xl border border-border bg-card p-8 text-center shadow-sm"
+  const formClass = embedded
+    ? "flex flex-col gap-6"
+    : "flex flex-col gap-6 rounded-xl border border-border bg-card p-6 shadow-sm md:p-8"
+
   if (status.kind === "sent") {
     return (
-      <div className="flex flex-col items-center gap-4 rounded-xl border border-border bg-card p-8 text-center shadow-sm">
+      <div className={surfaceClass}>
         <div className="flex size-12 items-center justify-center rounded-full bg-accent/10">
           <CheckCircle2 className="size-6 text-accent" />
         </div>
@@ -94,7 +103,7 @@ export function LoginForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col gap-6 rounded-xl border border-border bg-card p-6 shadow-sm md:p-8"
+      className={formClass}
     >
       {banner ? (
         <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">

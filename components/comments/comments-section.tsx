@@ -5,6 +5,8 @@ import { useEffect, useMemo, useState } from "react"
 import { Loader2 } from "lucide-react"
 import type { CommentListItem } from "@/lib/comments"
 import { Button } from "@/components/ui/button"
+import { LoginDialog } from "@/components/login-dialog"
+import { SubscribeForm } from "@/components/subscribe-form"
 import { ComposeForm } from "./compose-form"
 import { CommentItem, type Viewer } from "./comment-item"
 
@@ -110,39 +112,43 @@ export function CommentsSection({ postId }: { postId: string }) {
           <Loader2 className="size-4 animate-spin" />
           読み込み中…
         </div>
-      ) : state.viewer.isLoggedIn ? (
-        state.viewer.banned ? (
-          <BannedNotice />
-        ) : state.viewer.needsDisplayName ? (
-          <NeedsDisplayNameNotice />
-        ) : (
-          <ComposeForm postId={postId} onSuccess={addComment} />
-        )
-      ) : (
-        <LoginCta postId={postId} />
-      )}
+      ) : null}
+
+      {!state.loading && topLevel.length === 0 ? (
+        <p className="mb-6 text-sm text-muted-foreground">
+          まだコメントはありません。最初のコメントを投稿してみましょう。
+        </p>
+      ) : null}
 
       {!state.loading ? (
-        <div className="mt-8 flex flex-col gap-6">
-          {topLevel.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              まだコメントはありません。最初のコメントを投稿してみましょう。
-            </p>
+        state.viewer.isLoggedIn ? (
+          state.viewer.banned ? (
+            <BannedNotice />
+          ) : state.viewer.needsDisplayName ? (
+            <NeedsDisplayNameNotice />
           ) : (
-            topLevel.map((c) => (
-              <CommentItem
-                key={c.id}
-                comment={c}
-                replies={repliesByParent.get(c.id)}
-                postId={postId}
-                viewer={state.viewer}
-                onReplyAdded={addComment}
-                onUpdated={updateComment}
-                onDeleted={deleteComment}
-                onLikeUpdated={updateLike}
-              />
-            ))
-          )}
+            <ComposeForm postId={postId} onSuccess={addComment} />
+          )
+        ) : (
+          <LoginCta postId={postId} />
+        )
+      ) : null}
+
+      {!state.loading && topLevel.length > 0 ? (
+        <div className="mt-8 flex flex-col gap-6">
+          {topLevel.map((c) => (
+            <CommentItem
+              key={c.id}
+              comment={c}
+              replies={repliesByParent.get(c.id)}
+              postId={postId}
+              viewer={state.viewer}
+              onReplyAdded={addComment}
+              onUpdated={updateComment}
+              onDeleted={deleteComment}
+              onLikeUpdated={updateLike}
+            />
+          ))}
         </div>
       ) : null}
     </section>
@@ -150,20 +156,29 @@ export function CommentsSection({ postId }: { postId: string }) {
 }
 
 function LoginCta({ postId }: { postId: string }) {
-  const next = encodeURIComponent(`${postId}#comments`)
+  const next = `${postId}#comments`
   return (
-    <div className="flex flex-col items-start gap-3 rounded-xl border border-border bg-card p-6">
-      <p className="text-sm text-card-foreground">
-        コメントするにはメルマガ登録 + ログインが必要です。
+    <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-6">
+      <p className="text-xs text-muted-foreground">
+        bot コメント対策のため、ログイン必須にしています🙇
       </p>
-      <div className="flex flex-wrap gap-2">
-        <Button asChild size="sm">
-          <Link href={`/login?next=${next}`}>ログイン</Link>
-        </Button>
-        <Button asChild size="sm" variant="outline">
-          <Link href="/subscribe">メルマガに登録</Link>
-        </Button>
+
+      <LoginDialog
+        next={next}
+        trigger={
+          <Button type="button" className="w-full">
+            ログイン
+          </Button>
+        }
+      />
+
+      <div className="flex items-center gap-4" role="separator">
+        <span className="h-px flex-1 bg-border" aria-hidden />
+        <span className="text-xs font-medium text-muted-foreground">新規登録</span>
+        <span className="h-px flex-1 bg-border" aria-hidden />
       </div>
+
+      <SubscribeForm embedded />
     </div>
   )
 }

@@ -5,12 +5,17 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { CheckCircle2, AlertTriangle, Loader2 } from "lucide-react"
+import { SourceInlineLabel } from "@/components/source-ui"
+import type { ContentSource } from "@/lib/data"
 
-const sources = [
-  { id: "blog", label: "Blog" },
-  { id: "note", label: "note(個人)" },
-  { id: "ig_business", label: "kudoshu_vcook" },
-  { id: "ig_photo", label: "onoshu_photo(写真)" },
+const sources: { id: ContentSource }[] = [
+  { id: "blog" },
+  { id: "note" },
+  { id: "ig_business" },
+  { id: "ig_photo" },
+  { id: "pod_ochinashi" },
+  { id: "pod_yonakoi" },
+  { id: "pod_vegan" },
 ]
 
 type Status =
@@ -42,7 +47,7 @@ function explainError(payload: { error?: string; issues?: Array<{ message?: stri
   return "送信に失敗しました。時間をおいてお試しください。"
 }
 
-export function SubscribeForm() {
+export function SubscribeForm({ embedded = false }: { embedded?: boolean } = {}) {
   const [email, setEmail] = useState("")
   const [displayName, setDisplayName] = useState("")
   const [selected, setSelected] = useState<string[]>(["blog", "note"])
@@ -101,9 +106,16 @@ export function SubscribeForm() {
     }
   }
 
+  const surfaceClass = embedded
+    ? "flex flex-col items-center gap-4 text-center"
+    : "flex flex-col items-center gap-4 rounded-xl border border-border bg-card p-8 text-center shadow-sm"
+  const formClass = embedded
+    ? "flex flex-col gap-6"
+    : "flex flex-col gap-6 rounded-xl border border-border bg-card p-6 shadow-sm md:p-8"
+
   if (status.kind === "confirmation_sent") {
     return (
-      <div className="flex flex-col items-center gap-4 rounded-xl border border-border bg-card p-8 text-center shadow-sm">
+      <div className={surfaceClass}>
         <div className="flex size-12 items-center justify-center rounded-full bg-accent/10">
           <CheckCircle2 className="size-6 text-accent" />
         </div>
@@ -120,7 +132,7 @@ export function SubscribeForm() {
 
   if (status.kind === "updated") {
     return (
-      <div className="flex flex-col items-center gap-4 rounded-xl border border-border bg-card p-8 text-center shadow-sm">
+      <div className={surfaceClass}>
         <div className="flex size-12 items-center justify-center rounded-full bg-accent/10">
           <CheckCircle2 className="size-6 text-accent" />
         </div>
@@ -140,7 +152,7 @@ export function SubscribeForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col gap-6 rounded-xl border border-border bg-card p-6 shadow-sm md:p-8"
+      className={formClass}
     >
       <div className="flex flex-col gap-2">
         <label htmlFor="subscribe-display-name" className="text-sm font-medium text-card-foreground">
@@ -163,42 +175,50 @@ export function SubscribeForm() {
         </p>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <label htmlFor="subscribe-email" className="text-sm font-medium text-card-foreground">
-          Email
-        </label>
-        <Input
-          id="subscribe-email"
-          type="email"
-          placeholder="you@example.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          disabled={isSubmitting}
-          className="h-10"
-        />
-      </div>
-
-      <fieldset disabled={isSubmitting}>
-        <legend className="mb-3 text-sm font-medium text-card-foreground">
-          Sources
-        </legend>
-        <div className="flex flex-col gap-3">
-          {sources.map((source) => (
-            <label
-              key={source.id}
-              className="flex cursor-pointer items-center gap-3"
-            >
-              <Checkbox
-                checked={selected.includes(source.id)}
-                onCheckedChange={() => toggleSource(source.id)}
-                aria-label={source.label}
-              />
-              <span className="text-sm text-card-foreground">{source.label}</span>
-            </label>
-          ))}
+      {displayName.trim().length > 0 ? (
+        <div className="flex flex-col gap-2">
+          <label htmlFor="subscribe-email" className="text-sm font-medium text-card-foreground">
+            Email
+          </label>
+          <Input
+            id="subscribe-email"
+            type="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            disabled={isSubmitting}
+            className="h-10"
+          />
         </div>
-      </fieldset>
+      ) : null}
+
+      {displayName.trim().length > 0 && email.trim().length > 0 ? (
+        <fieldset disabled={isSubmitting}>
+          <legend className="mb-3 text-sm font-medium text-card-foreground">
+            通知対象
+          </legend>
+          <div className="flex flex-col gap-3">
+            {sources.map((source) => (
+              <label
+                key={source.id}
+                className="flex cursor-pointer items-center gap-3"
+              >
+                <Checkbox
+                  checked={selected.includes(source.id)}
+                  onCheckedChange={() => toggleSource(source.id)}
+                  aria-label={source.id}
+                />
+                <SourceInlineLabel
+                  source={source.id}
+                  className="text-sm text-card-foreground"
+                  iconClassName="size-4"
+                />
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      ) : null}
 
       <Button
         type="submit"

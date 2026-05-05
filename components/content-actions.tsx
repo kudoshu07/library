@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Heart } from "lucide-react"
+import { Heart, MessageCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ShareActions } from "@/components/share-actions"
 import { fetchLikeCounts, incrementLikeCount, readLocalLikes, writeLocalLikes } from "@/lib/likes-client"
@@ -10,11 +10,13 @@ export function ContentActions({
   contentId,
   title,
   canonicalUrl,
+  commentPostId,
   className,
 }: {
   contentId: string
   title: string
   canonicalUrl: string
+  commentPostId?: string
   className?: string
 }) {
   const [ready, setReady] = useState(false)
@@ -46,6 +48,31 @@ export function ContentActions({
   }, [contentId])
 
   const entry = useMemo(() => likesById[contentId] ?? { count: 0, liked: false }, [likesById, contentId])
+
+  const [commentCount, setCommentCount] = useState<number | null>(null)
+  useEffect(() => {
+    if (!commentPostId) return
+    const controller = new AbortController()
+    fetch(
+      `/api/comments?post_id=${encodeURIComponent(commentPostId)}&count_only=1`,
+      { signal: controller.signal, cache: "no-store" },
+    )
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data && typeof data.count === "number") setCommentCount(data.count)
+      })
+      .catch(() => {})
+    return () => controller.abort()
+  }, [commentPostId])
+
+  const onComment = () => {
+    const target = document.getElementById("comments")
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "start" })
+    } else {
+      window.location.hash = "#comments"
+    }
+  }
 
   const onLike = () => {
     setLikesById((prev) => {
@@ -87,6 +114,17 @@ export function ContentActions({
         <Heart className={cn("size-4", entry.liked && "fill-current")} />
         <span>{entry.count}</span>
       </button>
+      {commentPostId ? (
+        <button
+          type="button"
+          className="inline-flex items-center gap-1 text-xs transition-colors hover:text-sky-600"
+          aria-label="コメントへ移動"
+          onClick={onComment}
+        >
+          <MessageCircle className="size-4" />
+          <span>{commentCount ?? 0}</span>
+        </button>
+      ) : null}
       <ShareActions title={title} url={canonicalUrl} />
     </div>
   )
