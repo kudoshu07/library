@@ -17,6 +17,12 @@ export const dynamic = "force-dynamic"
 
 const payloadSchema = z.object({
   email: z.string().trim().toLowerCase().email("invalid_email").max(254),
+  displayName: z
+    .string()
+    .trim()
+    .min(1, "display_name_required")
+    .max(30, "display_name_too_long")
+    .refine((v) => !/[\r\n\t]/.test(v), { message: "display_name_invalid" }),
   sources: z
     .array(z.string())
     .min(1, "sources_required")
@@ -60,6 +66,8 @@ export async function POST(req: Request) {
     .eq("email", parsed.email)
     .maybeSingle()
 
+  const displayName = parsed.displayName
+
   if (selectError) {
     console.error("supabase select error", selectError)
     return NextResponse.json({ error: "database_error" }, { status: 500 })
@@ -70,10 +78,10 @@ export async function POST(req: Request) {
 
   if (existing) {
     if (existing.confirmed && !existing.unsubscribed_at) {
-      // Already an active subscriber — just update the source preferences.
+      // Already an active subscriber — just update the source preferences and display name.
       const { error: updateError } = await supabase
         .from("subscribers")
-        .update({ sources })
+        .update({ sources, display_name: displayName })
         .eq("id", existing.id)
       if (updateError) {
         console.error("supabase update error", updateError)
@@ -88,6 +96,7 @@ export async function POST(req: Request) {
         .from("subscribers")
         .update({
           sources,
+          display_name: displayName,
           confirm_token: confirmToken,
           confirmed: false,
           confirmed_at: null,
@@ -103,6 +112,7 @@ export async function POST(req: Request) {
     confirmToken = newToken()
     const { error: insertError } = await supabase.from("subscribers").insert({
       email: parsed.email,
+      display_name: displayName,
       sources,
       confirm_token: confirmToken,
       unsubscribe_token: newToken(),
@@ -125,7 +135,12 @@ export async function POST(req: Request) {
   }
 
   const confirmUrl = `${getSiteUrl()}/api/subscribe/confirm?token=${encodeURIComponent(confirmToken)}`
-  const email = renderConfirmEmail({ email: parsed.email, sources, confirmUrl })
+  const email = renderConfirmEmail({
+    email: parsed.email,
+    displayName,
+    sources,
+    confirmUrl,
+  })
 
   const sendResult = await resend.emails.send({
     from: getFromAddress(),

@@ -123,13 +123,18 @@ function emailLayout(opts: { previewText: string; bodyHtml: string }): string {
 
 export function renderConfirmEmail(opts: {
   email: string
+  displayName?: string | null
   confirmUrl: string
   sources: string[]
 }): { subject: string; html: string; text: string } {
   const labels = opts.sources.map((s) => sourceLabel(s)).join(", ")
   const previewText = "登録を完了するには、ボタンをクリックしてください。"
+  const greeting = opts.displayName
+    ? `<p style="margin:0 0 16px;font-size:14px;line-height:1.7;"><strong>${escapeHtml(opts.displayName)}</strong> さん、ご登録ありがとうございます。</p>`
+    : ""
   const bodyHtml = `
     <h1 style="margin:0 0 12px;font-size:20px;line-height:1.4;">登録の確認</h1>
+    ${greeting}
     <p style="margin:0 0 16px;font-size:14px;line-height:1.7;">
       Kudo Shu Library の更新通知を <strong>${escapeHtml(opts.email)}</strong> 宛に登録しようとしています。
       下のボタンをクリックして登録を完了してください。
@@ -149,10 +154,13 @@ export function renderConfirmEmail(opts: {
     <p style="margin:24px 0 0;font-size:12px;line-height:1.7;color:${PALETTE.muted};">
       心当たりがない場合は、このメールを破棄してください。確認しない限り登録は完了しません。
     </p>`
+  const textGreeting = opts.displayName
+    ? `${opts.displayName} さん、ご登録ありがとうございます。\n\n`
+    : ""
   const text = [
     "Kudo Shu Library の更新通知の登録",
     "",
-    `登録メール: ${opts.email}`,
+    `${textGreeting}登録メール: ${opts.email}`,
     `購読対象: ${labels || "(未選択)"}`,
     "",
     "以下の URL を開いて登録を確定してください。",
