@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
-import { getSiteUrl, getSupabaseClient } from "@/lib/newsletter"
+import { getSiteUrl, getSupabaseClient, sourceLabel } from "@/lib/newsletter"
+import { postSlackMessage, slackEscape } from "@/lib/slack"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -22,7 +23,7 @@ export async function GET(req: Request) {
 
   const { data: row, error: selectError } = await supabase
     .from("subscribers")
-    .select("id, email, confirmed, unsubscribed_at")
+    .select("id, email, confirmed, unsubscribed_at, display_name, sources")
     .eq("confirm_token", token)
     .maybeSingle()
 
@@ -52,6 +53,16 @@ export async function GET(req: Request) {
     console.error("supabase update error", updateError)
     return NextResponse.redirect(`${site}/subscribe/confirmed?status=error`, 303)
   }
+
+  const displayName = row.display_name?.trim() || "(名無し)"
+  const sourcesArr = Array.isArray(row.sources) ? (row.sources as string[]) : []
+  const labels = sourcesArr.map((s) => sourceLabel(s)).join(", ") || "(未選択)"
+  const slackText = [
+    "KudoShuLibraryのメルマガ新規登録🎉",
+    `・${slackEscape(displayName)}`,
+    `・${slackEscape(labels)}`,
+  ].join("\n")
+  void postSlackMessage(slackText)
 
   return NextResponse.redirect(`${site}/subscribe/confirmed?status=ok`, 303)
 }
