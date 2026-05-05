@@ -58,7 +58,7 @@ export async function GET(req: Request) {
   const sourcesArr = Array.isArray(row.sources) ? (row.sources as string[]) : []
   const labels = sourcesArr.map((s) => sourceLabel(s)).join(", ") || "(未選択)"
   const slackText = [
-    "KudoShuLibraryのメルマガ新規登録🎉",
+    "KudoShuLibraryのニュースレター新規登録🎉",
     `・${slackEscape(displayName)}`,
     `・${slackEscape(labels)}`,
   ].join("\n")

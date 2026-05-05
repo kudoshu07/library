@@ -255,7 +255,7 @@ export function renderReplyNotificationEmail(opts: {
     <p style="margin:0;font-size:12px;line-height:1.7;color:${PALETTE.muted};">
       返信メール通知の設定は
       <a href="${escapeHtml(opts.accountUrl)}" style="color:${PALETTE.muted};text-decoration:underline;">アカウント画面</a>
-      から変更できます。メルマガ自体を停止する場合は
+      から変更できます。ニュースレター自体を停止する場合は
       <a href="${escapeHtml(opts.unsubscribeUrl)}" style="color:${PALETTE.muted};text-decoration:underline;">こちら</a>
       から。
     </p>`
@@ -268,7 +268,7 @@ export function renderReplyNotificationEmail(opts: {
     "",
     "---",
     `通知設定の変更: ${opts.accountUrl}`,
-    `メルマガを停止する: ${opts.unsubscribeUrl}`,
+    `ニュースレターを停止する: ${opts.unsubscribeUrl}`,
   ].join("\n")
   return {
     subject,

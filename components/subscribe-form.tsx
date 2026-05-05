@@ -243,7 +243,7 @@ export function SubscribeForm({
               送信中…
             </>
           ) : (
-            "Subscribe"
+            "購読"
           )}
         </Button>
         <a

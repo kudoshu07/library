@@ -32,7 +32,7 @@ export default async function LoginPage({
           ログイン
         </h1>
         <p className="mt-2 text-sm text-muted-foreground text-pretty">
-          メルマガに登録済みのメールアドレスを入力すると、ログインリンクをお送りします。パスワードは不要です。
+          ニュースレターに登録済みのメールアドレスを入力すると、ログインリンクをお送りします。パスワードは不要です。
         </p>
       </div>
       <LoginForm next={safeNext} status={sp.status} />

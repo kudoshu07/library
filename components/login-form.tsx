@@ -15,8 +15,8 @@ const ERROR_MESSAGES: Record<string, string> = {
   invalid_input: "入力内容に誤りがあります。",
   invalid_email: "メールアドレスの形式が正しくありません。",
   invalid_json: "送信に失敗しました。もう一度お試しください。",
-  not_subscribed: "このメールアドレスはメルマガに登録されていません。",
-  not_confirmed: "メルマガの登録確認が完了していません。確認メールのリンクをクリックしてください。",
+  not_subscribed: "このメールアドレスはニュースレターに登録されていません。",
+  not_confirmed: "ニュースレターの登録確認が完了していません。確認メールのリンクをクリックしてください。",
   rate_limited: "ログインリンクの発行が多すぎます。1 分ほどお待ちください。",
   database_error: "データベースエラーが発生しました。時間をおいてお試しください。",
   email_send_failed: "ログインメールの送信に失敗しました。時間をおいてお試しください。",
@@ -127,7 +127,7 @@ export function LoginForm({
           className="h-10"
         />
         <p className="text-xs text-muted-foreground">
-          メルマガ登録に使ったメールアドレスを入力してください。
+          ニュースレター登録に使ったメールアドレスを入力してください。
         </p>
       </div>
 

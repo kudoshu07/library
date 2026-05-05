@@ -91,7 +91,7 @@ export function AccountForm({
   }
 
   const handleUnsubscribe = async () => {
-    if (!confirm("メルマガを解除すると、このメールアドレスで投稿したコメントもすべて削除されます。続けてよろしいですか？")) {
+    if (!confirm("ニュースレターを解除すると、このメールアドレスで投稿したコメントもすべて削除されます。続けてよろしいですか？")) {
       return
     }
     setBusyAction("unsubscribe")
@@ -197,7 +197,7 @@ export function AccountForm({
       </div>
 
       <div className="flex flex-col gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-6">
-        <span className="text-sm font-medium text-destructive">メルマガを解除</span>
+        <span className="text-sm font-medium text-destructive">ニュースレターを解除</span>
         <p className="text-xs text-muted-foreground">
           解除するとメール配信が止まり、これまで投稿したコメントもすべて削除されます。
         </p>
@@ -207,7 +207,7 @@ export function AccountForm({
           onClick={handleUnsubscribe}
           disabled={busyAction !== null}
         >
-          {busyAction === "unsubscribe" ? "退会処理中…" : "メルマガを解除する"}
+          {busyAction === "unsubscribe" ? "退会処理中…" : "ニュースレターを解除する"}
         </Button>
       </div>
     </div>

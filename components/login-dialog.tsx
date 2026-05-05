@@ -26,7 +26,7 @@ export function LoginDialog({
         <DialogHeader>
           <DialogTitle>ログイン</DialogTitle>
           <DialogDescription>
-            メルマガに登録済みのメールアドレスにログインリンクをお送りします。
+            ニュースレターに登録済みのメールアドレスにログインリンクをお送りします。
           </DialogDescription>
         </DialogHeader>
         <LoginForm next={next} embedded />
