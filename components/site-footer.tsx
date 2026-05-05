@@ -12,7 +12,7 @@ export function SiteFooter() {
           </Link>
           {ENABLE_SUBSCRIBE_UI && (
             <Link href="/subscribe" className="transition-colors hover:text-foreground">
-              Subscribe
+              購読
             </Link>
           )}
           <Link href="/privacy" className="transition-colors hover:text-foreground">

@@ -10,7 +10,7 @@ import { ENABLE_SUBSCRIBE_UI } from "@/lib/feature-flags"
 
 const navLinks = [
   { href: "/home", label: "Contents" },
-  { href: "/subscribe", label: "Subscribe" },
+  { href: "/subscribe", label: "購読" },
 ].filter((link) => ENABLE_SUBSCRIBE_UI || link.href !== "/subscribe")
 
 export function SiteHeader() {

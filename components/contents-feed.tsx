@@ -593,7 +593,7 @@ export function ContentsFeed({
                       className="inline-flex h-12 items-center justify-center rounded-full bg-[#264F8B] text-sm font-semibold text-white transition hover:bg-[#1f4376] min-[800px]:max-[1024px]:mx-auto min-[800px]:max-[1024px]:h-10 min-[800px]:max-[1024px]:w-10 min-[800px]:max-[1024px]:px-0 min-[1025px]:w-full min-[1025px]:px-5"
                     >
                       <Mail className="size-4 min-[1025px]:hidden" />
-                      <span className="min-[800px]:max-[1024px]:hidden">メルマガ登録</span>
+                      <span className="min-[800px]:max-[1024px]:hidden">購読</span>
                     </button>
                   )
                 )}
@@ -651,9 +651,9 @@ export function ContentsFeed({
                     {isLoggedIn ? (
                       <span
                         className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-[#264F8B] bg-white px-4 text-sm font-semibold text-[#264F8B]"
-                        aria-label="メルマガ登録済み"
+                        aria-label="購読中"
                       >
-                        <span className="whitespace-nowrap">メルマガ登録済み✅</span>
+                        <span className="whitespace-nowrap">購読中✅</span>
                       </span>
                     ) : (
                       <button
@@ -662,7 +662,7 @@ export function ContentsFeed({
                         className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-[#264F8B] bg-white px-4 text-sm font-semibold text-[#264F8B] transition hover:bg-slate-50"
                       >
                         <Mail className="size-4" />
-                        <span className="whitespace-nowrap">メルマガ登録</span>
+                        <span className="whitespace-nowrap">購読</span>
                       </button>
                     )}
                   </div>
@@ -904,7 +904,7 @@ export function ContentsFeed({
                 className="flex h-[clamp(3.75rem,8svh,4.5rem)] flex-col items-center justify-center gap-1 px-1 text-[10px] font-semibold leading-none text-slate-700 sm:text-xs"
               >
                 <Mail className="size-5" />
-                メルマガ
+                購読
               </button>
             )
           )}
@@ -978,7 +978,7 @@ export function ContentsFeed({
                     className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-semibold text-slate-800 hover:bg-slate-100"
                   >
                     <Mail className="size-4" />
-                    メルマガ登録
+                    購読
                   </button>
                 )
               )}
@@ -1086,10 +1086,10 @@ export function ContentsFeed({
         >
           <DialogContent className="max-h-[90svh] overflow-y-auto sm:max-w-lg">
             {subscribeStatus === "confirmation_sent" || subscribeStatus === "updated" ? (
-              <DialogTitle className="sr-only">メルマガ登録</DialogTitle>
+              <DialogTitle className="sr-only">ニュースレター登録</DialogTitle>
             ) : (
               <DialogHeader>
-                <DialogTitle>メルマガ登録</DialogTitle>
+                <DialogTitle>ニュースレター登録</DialogTitle>
                 <DialogDescription>
                   新しいコンテンツを見逃さないよう、メールでお知らせします💌
                 </DialogDescription>
@@ -1106,7 +1106,7 @@ export function ContentsFeed({
             <DialogHeader>
               <DialogTitle>登録情報</DialogTitle>
               <DialogDescription>
-                表示名や通知設定の変更、メルマガ解除ができます。
+                表示名や通知設定の変更、ニュースレター解除ができます。
               </DialogDescription>
             </DialogHeader>
             <AccountForm
