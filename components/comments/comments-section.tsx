@@ -58,19 +58,42 @@ export function CommentsSection({ postId }: { postId: string }) {
     }
   }, [postId])
 
-  const { topLevel, repliesByParent } = useMemo(() => {
-    const top: CommentListItem[] = []
-    const map = new Map<string, CommentListItem[]>()
-    for (const c of state.comments) {
-      if (c.parentId) {
-        const list = map.get(c.parentId) ?? []
-        list.push(c)
-        map.set(c.parentId, list)
-      } else {
-        top.push(c)
+  const { topLevel, repliesByRoot, replyingToNameById } = useMemo(() => {
+    const byId = new Map<string, CommentListItem>()
+    for (const c of state.comments) byId.set(c.id, c)
+    const findRoot = (c: CommentListItem): CommentListItem => {
+      let cur = c
+      let safety = 0
+      while (cur.parentId && safety < 32) {
+        const p = byId.get(cur.parentId)
+        if (!p) break
+        cur = p
+        safety++
       }
+      return cur
     }
-    return { topLevel: top, repliesByParent: map }
+    const top: CommentListItem[] = []
+    const replies = new Map<string, CommentListItem[]>()
+    const replyingToName = new Map<string, string>()
+    for (const c of state.comments) {
+      if (!c.parentId) {
+        top.push(c)
+        continue
+      }
+      const root = findRoot(c)
+      if (c.parentId !== root.id) {
+        const parent = byId.get(c.parentId)
+        if (parent) replyingToName.set(c.id, parent.author.displayName)
+      }
+      const list = replies.get(root.id) ?? []
+      list.push(c)
+      replies.set(root.id, list)
+    }
+    return {
+      topLevel: top,
+      repliesByRoot: replies,
+      replyingToNameById: replyingToName,
+    }
   }, [state.comments])
 
   const addComment = (c: CommentListItem) => {
@@ -143,7 +166,8 @@ export function CommentsSection({ postId }: { postId: string }) {
             <CommentItem
               key={c.id}
               comment={c}
-              replies={repliesByParent.get(c.id)}
+              replies={repliesByRoot.get(c.id)}
+              replyingToNameById={replyingToNameById}
               postId={postId}
               viewer={state.viewer}
               onReplyAdded={addComment}

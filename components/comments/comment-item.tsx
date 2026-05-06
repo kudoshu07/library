@@ -19,6 +19,8 @@ export type Viewer = {
 export function CommentItem({
   comment,
   replies,
+  replyingToNameById,
+  replyingToName = null,
   postId,
   viewer,
   onReplyAdded,
@@ -29,6 +31,8 @@ export function CommentItem({
 }: {
   comment: CommentListItem
   replies?: CommentListItem[]
+  replyingToNameById?: Map<string, string>
+  replyingToName?: string | null
   postId: string
   viewer: Viewer
   onReplyAdded: (c: CommentListItem) => void
@@ -161,6 +165,11 @@ export function CommentItem({
             </form>
           ) : (
             <div className="mt-1">
+              {replyingToName ? (
+                <p className="mb-1 text-xs text-muted-foreground">
+                  返信先: <span className="text-sky-600">@{replyingToName}</span>
+                </p>
+              ) : null}
               <CommentBody body={comment.body} />
             </div>
           )}
@@ -180,8 +189,7 @@ export function CommentItem({
                 {comment.likeCount > 0 ? <span>{comment.likeCount}</span> : null}
               </button>
 
-              {!isReply &&
-              viewer.isLoggedIn &&
+              {viewer.isLoggedIn &&
               !viewer.needsDisplayName &&
               !viewer.banned ? (
                 <button
@@ -244,6 +252,7 @@ export function CommentItem({
                 <CommentItem
                   key={r.id}
                   comment={r}
+                  replyingToName={replyingToNameById?.get(r.id) ?? null}
                   postId={postId}
                   viewer={viewer}
                   onReplyAdded={onReplyAdded}
