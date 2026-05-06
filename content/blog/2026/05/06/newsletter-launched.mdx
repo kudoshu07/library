@@ -1,0 +1,229 @@
+---
+title: "ニュースレター(購読)機能・コメント機能を追加しました🎉"
+date: "2026-05-06T09:00:00.000Z"
+slug: "newsletter-launched"
+summary: "Kudo Shu Library に、ニュースレター(購読)機能とコメント機能を追加しました。実装に使ったツールと、購読～配信、コメント投稿までの構造をまとめます。"
+tags: ["Development"]
+thumbnail: "/newsletter-launched/thumbnail_newsletter-launched.png"
+---
+
+
+<h2>リリース概要</h2>
+
+<p>Kudo Shu Library に、2 つの機能を追加しました🎉</p>
+
+<ul>
+  <li><strong>ニュースレター(購読)機能</strong> — Blog / note / Instagram (kudoshu_vcook, onoshu_photo) / Podcast (工藤柊のオチのない話 / よな恋ラジオ / ヴィーガンの裏側) の中から、好きなチャネルだけを選んで新着メールを受け取れます。</li>
+  <li><strong>コメント機能</strong> — ブログ記事に対して、ニュースレター登録者がそのままログインしてコメント・返信・いいねができます。</li>
+</ul>
+
+<p><strong>「ニュースレター登録 = ログインアカウント」</strong>として設計しました。1 度メール登録すれば、そのアドレスへのマジックリンクでコメント機能にもログインでき、返信が付いたらメールで通知が届きます。</p>
+
+<h2>背景</h2>
+
+<h3>ニュースレター(購読)機能</h3>
+<p>ブログの更新をInstagramなどで発信してきました。</p>
+<p>しかし、それでは読みたい人が見逃してしまう可能性があるため、確実に届くメールでの通知機能として追加しました。</p>
+<p>また、個人的に<strong>「〇〇人が登録してくれている...！」と分かると、書く励みにもなる</strong>ため、作ってみました。</p>
+
+<p>（ぜひ<a href="/subscribe/">購読</a>してください🥺）</p>
+
+<h3>コメント機能</h3>
+<p>僕はTwitterが大好きでした。</p>
+<p>そのため、このsiteのhomeもTwitterライクなものにしています。</p>
+<p>Twitterで色々な人の意見が煩雑に飛び交い、中には「お、この人の言うこと分かるなー」というものもごく稀にある。</p>
+<p>そんな世界観の一歩目としてコメント機能を追加してみました。</p>
+<p>（ぜひ<strong>気軽にコメント</strong>ください😋）</p>
+
+<h2>使用したツール</h2>
+
+<div style="overflow-x:auto;">
+  <table style="width:100%; min-width:520px; border-collapse:collapse; font-size:14px;">
+    <thead>
+      <tr>
+        <th style="border:1px solid #e2e8f0; background:#f8fafc; padding:8px; text-align:left;">レイヤー</th>
+        <th style="border:1px solid #e2e8f0; background:#f8fafc; padding:8px; text-align:left;">使用ツール</th>
+        <th style="border:1px solid #e2e8f0; background:#f8fafc; padding:8px; text-align:left;">役割</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="border:1px solid #e2e8f0; padding:8px;">フロントエンド</td>
+        <td style="border:1px solid #e2e8f0; padding:8px;">Next.js 16 (App Router) / React 19 / TypeScript</td>
+        <td style="border:1px solid #e2e8f0; padding:8px;">登録ポップアップ、ログイン、アカウント、コメント欄</td>
+      </tr>
+      <tr>
+        <td style="border:1px solid #e2e8f0; padding:8px;">UI</td>
+        <td style="border:1px solid #e2e8f0; padding:8px;">Tailwind CSS / shadcn-ui (Radix UI)</td>
+        <td style="border:1px solid #e2e8f0; padding:8px;">フォーム、ダイアログ、チェックボックスなど</td>
+      </tr>
+      <tr>
+        <td style="border:1px solid #e2e8f0; padding:8px;">入力バリデーション</td>
+        <td style="border:1px solid #e2e8f0; padding:8px;">zod</td>
+        <td style="border:1px solid #e2e8f0; padding:8px;">登録情報・コメント本文の検証</td>
+      </tr>
+      <tr>
+        <td style="border:1px solid #e2e8f0; padding:8px;">サーバ API</td>
+        <td style="border:1px solid #e2e8f0; padding:8px;">Next.js Route Handlers (Node runtime)</td>
+        <td style="border:1px solid #e2e8f0; padding:8px;">/api/subscribe、/api/auth、/api/comments、/api/account など</td>
+      </tr>
+      <tr>
+        <td style="border:1px solid #e2e8f0; padding:8px;">データベース</td>
+        <td style="border:1px solid #e2e8f0; padding:8px;">Supabase (PostgreSQL)</td>
+        <td style="border:1px solid #e2e8f0; padding:8px;">購読者、配信ログ、ログイン／セッション、コメント、いいね</td>
+      </tr>
+      <tr>
+        <td style="border:1px solid #e2e8f0; padding:8px;">メール配信</td>
+        <td style="border:1px solid #e2e8f0; padding:8px;">Resend</td>
+        <td style="border:1px solid #e2e8f0; padding:8px;">確認メール、ログインリンク、新着通知、コメント返信通知</td>
+      </tr>
+      <tr>
+        <td style="border:1px solid #e2e8f0; padding:8px;">通知連携</td>
+        <td style="border:1px solid #e2e8f0; padding:8px;">Slack Incoming Webhook</td>
+        <td style="border:1px solid #e2e8f0; padding:8px;">新規コメントを管理用 Slack チャンネルへ通知</td>
+      </tr>
+      <tr>
+        <td style="border:1px solid #e2e8f0; padding:8px;">ホスティング</td>
+        <td style="border:1px solid #e2e8f0; padding:8px;">Vercel</td>
+        <td style="border:1px solid #e2e8f0; padding:8px;">サイト本体のデプロイ</td>
+      </tr>
+      <tr>
+        <td style="border:1px solid #e2e8f0; padding:8px;">CI / 定期実行</td>
+        <td style="border:1px solid #e2e8f0; padding:8px;">GitHub Actions</td>
+        <td style="border:1px solid #e2e8f0; padding:8px;">毎時の外部コンテンツ同期＋新着メール送信、DB マイグレーション自動適用</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>機能の構造</h2>
+
+<h3>ニュースレター(購読)機能</h3>
+
+<h4>1. 登録フロー（ダブルオプトイン）</h4>
+
+<p>ヘッダーやフッターの「ニュースレター登録」ボタンからポップアップを開き、メールアドレス・表示名・購読したいチャネルを入力します。送信後はこのように動きます。</p>
+
+<ol>
+  <li>クライアントから <code>POST /api/subscribe</code> を叩く</li>
+  <li>サーバ側で zod バリデーションを通したあと、<code>subscribers</code> テーブルに 1 行 INSERT または UPDATE</li>
+  <li>ランダムな <code>confirm_token</code> を発行し、Resend 経由で確認メールを送信</li>
+  <li>メール内のボタン → <code>GET /api/subscribe/confirm?token=...</code> で <code>confirmed = true</code> に</li>
+  <li>確認完了ページ <code>/subscribe/confirmed</code> を表示</li>
+</ol>
+
+<p>すでに登録済みのメールアドレスで再送信した場合は、購読対象チャネルと表示名だけを更新する仕様になっています。</p>
+
+<h4>2. 新着通知の配信フロー</h4>
+
+<p>毎時 1 回、GitHub Actions の <code>Sync External Content</code> ワークフローが Instagram / note を取得して <code>content/external/</code> に書き出し、その直後に <code>pnpm run notify:newsletter</code>（実体は <code>scripts/notify-new-content.mjs</code>）を実行します。</p>
+
+<ol>
+  <li>サイトに掲載されている全コンテンツを集計し、<code>notifications_log</code> テーブルにまだ記録のないものだけを抽出</li>
+  <li>購読者ごとに、その人が選んだチャネルとマッチする新着だけを束ねる</li>
+  <li>1 通あたり最大 10 件、送信間隔を空けながら Resend で順次配信</li>
+  <li>送信が完了したコンテンツ ID を <code>notifications_log</code> に追記し、二重送信を防止</li>
+</ol>
+
+<p>環境変数が未設定の場合や DRY_RUN モードのときは安全に no-op するようになっています。</p>
+
+<h4>3. 配信停止・購読変更</h4>
+
+<p>各メールのフッターには専用の解除リンクが入っています。発行済みの <code>unsubscribe_token</code> を使うので、ログインしなくてもワンクリックで停止できます。停止後は <code>/subscribe/unsubscribed</code> ページに遷移します。</p>
+
+<p>登録メールアドレスでログインすれば、<code>/account</code> から購読チャネルや表示名・通知設定を後から変更することもできます。</p>
+
+<h3>コメント機能</h3>
+
+<h4>1. 投稿の流れ</h4>
+
+<p>各ブログ記事の下部にコメント欄を表示しています。</p>
+
+<ol>
+  <li>未ログインの場合は「ログイン」または「ニュースレター登録」のボタンを表示</li>
+  <li>ログイン済みなら本文入力欄を表示し、<code>POST /api/comments</code> へ送信</li>
+  <li>サーバ側で zod バリデーション → <code>comments</code> テーブルに INSERT</li>
+  <li>挿入後、親コメントの投稿者にメール、管理用 Slack チャンネルに Webhook で通知（どちらも fire-and-forget）</li>
+</ol>
+
+<h4>2. スレッド構造</h4>
+
+<p>「記事 → コメント → 返信」までの <strong>2 階層</strong>に制限しています（深いネストは避け、議論が見渡しやすい形にしました）。これはサーバ API 側で <code>parent_id</code> をたどって enforce しています。本文は最大 1000 文字、同一ユーザーは 1 分間に 5 件までというレート制限つきです。</p>
+
+<h4>3. 編集・削除</h4>
+
+<p>自分のコメントは投稿後でも編集・削除できます。編集時は <code>edited_at</code> が記録され、UI にも「編集済み」が表示されます。サイト所有者だけは他人のコメントも削除可能です。</p>
+
+<h4>4. いいね</h4>
+
+<p>1 コメント × 1 ユーザー = 1 いいね、トグル式です。<code>POST /api/comments/[id]/like</code> と <code>DELETE</code> で <code>comment_likes</code> テーブルを増減させ、自分が「いいね」したかどうかは初回取得時に一緒に返しています。</p>
+
+<h4>5. 返信通知メール</h4>
+
+<p>自分のコメントに返信が付くと、Resend からメール通知が届きます。アカウント設定 <code>notify_on_reply</code> でいつでも OFF にできます。本文は 280 文字で切り詰めて引用し、フッターから設定変更や購読停止に飛べるようにしています。</p>
+
+<h4>6. モデレーション</h4>
+
+<p>サイト所有者は Slack 通知から問題のあるコメントに気付いたら、<code>/admin</code> 経由で対象アドレスを <strong>BAN</strong> できます。BAN されたユーザーは新規投稿・返信・編集・いいねがすべてブロックされますが、過去のコメントは表示されたままになります（議論の文脈を壊さない方針）。</p>
+
+<h3>共通：マジックリンクログイン</h3>
+
+<p>コメント投稿には、ニュースレター登録済みアドレスへのマジックリンクログインを使います。パスワードは持たない設計です。</p>
+
+<ul>
+  <li><code>login_tokens</code>: 15 分で失効する 1 回限りの使い捨てトークン</li>
+  <li><code>sessions</code>: 認証後に発行される 90 日有効のサーバ側セッション（HttpOnly Cookie）</li>
+  <li>同一アドレスから 1 分以内に 3 回まで、というシンプルなレート制限つき</li>
+</ul>
+
+<h2>データベーススキーマ</h2>
+
+<p>Supabase 上に以下のテーブルを用意しています。マイグレーションは <code>supabase/migrations/</code> 以下に SQL を置くと、main ブランチへの push で GitHub Actions が自動適用する仕組みです。</p>
+
+<div style="overflow-x:auto;">
+  <table style="width:100%; min-width:520px; border-collapse:collapse; font-size:14px;">
+    <thead>
+      <tr>
+        <th style="border:1px solid #e2e8f0; background:#f8fafc; padding:8px; text-align:left;">テーブル</th>
+        <th style="border:1px solid #e2e8f0; background:#f8fafc; padding:8px; text-align:left;">用途</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="border:1px solid #e2e8f0; padding:8px;"><code>subscribers</code></td>
+        <td style="border:1px solid #e2e8f0; padding:8px;">登録者本体。メール、表示名、購読チャネル、確認状態、解除トークン、返信通知の ON/OFF、BAN フラグなど</td>
+      </tr>
+      <tr>
+        <td style="border:1px solid #e2e8f0; padding:8px;"><code>notifications_log</code></td>
+        <td style="border:1px solid #e2e8f0; padding:8px;">配信済みコンテンツの記録。同じ記事が二重に送られないようにするためのキー</td>
+      </tr>
+      <tr>
+        <td style="border:1px solid #e2e8f0; padding:8px;"><code>login_tokens</code></td>
+        <td style="border:1px solid #e2e8f0; padding:8px;">マジックリンクの一時トークン（15 分）</td>
+      </tr>
+      <tr>
+        <td style="border:1px solid #e2e8f0; padding:8px;"><code>sessions</code></td>
+        <td style="border:1px solid #e2e8f0; padding:8px;">ログイン後のサーバ側セッション（90 日）</td>
+      </tr>
+      <tr>
+        <td style="border:1px solid #e2e8f0; padding:8px;"><code>comments</code></td>
+        <td style="border:1px solid #e2e8f0; padding:8px;">ブログコメント本体。<code>post_id</code>＋<code>parent_id</code> で 2 階層スレッドを表現</td>
+      </tr>
+      <tr>
+        <td style="border:1px solid #e2e8f0; padding:8px;"><code>comment_likes</code></td>
+        <td style="border:1px solid #e2e8f0; padding:8px;">コメントへの「いいね」（1 ユーザー × 1 コメント = 1 件）</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<p>すべてのテーブルは Row Level Security を有効化し、サーバから <code>SUPABASE_SERVICE_ROLE_KEY</code> でだけアクセスする運用にしています。クライアント（ブラウザ）から DB を直接叩くことはありません。</p>
+
+<h2>同時にやったこと</h2>
+
+<ul>
+  <li>登録フォームのポップアップ化と、サイト内のボタン文言の統一</li>
+  <li><a href="/privacy/">プライバシーポリシー</a>のページ追加と、登録フォームからの導線</li>
+  <li>マジックリンクで入れる <code>/account</code> ページ（表示名・購読チャネル・返信通知設定の編集）</li>
+  <li>所有者向けモデレーション画面 <code>/admin</code></li>
+</ul>
