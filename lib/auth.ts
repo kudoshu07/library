@@ -15,6 +15,12 @@ export const SESSION_COOKIE = "ksl_session"
 
 export const LOGIN_TOKEN_TTL_MS = 15 * 60 * 1000
 export const SESSION_TTL_MS = 90 * 24 * 60 * 60 * 1000
+// Hard cap from the moment a session was first issued. Prevents an
+// indefinitely-extended cookie from outliving a stolen device.
+export const SESSION_ABSOLUTE_TTL_MS = 365 * 24 * 60 * 60 * 1000
+// Only extend the sliding window when less than this much time remains.
+// Keeps DB writes to roughly once per ~45 days per active session.
+const SESSION_REFRESH_THRESHOLD_MS = SESSION_TTL_MS / 2
 const LOGIN_RATE_WINDOW_MS = 60 * 1000
 const LOGIN_RATE_MAX = 3
 
@@ -233,6 +239,51 @@ export async function getSession(): Promise<Session | null> {
     banned: subscriber.banned ?? false,
     isOwner: isOwnerEmail(subscriber.email),
   }
+}
+
+export type TouchSessionResult =
+  | { kind: "extended"; maxAgeMs: number }
+  | { kind: "ok" }
+  | { kind: "expired" }
+  | { kind: "missing" }
+
+export async function touchSession(token: string): Promise<TouchSessionResult> {
+  let supabase
+  try {
+    supabase = getSupabaseClient()
+  } catch {
+    return { kind: "missing" }
+  }
+
+  const { data: session, error } = await supabase
+    .from("sessions")
+    .select("id, expires_at, issued_at")
+    .eq("token", token)
+    .maybeSingle()
+  if (error || !session) return { kind: "missing" }
+
+  const now = Date.now()
+  const expiresAt = new Date(session.expires_at).getTime()
+  if (expiresAt <= now) return { kind: "expired" }
+
+  if (expiresAt - now > SESSION_REFRESH_THRESHOLD_MS) return { kind: "ok" }
+
+  const issuedAt = new Date(session.issued_at).getTime()
+  const absoluteCap = issuedAt + SESSION_ABSOLUTE_TTL_MS
+  const target = Math.min(now + SESSION_TTL_MS, absoluteCap)
+  if (target <= expiresAt) return { kind: "ok" }
+
+  const newExpiresAt = new Date(target).toISOString()
+  const { error: updateError } = await supabase
+    .from("sessions")
+    .update({ expires_at: newExpiresAt })
+    .eq("id", session.id)
+  if (updateError) {
+    console.error("supabase session touch error", updateError)
+    return { kind: "ok" }
+  }
+
+  return { kind: "extended", maxAgeMs: target - now }
 }
 
 export async function destroySession(token: string): Promise<void> {
