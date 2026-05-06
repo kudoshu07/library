@@ -28,6 +28,7 @@ export default async function AccountPage() {
         email={session.email}
         initialDisplayName={session.displayName ?? ""}
         initialNotifyOnReply={session.notifyOnReply}
+        initialSources={session.sources}
       />
     </div>
   )
