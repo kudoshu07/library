@@ -161,41 +161,45 @@ export function SubscribeForm({
       className={formClass}
     >
       <div className="flex flex-col gap-2">
-        <label htmlFor="subscribe-display-name" className="text-sm font-medium text-card-foreground">
-          表示名
+        <label htmlFor="subscribe-email" className="text-sm font-medium text-card-foreground">
+          Email
         </label>
         <Input
-          id="subscribe-display-name"
-          type="text"
-          placeholder="工藤 柊"
-          value={displayName}
-          onChange={(e) => setDisplayName(e.target.value)}
+          id="subscribe-email"
+          type="email"
+          placeholder="you@example.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           required
-          maxLength={30}
           disabled={isSubmitting}
           className="h-10"
-          aria-describedby="subscribe-display-name-help"
+          aria-describedby="subscribe-email-help"
         />
-        <p id="subscribe-display-name-help" className="text-xs text-muted-foreground">
-          ブログへのコメントなどに表示されます
+        <p id="subscribe-email-help" className="text-xs text-muted-foreground">
+          購読のメール通知にのみ使用します👌
         </p>
       </div>
 
-      {displayName.trim().length > 0 ? (
+      {email.trim().length > 0 ? (
         <div className="flex flex-col gap-2">
-          <label htmlFor="subscribe-email" className="text-sm font-medium text-card-foreground">
-            Email
+          <label htmlFor="subscribe-display-name" className="text-sm font-medium text-card-foreground">
+            表示名
           </label>
           <Input
-            id="subscribe-email"
-            type="email"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            id="subscribe-display-name"
+            type="text"
+            placeholder="工藤 柊"
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
             required
+            maxLength={30}
             disabled={isSubmitting}
             className="h-10"
+            aria-describedby="subscribe-display-name-help"
           />
+          <p id="subscribe-display-name-help" className="text-xs text-muted-foreground">
+            ブログへのコメントなどに表示されます
+          </p>
         </div>
       ) : null}
 
