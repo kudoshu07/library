@@ -100,12 +100,15 @@ export function CommentsSection({ postId }: { postId: string }) {
   return (
     <section
       id="comments"
-      className="mt-12 border-t border-border pt-8"
+      className="mt-12 rounded-xl border border-border bg-card p-5 md:p-8"
       aria-label="コメント"
     >
-      <h2 className="mb-6 text-xl font-bold text-foreground">
+      <h2 className="text-xl font-bold text-foreground">
         コメント {state.loading ? "" : `(${state.comments.length})`}
       </h2>
+      <p className="mb-6 mt-2 text-sm text-muted-foreground">
+        気軽にコメントください。大変励みになります🙏
+      </p>
 
       {state.loading ? (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
