@@ -8,8 +8,10 @@ import {
   getResendClient,
   getSiteUrl,
   getSupabaseClient,
+  isSubscribableSource,
   renderLoginEmail,
 } from "@/lib/newsletter"
+import type { ContentSource } from "@/lib/data"
 
 export const SESSION_COOKIE = "ksl_session"
 
@@ -187,6 +189,7 @@ export type Session = {
   email: string
   displayName: string | null
   notifyOnReply: boolean
+  sources: ContentSource[]
   banned: boolean
   isOwner: boolean
 }
@@ -219,17 +222,23 @@ export async function getSession(): Promise<Session | null> {
 
   const { data: subscriber } = await supabase
     .from("subscribers")
-    .select("id, email, display_name, notify_on_reply, unsubscribed_at, banned")
+    .select("id, email, display_name, notify_on_reply, sources, unsubscribed_at, banned")
     .eq("id", session.subscriber_id)
     .maybeSingle()
   if (!subscriber) return null
   if (subscriber.unsubscribed_at) return null
+
+  const rawSources = Array.isArray(subscriber.sources) ? subscriber.sources : []
+  const sources = rawSources
+    .filter((value: unknown): value is string => typeof value === "string")
+    .filter(isSubscribableSource)
 
   return {
     subscriberId: subscriber.id,
     email: subscriber.email,
     displayName: subscriber.display_name,
     notifyOnReply: subscriber.notify_on_reply ?? true,
+    sources,
     banned: subscriber.banned ?? false,
     isOwner: isOwnerEmail(subscriber.email),
   }

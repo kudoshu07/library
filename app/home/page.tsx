@@ -35,6 +35,7 @@ export default async function HomeTimelinePage() {
         email: session.email,
         displayName: session.displayName ?? "",
         notifyOnReply: session.notifyOnReply,
+        sources: session.sources,
       }
     : null
 

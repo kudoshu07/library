@@ -5,7 +5,20 @@ import { useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
+import { Checkbox } from "@/components/ui/checkbox"
 import { AlertTriangle, CheckCircle2, Loader2 } from "lucide-react"
+import { SourceInlineLabel } from "@/components/source-ui"
+import type { ContentSource } from "@/lib/data"
+
+const NOTIFICATION_SOURCES: { id: ContentSource }[] = [
+  { id: "blog" },
+  { id: "note" },
+  { id: "ig_business" },
+  { id: "ig_photo" },
+  { id: "pod_ochinashi" },
+  { id: "pod_yonakoi" },
+  { id: "pod_vegan" },
+]
 
 const ERROR_MESSAGES: Record<string, string> = {
   invalid_input: "入力内容に誤りがあります。",
@@ -13,10 +26,21 @@ const ERROR_MESSAGES: Record<string, string> = {
   display_name_required: "表示名を入力してください。",
   display_name_too_long: "表示名は30文字以内で入力してください。",
   display_name_invalid: "表示名に改行・タブは使えません。",
+  sources_required: "通知対象を1つ以上選択してください。",
+  invalid_source: "通知対象に不正な値が含まれています。",
   no_changes: "変更がありません。",
   unauthorized: "セッションが切れました。再度ログインしてください。",
   database_error: "データベースエラーが発生しました。時間をおいてお試しください。",
   supabase_not_configured: "現在この機能は利用できません。",
+}
+
+function arraysEqualAsSets(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false
+  const setA = new Set(a)
+  for (const item of b) {
+    if (!setA.has(item)) return false
+  }
+  return true
 }
 
 function explainError(payload: { error?: string }): string {
@@ -29,16 +53,20 @@ export function AccountForm({
   email,
   initialDisplayName,
   initialNotifyOnReply,
+  initialSources = [],
 }: {
   email: string
   initialDisplayName: string
   initialNotifyOnReply: boolean
+  initialSources?: ContentSource[]
 }) {
   const router = useRouter()
   const [displayName, setDisplayName] = useState(initialDisplayName)
   const [notifyOnReply, setNotifyOnReply] = useState(initialNotifyOnReply)
+  const [sources, setSources] = useState<ContentSource[]>(initialSources)
   const [savedDisplayName, setSavedDisplayName] = useState(initialDisplayName)
   const [savedNotifyOnReply, setSavedNotifyOnReply] = useState(initialNotifyOnReply)
+  const [savedSources, setSavedSources] = useState<ContentSource[]>(initialSources)
   const [saveStatus, setSaveStatus] = useState<
     | { kind: "idle" }
     | { kind: "saving" }
@@ -47,17 +75,26 @@ export function AccountForm({
   >({ kind: "idle" })
   const [busyAction, setBusyAction] = useState<null | "logout" | "unsubscribe">(null)
 
+  const sourcesDirty = !arraysEqualAsSets(sources, savedSources)
   const isDirty =
     displayName.trim() !== savedDisplayName ||
-    notifyOnReply !== savedNotifyOnReply
+    notifyOnReply !== savedNotifyOnReply ||
+    sourcesDirty
+
+  const toggleSource = (id: ContentSource) => {
+    setSources((prev) =>
+      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id],
+    )
+  }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!isDirty || !displayName.trim()) return
+    if (!isDirty || !displayName.trim() || sources.length === 0) return
     setSaveStatus({ kind: "saving" })
     const payload: Record<string, unknown> = {}
     if (displayName.trim() !== savedDisplayName) payload.displayName = displayName.trim()
     if (notifyOnReply !== savedNotifyOnReply) payload.notifyOnReply = notifyOnReply
+    if (sourcesDirty) payload.sources = sources
     try {
       const res = await fetch("/api/account/profile", {
         method: "PATCH",
@@ -71,6 +108,7 @@ export function AccountForm({
       }
       setSavedDisplayName(displayName.trim())
       setSavedNotifyOnReply(notifyOnReply)
+      setSavedSources(sources)
       setSaveStatus({ kind: "saved" })
     } catch {
       setSaveStatus({
@@ -159,7 +197,42 @@ export function AccountForm({
           />
         </div>
 
-        <Button type="submit" className="w-full" disabled={!isDirty || !displayName.trim() || isSaving}>
+        <fieldset disabled={isSaving} className="flex flex-col gap-3">
+          <legend className="text-sm font-medium text-card-foreground">通知対象</legend>
+          <p className="text-xs text-muted-foreground">
+            選択したソースの新着コンテンツがメールで届きます（1つ以上選択してください）。
+          </p>
+          <div className="flex flex-col gap-3">
+            {NOTIFICATION_SOURCES.map((source) => (
+              <label
+                key={source.id}
+                className="flex cursor-pointer items-center gap-3"
+              >
+                <Checkbox
+                  checked={sources.includes(source.id)}
+                  onCheckedChange={() => toggleSource(source.id)}
+                  aria-label={source.id}
+                />
+                <SourceInlineLabel
+                  source={source.id}
+                  className="text-sm text-card-foreground"
+                  iconClassName="size-4"
+                />
+              </label>
+            ))}
+          </div>
+        </fieldset>
+
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={
+            !isDirty ||
+            !displayName.trim() ||
+            sources.length === 0 ||
+            isSaving
+          }
+        >
           {isSaving ? (
             <>
               <Loader2 className="size-4 animate-spin" />

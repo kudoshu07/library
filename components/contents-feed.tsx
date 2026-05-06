@@ -34,6 +34,7 @@ export type ContentsFeedSessionInfo = {
   email: string
   displayName: string
   notifyOnReply: boolean
+  sources: ContentSource[]
 }
 
 const ITEMS_PER_PAGE = 20
@@ -254,6 +255,9 @@ export function ContentsFeed({
   const [likesById, setLikesById] = useState<
     Record<string, { count: number; liked: boolean }>
   >({})
+  const [commentCountsByPostId, setCommentCountsByPostId] = useState<
+    Record<string, number>
+  >({})
 
   useEffect(() => {
     setResolvedProfileAvatarUrl(profileAvatarUrl)
@@ -377,6 +381,49 @@ export function ContentsFeed({
   const hasMore = visibleItems.length < filteredItems.length
   const visibleItemIds = useMemo(() => visibleItems.map((item) => item.id), [visibleItems])
   const visibleItemIdsKey = useMemo(() => visibleItemIds.join("|"), [visibleItemIds])
+  const visibleBlogPostIds = useMemo(
+    () => visibleItems.filter((item) => item.source === "blog").map((item) => item.url),
+    [visibleItems],
+  )
+  const visibleBlogPostIdsKey = useMemo(
+    () => visibleBlogPostIds.join("|"),
+    [visibleBlogPostIds],
+  )
+
+  useEffect(() => {
+    const postIds = visibleBlogPostIds
+    if (postIds.length === 0) return
+
+    const controller = new AbortController()
+    const params = new URLSearchParams()
+    for (const id of postIds) params.append("post_id", id)
+
+    fetch(`/api/comments/counts?${params.toString()}`, {
+      signal: controller.signal,
+      cache: "no-store",
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { counts?: Record<string, number> } | null) => {
+        if (!data?.counts) return
+        const counts = data.counts
+        setCommentCountsByPostId((prev) => {
+          const next = { ...prev }
+          let changed = false
+          for (const id of postIds) {
+            const value = counts[id]
+            if (!Number.isFinite(value)) continue
+            if (next[id] !== value) {
+              next[id] = value
+              changed = true
+            }
+          }
+          return changed ? next : prev
+        })
+      })
+      .catch(() => {})
+
+    return () => controller.abort()
+  }, [visibleBlogPostIdsKey])
 
   useEffect(() => {
     const ids = visibleItemIds
@@ -649,12 +696,14 @@ export function ContentsFeed({
                 <div className="px-6 pt-4">
                   <div className="flex justify-end">
                     {isLoggedIn ? (
-                      <span
-                        className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-[#264F8B] bg-white px-4 text-sm font-semibold text-[#264F8B]"
-                        aria-label="購読中"
+                      <button
+                        type="button"
+                        onClick={() => setAccountOpen(true)}
+                        className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-[#264F8B] bg-white px-4 text-sm font-semibold text-[#264F8B] transition hover:bg-slate-50"
+                        aria-label="購読中（登録情報を変更）"
                       >
-                        <span className="whitespace-nowrap">購読中✅</span>
-                      </span>
+                        <span className="whitespace-nowrap">購読中 ✅</span>
+                      </button>
                     ) : (
                       <button
                         type="button"
@@ -767,6 +816,11 @@ export function ContentsFeed({
                       likeCount={likesById[item.id]?.count ?? 0}
                       isLiked={likesById[item.id]?.liked ?? false}
                       onToggleLike={() => toggleLike(item.id)}
+                      commentCount={
+                        item.source === "blog"
+                          ? commentCountsByPostId[item.url] ?? 0
+                          : undefined
+                      }
                     />
                   ))}
                 </div>
@@ -1113,6 +1167,7 @@ export function ContentsFeed({
               email={sessionInfo.email}
               initialDisplayName={sessionInfo.displayName}
               initialNotifyOnReply={sessionInfo.notifyOnReply}
+              initialSources={sessionInfo.sources}
             />
           </DialogContent>
         </Dialog>

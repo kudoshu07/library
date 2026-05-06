@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
 import { getSession } from "@/lib/auth"
-import { getSupabaseClient } from "@/lib/newsletter"
+import {
+  SUBSCRIBABLE_SOURCES,
+  getSupabaseClient,
+  isSubscribableSource,
+} from "@/lib/newsletter"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -16,9 +20,18 @@ const schema = z
       .refine((v) => !/[\r\n\t]/.test(v), { message: "display_name_invalid" })
       .optional(),
     notifyOnReply: z.boolean().optional(),
+    sources: z
+      .array(z.string())
+      .min(1, "sources_required")
+      .max(SUBSCRIBABLE_SOURCES.length)
+      .refine((arr) => arr.every(isSubscribableSource), { message: "invalid_source" })
+      .optional(),
   })
   .refine(
-    (v) => v.displayName !== undefined || v.notifyOnReply !== undefined,
+    (v) =>
+      v.displayName !== undefined ||
+      v.notifyOnReply !== undefined ||
+      v.sources !== undefined,
     { message: "no_changes" },
   )
 
@@ -46,6 +59,9 @@ export async function PATCH(req: Request) {
   const update: Record<string, unknown> = {}
   if (body.displayName !== undefined) update.display_name = body.displayName
   if (body.notifyOnReply !== undefined) update.notify_on_reply = body.notifyOnReply
+  if (body.sources !== undefined) {
+    update.sources = Array.from(new Set(body.sources))
+  }
 
   let supabase
   try {

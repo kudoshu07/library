@@ -6,6 +6,7 @@ import { type ReactNode } from "react"
 import {
   ExternalLink,
   Heart,
+  MessageCircle,
 } from "lucide-react"
 import { type ContentItem, type ContentSource } from "@/lib/data"
 import { cn } from "@/lib/utils"
@@ -56,12 +57,14 @@ export function ContentCard({
   likeCount = 0,
   isLiked = false,
   onToggleLike,
+  commentCount,
 }: {
   item: ContentItem
   variant?: "feed" | "pickup"
   likeCount?: number
   isLiked?: boolean
   onToggleLike?: () => void
+  commentCount?: number
 }) {
   if (variant === "pickup") {
     return <PickupCard item={item} />
@@ -73,6 +76,7 @@ export function ContentCard({
       likeCount={likeCount}
       isLiked={isLiked}
       onToggleLike={onToggleLike}
+      commentCount={commentCount}
     />
   )
 }
@@ -82,11 +86,13 @@ function FeedCard({
   likeCount,
   isLiked,
   onToggleLike,
+  commentCount,
 }: {
   item: ContentItem
   likeCount: number
   isLiked: boolean
   onToggleLike?: () => void
+  commentCount?: number
 }) {
   const isExternal = item.source !== "blog"
   const isInstagram = item.source === "ig_business" || item.source === "ig_photo"
@@ -284,6 +290,16 @@ function FeedCard({
               <Heart className={cn("size-4", isLiked && "fill-current")} />
               <span>{likeCount}</span>
             </button>
+            {item.source === "blog" && (
+              <Link
+                href={`${item.url}#comments`}
+                className="inline-flex items-center gap-1 text-xs transition-colors hover:text-sky-600"
+                aria-label="コメントへ移動"
+              >
+                <MessageCircle className="size-4" />
+                <span>{commentCount ?? 0}</span>
+              </Link>
+            )}
             <ShareActions title={item.title} url={canonicalUrl} />
           </div>
         </div>
