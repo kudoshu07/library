@@ -71,7 +71,7 @@ export function SiteHeader() {
             trigger={
               <button
                 type="button"
-                className="rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                className="text-xs text-muted-foreground underline underline-offset-2 transition-colors hover:text-foreground"
               >
                 購読
               </button>
