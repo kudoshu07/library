@@ -284,6 +284,109 @@ export type NotificationContentItem = {
   summary?: string
   thumbnail?: string
   date?: string
+  body?: string
+}
+
+function formatDateJa(iso?: string): string {
+  if (!iso) return ""
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ""
+  return new Intl.DateTimeFormat("ja-JP", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  }).format(d)
+}
+
+function absolutizeUrls(html: string, siteUrl: string): string {
+  const base = siteUrl.replace(/\/$/, "")
+  return html.replace(/(\s(?:href|src))="\/(?!\/)/gi, `$1="${base}/`)
+}
+
+const BODY_TAG_STYLES: Record<string, string> = {
+  h2: `font-size:18px;font-weight:700;line-height:1.5;margin:28px 0 12px;color:${PALETTE.text};`,
+  h3: `font-size:16px;font-weight:700;line-height:1.5;margin:24px 0 10px;color:${PALETTE.text};`,
+  h4: `font-size:15px;font-weight:600;line-height:1.5;margin:20px 0 8px;color:${PALETTE.text};`,
+  p: `margin:0 0 14px;font-size:15px;line-height:1.85;color:${PALETTE.text};`,
+  ul: "margin:0 0 16px;padding-left:24px;",
+  ol: "margin:0 0 16px;padding-left:24px;",
+  li: "margin-bottom:6px;font-size:15px;line-height:1.85;",
+  blockquote: `margin:0 0 16px;padding:12px 16px;border-left:3px solid ${PALETTE.border};background:${PALETTE.background};border-radius:0 8px 8px 0;color:#334155;`,
+  hr: `border:0;border-top:1px solid ${PALETTE.border};margin:24px 0;`,
+  img: `max-width:100%;height:auto;border-radius:8px;margin:16px 0;display:block;border:1px solid ${PALETTE.border};`,
+  a: `color:${PALETTE.primary};text-decoration:underline;`,
+  code: "font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#F1F5F9;padding:2px 6px;border-radius:4px;font-size:13px;",
+}
+
+function injectBodyStyles(html: string): string {
+  return html.replace(
+    /<(h2|h3|h4|p|ul|ol|li|blockquote|hr|img|a|code)(\s[^>]*)?>/gi,
+    (match, tag: string, attrs: string = "") => {
+      const style = BODY_TAG_STYLES[tag.toLowerCase()]
+      if (!style) return match
+      if (/\sstyle\s*=/i.test(attrs)) return match
+      return `<${tag}${attrs} style="${style}">`
+    },
+  )
+}
+
+function htmlToText(html: string): string {
+  return html
+    .replace(/<\/(p|h\d|li|blockquote|tr|div)>/gi, "\n")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim()
+}
+
+function renderItemCard(item: NotificationContentItem, siteUrl: string): string {
+  const dateText = formatDateJa(item.date)
+  const metaParts = [
+    `<span style="text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">${escapeHtml(sourceLabel(item.source))}</span>`,
+  ]
+  if (dateText) metaParts.push(escapeHtml(dateText))
+  const meta = metaParts.join(' <span style="color:' + PALETTE.border + ';">・</span> ')
+
+  const thumb =
+    item.thumbnail && /^https?:\/\//i.test(item.thumbnail)
+      ? `<img src="${escapeHtml(item.thumbnail)}" alt="" style="display:block;width:100%;max-width:100%;height:auto;border-radius:10px;border:1px solid ${PALETTE.border};margin:0 0 24px;" />`
+      : ""
+
+  const bodyHtml = item.body
+    ? `<div style="font-size:15px;line-height:1.85;color:${PALETTE.text};">${injectBodyStyles(absolutizeUrls(item.body, siteUrl))}</div>`
+    : item.summary
+      ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.85;color:${PALETTE.text};">${escapeHtml(item.summary)}</p>`
+      : ""
+
+  return `
+    <article style="margin:0 0 8px;">
+      <div style="font-size:12px;color:${PALETTE.muted};margin-bottom:10px;">
+        ${meta}
+      </div>
+      <h1 style="margin:0 0 20px;font-size:22px;line-height:1.45;font-weight:700;color:${PALETTE.text};">
+        <a href="${escapeHtml(item.url)}" style="color:${PALETTE.text};text-decoration:none;">${escapeHtml(item.title)}</a>
+      </h1>
+      ${thumb}
+      ${bodyHtml}
+      <p style="margin:24px 0 0;">
+        <a href="${escapeHtml(item.url)}" style="display:inline-block;background:${PALETTE.primary};color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:600;font-size:14px;">サイトで読む→</a>
+      </p>
+      ${
+        item.source === "blog"
+          ? `
+      <p style="margin:12px 0 0;">
+        <a href="${escapeHtml(item.url)}#comments" style="display:inline-block;background:${PALETTE.primary};color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:600;font-size:14px;">コメントする→</a>
+      </p>
+      <p style="margin:10px 0 0;font-size:13px;line-height:1.7;color:${PALETTE.muted};">気軽にコメントください。大変励みになります🙏</p>`
+          : ""
+      }
+    </article>`
 }
 
 export function renderNotificationEmail(opts: {
@@ -293,66 +396,45 @@ export function renderNotificationEmail(opts: {
   const count = opts.items.length
   const subject =
     count === 1
-      ? `[Kudo Shu Library] 新着: ${opts.items[0].title}`
-      : `[Kudo Shu Library] 新着コンテンツ ${count} 件`
+      ? `[KSL]${opts.items[0].title}`
+      : `[KSL]新着 ${count}件`
 
   const previewText =
     count === 1
-      ? opts.items[0].title
+      ? opts.items[0].summary || opts.items[0].title
       : `${opts.items[0].title} ほか ${count - 1} 件`
 
+  const siteUrl = getSiteUrl()
   const itemsHtml = opts.items
-    .map((item) => {
-      const summary = item.summary ? escapeHtml(item.summary) : ""
-      const thumb =
-        item.thumbnail && /^https?:\/\//i.test(item.thumbnail)
-          ? `<img src="${escapeHtml(item.thumbnail)}" alt="" width="120" height="120" style="display:block;width:120px;height:120px;border-radius:8px;object-fit:cover;border:1px solid ${PALETTE.border};" />`
-          : ""
-      return `
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;">
-          <tr>
-            ${thumb ? `<td valign="top" width="120" style="padding-right:16px;">${thumb}</td>` : ""}
-            <td valign="top">
-              <div style="font-size:11px;letter-spacing:0.04em;text-transform:uppercase;color:${PALETTE.muted};margin-bottom:4px;">
-                ${escapeHtml(sourceLabel(item.source))}
-              </div>
-              <a href="${escapeHtml(item.url)}" style="color:${PALETTE.text};text-decoration:none;font-weight:600;font-size:15px;line-height:1.45;">
-                ${escapeHtml(item.title)}
-              </a>
-              ${summary ? `<p style="margin:6px 0 0;font-size:13px;line-height:1.6;color:${PALETTE.muted};">${summary}</p>` : ""}
-            </td>
-          </tr>
-        </table>`
-    })
-    .join("")
-
-  const heading =
-    count === 1
-      ? "新着コンテンツ"
-      : `新着コンテンツ <span style="color:${PALETTE.muted};font-weight:500;">(${count})</span>`
+    .map((item) => renderItemCard(item, siteUrl))
+    .join(
+      `<hr style="border:0;border-top:1px solid ${PALETTE.border};margin:40px 0;" />`,
+    )
 
   const bodyHtml = `
-    <h1 style="margin:0 0 16px;font-size:20px;line-height:1.4;">${heading}</h1>
     ${itemsHtml}
-    <hr style="border:0;border-top:1px solid ${PALETTE.border};margin:24px 0;" />
+    <hr style="border:0;border-top:1px solid ${PALETTE.border};margin:40px 0 24px;" />
     <p style="margin:0;font-size:12px;line-height:1.7;color:${PALETTE.muted};">
       配信を停止するには
       <a href="${escapeHtml(opts.unsubscribeUrl)}" style="color:${PALETTE.muted};text-decoration:underline;">こちら</a>
       をクリックしてください。
     </p>`
 
-  const text = [
-    count === 1 ? "新着コンテンツ" : `新着コンテンツ ${count} 件`,
-    "",
-    ...opts.items.map((item) => {
-      const lines = [`【${sourceLabel(item.source)}】 ${item.title}`, item.url]
-      if (item.summary) lines.push(item.summary)
+  const text = opts.items
+    .map((item) => {
+      const lines = [`【${sourceLabel(item.source)}】 ${item.title}`]
+      const dateText = formatDateJa(item.date)
+      if (dateText) lines.push(dateText)
+      lines.push(item.url)
+      if (item.body) {
+        lines.push("", htmlToText(item.body))
+      } else if (item.summary) {
+        lines.push("", item.summary)
+      }
       return lines.join("\n")
-    }),
-    "",
-    "---",
-    `配信停止: ${opts.unsubscribeUrl}`,
-  ].join("\n\n")
+    })
+    .concat(["---", `配信停止: ${opts.unsubscribeUrl}`])
+    .join("\n\n")
 
   return {
     subject,
