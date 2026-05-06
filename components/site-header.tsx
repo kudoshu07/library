@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
 import { Menu, X } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { SubscribeDialog } from "@/components/subscribe-dialog"
 import { ENABLE_SUBSCRIBE_UI } from "@/lib/feature-flags"
 
 const navLinks = [
@@ -18,6 +19,7 @@ export function SiteHeader() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const isBlogPostPage = /^\/\d{4}\/\d{2}\/\d{2}\/[^/]+\/?$/.test(pathname)
   const visibleNavLinks = isBlogPostPage ? [] : navLinks
+  const showBlogSubscribeLink = isBlogPostPage && ENABLE_SUBSCRIBE_UI
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
@@ -61,6 +63,20 @@ export function SiteHeader() {
           >
             {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}
           </Button>
+        )}
+
+        {/* Blog post page: subscribe trigger */}
+        {showBlogSubscribeLink && (
+          <SubscribeDialog
+            trigger={
+              <button
+                type="button"
+                className="rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+              >
+                購読
+              </button>
+            }
+          />
         )}
       </div>
 
