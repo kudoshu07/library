@@ -195,10 +195,11 @@ export function CommentItem({
                 <button
                   type="button"
                   onClick={() => setReplying((r) => !r)}
-                  className="inline-flex items-center gap-1 rounded-full px-2 py-1 hover:bg-muted"
+                  aria-label="返信"
+                  title="返信"
+                  className="inline-flex items-center rounded-full p-1.5 hover:bg-muted"
                 >
                   <MessageCircle className="size-3.5" />
-                  返信
                 </button>
               ) : null}
 
@@ -207,10 +208,11 @@ export function CommentItem({
                   type="button"
                   onClick={() => setEditing(true)}
                   disabled={busy !== null}
-                  className="inline-flex items-center gap-1 rounded-full px-2 py-1 hover:bg-muted disabled:opacity-50"
+                  aria-label="編集"
+                  title="編集"
+                  className="inline-flex items-center rounded-full p-1.5 hover:bg-muted disabled:opacity-50"
                 >
                   <Pencil className="size-3.5" />
-                  編集
                 </button>
               ) : null}
 
@@ -219,14 +221,19 @@ export function CommentItem({
                   type="button"
                   onClick={handleDelete}
                   disabled={busy !== null}
-                  className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-rose-600 hover:bg-rose-50 disabled:opacity-50"
+                  aria-label={
+                    viewer.isOwner && !comment.isMine ? "削除（オーナー）" : "削除"
+                  }
+                  title={
+                    viewer.isOwner && !comment.isMine ? "削除（オーナー）" : "削除"
+                  }
+                  className="inline-flex items-center rounded-full p-1.5 text-rose-600 hover:bg-rose-50 disabled:opacity-50"
                 >
                   {busy === "delete" ? (
                     <Loader2 className="size-3.5 animate-spin" />
                   ) : (
                     <Trash2 className="size-3.5" />
                   )}
-                  {viewer.isOwner && !comment.isMine ? "削除（オーナー）" : "削除"}
                 </button>
               ) : null}
             </div>
