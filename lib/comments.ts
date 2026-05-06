@@ -185,9 +185,6 @@ export async function createComment(opts: {
     if (!parent || parent.post_id !== opts.postId) {
       return { ok: false, reason: "parent_not_found" }
     }
-    if (parent.parent_id !== null) {
-      return { ok: false, reason: "nesting_too_deep" }
-    }
     parentSubscriberId = parent.subscriber_id
   }
 
