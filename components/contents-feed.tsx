@@ -36,6 +36,7 @@ export type ContentsFeedSessionInfo = {
   displayName: string
   notifyOnReply: boolean
   sources: ContentSource[]
+  ordinal: number | null
 }
 
 const ITEMS_PER_PAGE = 20
@@ -266,6 +267,11 @@ export function ContentsFeed({
     subscriberCount !== null
       ? `${subscriberCount + 1}人目のニュースレター登録`
       : "ニュースレター登録"
+  const userOrdinal = sessionInfo?.ordinal ?? null
+  const subscribedButtonLabel =
+    userOrdinal !== null ? `✅購読中(${userOrdinal})` : "購読中 ✅"
+  const accountButtonLabel =
+    userOrdinal !== null ? `登録情報（${userOrdinal}人目）` : "登録情報"
 
   useEffect(() => {
     setResolvedProfileAvatarUrl(profileAvatarUrl)
@@ -639,7 +645,7 @@ export function ContentsFeed({
                       className="inline-flex h-12 items-center justify-center rounded-full bg-[#264F8B] text-sm font-semibold text-white transition hover:bg-[#1f4376] min-[800px]:max-[1024px]:mx-auto min-[800px]:max-[1024px]:h-10 min-[800px]:max-[1024px]:w-10 min-[800px]:max-[1024px]:px-0 min-[1025px]:w-full min-[1025px]:px-5"
                     >
                       <User className="size-4 min-[1025px]:hidden" />
-                      <span className="min-[800px]:max-[1024px]:hidden">登録情報</span>
+                      <span className="min-[800px]:max-[1024px]:hidden">{accountButtonLabel}</span>
                     </button>
                   ) : (
                     <button
@@ -710,7 +716,7 @@ export function ContentsFeed({
                         className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-[#264F8B] bg-white px-4 text-sm font-semibold text-[#264F8B] transition hover:bg-slate-50"
                         aria-label="購読中（登録情報を変更）"
                       >
-                        <span className="whitespace-nowrap">購読中 ✅</span>
+                        <span className="whitespace-nowrap">{subscribedButtonLabel}</span>
                       </button>
                     ) : (
                       <button
@@ -1166,7 +1172,7 @@ export function ContentsFeed({
         <Dialog open={accountOpen} onOpenChange={setAccountOpen}>
           <DialogContent className="max-h-[90svh] overflow-y-auto sm:max-w-lg">
             <DialogHeader>
-              <DialogTitle>登録情報</DialogTitle>
+              <DialogTitle>{accountButtonLabel}</DialogTitle>
               <DialogDescription>
                 表示名や通知設定の変更、ニュースレター解除ができます。
               </DialogDescription>
