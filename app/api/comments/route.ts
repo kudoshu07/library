@@ -6,6 +6,7 @@ import {
   createComment,
   fetchCommentsForPost,
 } from "@/lib/comments"
+import { getRemoteIp, verifyTurnstileToken } from "@/lib/turnstile"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -51,6 +52,7 @@ const postSchema = z.object({
     }),
   parentId: z.string().uuid().nullable().optional(),
   body: z.string().min(1, "invalid_body").max(COMMENT_BODY_MAX, "invalid_body"),
+  turnstileToken: z.string().optional(),
 })
 
 export async function POST(req: Request) {
@@ -74,6 +76,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "invalid_json" }, { status: 400 })
   }
 
+  const turnstileOk = await verifyTurnstileToken(
+    body.turnstileToken,
+    getRemoteIp(req),
+  )
+  if (!turnstileOk) {
+    return NextResponse.json({ error: "turnstile_failed" }, { status: 400 })
+  }
+
   const result = await createComment({
     session,
     postId: body.postId,
@@ -85,15 +95,17 @@ export async function POST(req: Request) {
     const status =
       result.reason === "rate_limited"
         ? 429
-        : result.reason === "display_name_required"
+        : result.reason === "duplicate"
           ? 409
-          : result.reason === "banned"
-            ? 403
-            : result.reason === "parent_not_found" ||
-                result.reason === "nesting_too_deep" ||
-                result.reason === "invalid_body"
-              ? 400
-              : 500
+          : result.reason === "display_name_required"
+            ? 409
+            : result.reason === "banned"
+              ? 403
+              : result.reason === "parent_not_found" ||
+                  result.reason === "nesting_too_deep" ||
+                  result.reason === "invalid_body"
+                ? 400
+                : 500
     return NextResponse.json({ error: result.reason }, { status })
   }
 

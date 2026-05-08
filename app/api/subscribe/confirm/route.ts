@@ -5,6 +5,10 @@ import { postSlackMessage, slackEscape } from "@/lib/slack"
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
+// Bots that subscribe and confirm within seconds of signup get blocked.
+// Real users always take longer than this (open inbox, find the email, click).
+const MIN_CONFIRM_ELAPSED_MS = 30 * 1000
+
 export async function GET(req: Request) {
   const url = new URL(req.url)
   const token = url.searchParams.get("token")?.trim()
@@ -23,7 +27,9 @@ export async function GET(req: Request) {
 
   const { data: row, error: selectError } = await supabase
     .from("subscribers")
-    .select("id, email, confirmed, unsubscribed_at, display_name, sources")
+    .select(
+      "id, email, confirmed, unsubscribed_at, display_name, sources, created_at, confirm_token_issued_at",
+    )
     .eq("confirm_token", token)
     .maybeSingle()
 
@@ -38,6 +44,13 @@ export async function GET(req: Request) {
 
   if (row.confirmed && !row.unsubscribed_at) {
     return NextResponse.redirect(`${site}/subscribe/confirmed?status=already`, 303)
+  }
+
+  // Fall back to created_at for legacy rows where the column is NULL.
+  const issuedAtRaw = row.confirm_token_issued_at ?? row.created_at
+  const issuedAtMs = issuedAtRaw ? new Date(issuedAtRaw).getTime() : NaN
+  if (Number.isFinite(issuedAtMs) && Date.now() - issuedAtMs < MIN_CONFIRM_ELAPSED_MS) {
+    return NextResponse.redirect(`${site}/subscribe/confirmed?status=too_fast`, 303)
   }
 
   const { error: updateError } = await supabase

@@ -18,6 +18,7 @@ import type { Session } from "@/lib/auth"
 
 const POST_RATE_WINDOW_MS = 60 * 1000
 const POST_RATE_MAX = 5
+const DUPLICATE_WINDOW_MS = 5 * 60 * 1000
 
 export const COMMENT_BODY_MAX = 1000
 
@@ -124,6 +125,7 @@ export type CreateCommentResult =
       ok: false
       reason:
         | "rate_limited"
+        | "duplicate"
         | "parent_not_found"
         | "nesting_too_deep"
         | "display_name_required"
@@ -168,6 +170,25 @@ export async function createComment(opts: {
   }
   if ((recentCount ?? 0) >= POST_RATE_MAX) {
     return { ok: false, reason: "rate_limited" }
+  }
+
+  // Block exact-duplicate body on the same post within DUPLICATE_WINDOW_MS.
+  // This catches both accidental double-submits and bot floods of identical text.
+  const dupSince = new Date(Date.now() - DUPLICATE_WINDOW_MS).toISOString()
+  const { data: dupRows, error: dupError } = await supabase
+    .from("comments")
+    .select("id")
+    .eq("subscriber_id", opts.session.subscriberId)
+    .eq("post_id", opts.postId)
+    .eq("body", body)
+    .gte("created_at", dupSince)
+    .limit(1)
+  if (dupError) {
+    console.error("createComment dup check error", dupError)
+    return { ok: false, reason: "error" }
+  }
+  if ((dupRows?.length ?? 0) > 0) {
+    return { ok: false, reason: "duplicate" }
   }
 
   let parentSubscriberId: string | null = null

@@ -11,6 +11,8 @@ import {
   isSubscribableSource,
   renderConfirmEmail,
 } from "@/lib/newsletter"
+import { isDisposableEmail } from "@/lib/disposable-emails"
+import { getRemoteIp, verifyTurnstileToken } from "@/lib/turnstile"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -28,6 +30,7 @@ const payloadSchema = z.object({
     .min(1, "sources_required")
     .max(SUBSCRIBABLE_SOURCES.length)
     .refine((arr) => arr.every(isSubscribableSource), { message: "invalid_source" }),
+  turnstileToken: z.string().optional(),
 })
 
 function newToken(): string {
@@ -48,6 +51,18 @@ export async function POST(req: Request) {
     parsed = result.data
   } catch {
     return NextResponse.json({ error: "invalid_json" }, { status: 400 })
+  }
+
+  if (isDisposableEmail(parsed.email)) {
+    return NextResponse.json({ error: "disposable_email" }, { status: 400 })
+  }
+
+  const turnstileOk = await verifyTurnstileToken(
+    parsed.turnstileToken,
+    getRemoteIp(req),
+  )
+  if (!turnstileOk) {
+    return NextResponse.json({ error: "turnstile_failed" }, { status: 400 })
   }
 
   let supabase
@@ -98,6 +113,7 @@ export async function POST(req: Request) {
           sources,
           display_name: displayName,
           confirm_token: confirmToken,
+          confirm_token_issued_at: new Date().toISOString(),
           confirmed: false,
           confirmed_at: null,
           unsubscribed_at: null,
@@ -115,6 +131,7 @@ export async function POST(req: Request) {
       display_name: displayName,
       sources,
       confirm_token: confirmToken,
+      confirm_token_issued_at: new Date().toISOString(),
       unsubscribe_token: newToken(),
     })
     if (insertError) {
