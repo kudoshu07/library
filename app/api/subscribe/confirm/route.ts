@@ -70,8 +70,20 @@ export async function GET(req: Request) {
   const displayName = row.display_name?.trim() || "(名無し)"
   const sourcesArr = Array.isArray(row.sources) ? (row.sources as string[]) : []
   const labels = sourcesArr.map((s) => sourceLabel(s)).join(", ") || "(未選択)"
+
+  const { count: confirmedCount, error: countError } = await supabase
+    .from("subscribers")
+    .select("*", { count: "exact", head: true })
+    .eq("confirmed", true)
+    .is("unsubscribed_at", null)
+  if (countError) {
+    console.error("supabase count error", countError)
+  }
+  const ordinal =
+    typeof confirmedCount === "number" ? `(${confirmedCount}人目)` : ""
+
   const slackText = [
-    "KudoShuLibraryのニュースレター新規登録🎉",
+    `ニュースレター新規登録${ordinal}🎉`,
     `・${slackEscape(displayName)}`,
     `・${slackEscape(labels)}`,
   ].join("\n")

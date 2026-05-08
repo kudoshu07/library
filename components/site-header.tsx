@@ -8,6 +8,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { SubscribeDialog } from "@/components/subscribe-dialog"
 import { ENABLE_SUBSCRIBE_UI } from "@/lib/feature-flags"
+import { useSubscriberCount } from "@/hooks/use-subscriber-count"
 
 const navLinks = [
   { href: "/home", label: "Contents" },
@@ -20,6 +21,11 @@ export function SiteHeader() {
   const isBlogPostPage = /^\/\d{4}\/\d{2}\/\d{2}\/[^/]+\/?$/.test(pathname)
   const visibleNavLinks = isBlogPostPage ? [] : navLinks
   const showBlogSubscribeLink = isBlogPostPage && ENABLE_SUBSCRIBE_UI
+  const subscriberCount = useSubscriberCount(ENABLE_SUBSCRIBE_UI)
+  const renderSubscribeLabel = (label: string) =>
+    label === "購読" && subscriberCount !== null
+      ? `${label}(${subscriberCount})`
+      : label
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
@@ -46,7 +52,7 @@ export function SiteHeader() {
                     : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                 )}
               >
-                {link.label}
+                {renderSubscribeLabel(link.label)}
               </Link>
             ))}
           </nav>
@@ -73,7 +79,7 @@ export function SiteHeader() {
                 type="button"
                 className="text-xs text-muted-foreground underline underline-offset-2 transition-colors hover:text-foreground"
               >
-                購読
+                {subscriberCount !== null ? `購読(${subscriberCount})` : "購読"}
               </button>
             }
           />
@@ -97,7 +103,7 @@ export function SiteHeader() {
                     : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                 )}
               >
-                {link.label}
+                {renderSubscribeLabel(link.label)}
               </Link>
             ))}
           </div>
