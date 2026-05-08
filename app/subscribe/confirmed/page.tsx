@@ -8,10 +8,16 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 }
 
-type Status = "ok" | "already" | "invalid" | "error"
+type Status = "ok" | "already" | "invalid" | "error" | "too_fast"
 
 function resolveStatus(value: string | undefined): Status {
-  if (value === "ok" || value === "already" || value === "invalid" || value === "error") {
+  if (
+    value === "ok" ||
+    value === "already" ||
+    value === "invalid" ||
+    value === "error" ||
+    value === "too_fast"
+  ) {
     return value
   }
   return "invalid"
@@ -37,6 +43,11 @@ const messages: Record<Status, { icon: "ok" | "warn"; title: string; body: strin
     icon: "warn",
     title: "処理中にエラーが発生しました",
     body: "時間をおいてもう一度お試しください。問題が続く場合は管理者までご連絡ください。",
+  },
+  too_fast: {
+    icon: "warn",
+    title: "確認が早すぎました",
+    body: "登録直後のため、確認リンクをまだ有効にできません。30秒ほど待ってから、メール内のリンクをもう一度クリックしてください。",
   },
 }
 

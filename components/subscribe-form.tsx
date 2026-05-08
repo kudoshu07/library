@@ -6,6 +6,10 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { CheckCircle2, AlertTriangle, Loader2 } from "lucide-react"
 import { SourceInlineLabel } from "@/components/source-ui"
+import {
+  TurnstileWidget,
+  isTurnstileConfigured,
+} from "@/components/turnstile-widget"
 import type { ContentSource } from "@/lib/data"
 
 const sources: { id: ContentSource }[] = [
@@ -29,6 +33,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   invalid_input: "入力内容に誤りがあります。",
   invalid_json: "送信に失敗しました。もう一度お試しください。",
   invalid_email: "メールアドレスの形式が正しくありません。",
+  disposable_email: "このメールアドレスは利用できません。別のアドレスでお試しください。",
   display_name_required: "表示名を入力してください。",
   display_name_too_long: "表示名は30文字以内で入力してください。",
   display_name_invalid: "表示名に改行・タブは使えません。",
@@ -37,6 +42,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   email_send_failed: "確認メールの送信に失敗しました。時間をおいてお試しください。",
   supabase_not_configured: "現在この機能は利用できません。",
   resend_not_configured: "現在この機能は利用できません。",
+  turnstile_failed: "ボット検証に失敗しました。ページを再読み込みしてもう一度お試しください。",
 }
 
 function explainError(payload: { error?: string; issues?: Array<{ message?: string }> }): string {
@@ -60,6 +66,8 @@ export function SubscribeForm({
   const [displayName, setDisplayName] = useState("")
   const [selected, setSelected] = useState<string[]>(["blog", "note"])
   const [status, setStatus] = useState<Status>({ kind: "idle" })
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
+  const turnstileEnabled = isTurnstileConfigured()
 
   useEffect(() => {
     onStatusChange?.(status.kind)
@@ -81,6 +89,13 @@ export function SubscribeForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!email.trim() || !displayName.trim() || selected.length === 0) return
+    if (turnstileEnabled && !turnstileToken) {
+      setStatus({
+        kind: "error",
+        message: "ボット検証を完了してください。",
+      })
+      return
+    }
     setStatus({ kind: "submitting" })
 
     try {
@@ -91,6 +106,7 @@ export function SubscribeForm({
           email: email.trim(),
           displayName: displayName.trim(),
           sources: selected,
+          turnstileToken: turnstileToken ?? undefined,
         }),
       })
       const data = (await res.json().catch(() => ({}))) as {
@@ -230,6 +246,16 @@ export function SubscribeForm({
         </fieldset>
       ) : null}
 
+      {turnstileEnabled &&
+      email.trim().length > 0 &&
+      displayName.trim().length > 0 ? (
+        <TurnstileWidget
+          action="subscribe"
+          onToken={setTurnstileToken}
+          className="flex justify-center"
+        />
+      ) : null}
+
       <div className="flex flex-col items-center gap-2">
         <Button
           type="submit"
@@ -238,7 +264,8 @@ export function SubscribeForm({
             !email.trim() ||
             !displayName.trim() ||
             selected.length === 0 ||
-            isSubmitting
+            isSubmitting ||
+            (turnstileEnabled && !turnstileToken)
           }
         >
           {isSubmitting ? (

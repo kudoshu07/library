@@ -3,6 +3,10 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Loader2 } from "lucide-react"
+import {
+  TurnstileWidget,
+  isTurnstileConfigured,
+} from "@/components/turnstile-widget"
 import type { CommentListItem } from "@/lib/comments"
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -12,8 +16,10 @@ const ERROR_MESSAGES: Record<string, string> = {
   parent_not_found: "返信先のコメントが見つかりません。",
   nesting_too_deep: "返信に返信はできません。",
   rate_limited: "投稿が早すぎます。1 分ほどお待ちください。",
+  duplicate: "同じ内容のコメントが直前に投稿されています。",
   invalid_input: "入力内容に誤りがあります。",
   invalid_json: "送信に失敗しました。もう一度お試しください。",
+  turnstile_failed: "ボット検証に失敗しました。ページを再読み込みしてもう一度お試しください。",
 }
 
 const FALLBACK_ERROR = "投稿に失敗しました。時間をおいてお試しください。"
@@ -38,17 +44,28 @@ export function ComposeForm({
   const [body, setBody] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
+  const turnstileEnabled = isTurnstileConfigured()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!body.trim() || submitting) return
+    if (turnstileEnabled && !turnstileToken) {
+      setError("ボット検証を完了してください。")
+      return
+    }
     setError(null)
     setSubmitting(true)
     try {
       const res = await fetch("/api/comments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ postId, parentId, body }),
+        body: JSON.stringify({
+          postId,
+          parentId,
+          body,
+          turnstileToken: turnstileToken ?? undefined,
+        }),
       })
       const data = (await res.json().catch(() => ({}))) as {
         ok?: boolean
@@ -81,6 +98,13 @@ export function ComposeForm({
         disabled={submitting}
         className="w-full resize-y rounded-md border border-border bg-background p-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
       />
+      {turnstileEnabled && body.trim().length > 0 ? (
+        <TurnstileWidget
+          action="comment"
+          onToken={setTurnstileToken}
+          className="flex justify-start"
+        />
+      ) : null}
       <div className="flex items-center justify-between gap-2">
         <span className="text-xs text-muted-foreground">{body.length} / 1000</span>
         <div className="flex gap-2">
@@ -98,7 +122,11 @@ export function ComposeForm({
           <Button
             type="submit"
             size="sm"
-            disabled={!body.trim() || submitting}
+            disabled={
+              !body.trim() ||
+              submitting ||
+              (turnstileEnabled && !turnstileToken)
+            }
           >
             {submitting ? (
               <>
