@@ -14,6 +14,7 @@ import {
   slackEscape,
   slackLink,
 } from "@/lib/slack"
+import { containsDisallowedScript } from "@/lib/script-filter"
 import type { Session } from "@/lib/auth"
 
 const POST_RATE_WINDOW_MS = 60 * 1000
@@ -150,6 +151,9 @@ export async function createComment(opts: {
   if (body.length === 0 || body.length > COMMENT_BODY_MAX) {
     return { ok: false, reason: "invalid_body" }
   }
+  if (containsDisallowedScript(body)) {
+    return { ok: false, reason: "invalid_body" }
+  }
 
   let supabase
   try {
@@ -252,6 +256,7 @@ export async function createComment(opts: {
   }
 
   void notifyNewCommentToSlack({
+    commentId: inserted.id,
     displayName: opts.session.displayName,
     postId: opts.postId,
     body,
@@ -429,6 +434,7 @@ export async function setLike(opts: {
 }
 
 async function notifyNewCommentToSlack(opts: {
+  commentId: string
   displayName: string
   postId: string
   body: string
@@ -443,7 +449,28 @@ async function notifyNewCommentToSlack(opts: {
     `・${link}`,
     `・${slackEscape(opts.body)}`,
   ].join("\n")
-  await postSlackMessage(text)
+  const blocks = [
+    { type: "section", text: { type: "mrkdwn", text } },
+    {
+      type: "actions",
+      elements: [
+        {
+          type: "button",
+          style: "danger",
+          text: { type: "plain_text", text: "コメント削除", emoji: false },
+          action_id: "delete_comment",
+          value: JSON.stringify({ commentId: opts.commentId }),
+          confirm: {
+            title: { type: "plain_text", text: "コメントを削除しますか？" },
+            text: { type: "plain_text", text: "削除すると元に戻せません。" },
+            confirm: { type: "plain_text", text: "削除する" },
+            deny: { type: "plain_text", text: "キャンセル" },
+          },
+        },
+      ],
+    },
+  ]
+  await postSlackMessage(text, blocks)
 }
 
 async function notifyReplyAuthor(opts: {
