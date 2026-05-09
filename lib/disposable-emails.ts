@@ -51,6 +51,8 @@ const DISPOSABLE_DOMAINS: ReadonlySet<string> = new Set([
   "byom.de",
   "mt2015.com",
   "mt2014.com",
+  "hidingmail.net",
+  "gcervera.com",
 ])
 
 export function isDisposableEmail(email: string): boolean {
