@@ -175,19 +175,31 @@ export async function consumeLoginToken(
   }
   if (!marked) return { ok: false, reason: "used" }
 
+  const sessionToken = await issueSession(row.subscriber_id)
+  if (!sessionToken) return { ok: false, reason: "error" }
+
+  return { ok: true, sessionToken, subscriberId: row.subscriber_id }
+}
+
+export async function issueSession(subscriberId: string): Promise<string | null> {
+  let supabase
+  try {
+    supabase = getSupabaseClient()
+  } catch {
+    return null
+  }
   const sessionToken = newToken()
   const expiresAt = new Date(Date.now() + SESSION_TTL_MS).toISOString()
-  const { error: sessionError } = await supabase.from("sessions").insert({
-    subscriber_id: row.subscriber_id,
+  const { error } = await supabase.from("sessions").insert({
+    subscriber_id: subscriberId,
     token: sessionToken,
     expires_at: expiresAt,
   })
-  if (sessionError) {
-    console.error("supabase session insert error", sessionError)
-    return { ok: false, reason: "error" }
+  if (error) {
+    console.error("supabase session insert error", error)
+    return null
   }
-
-  return { ok: true, sessionToken, subscriberId: row.subscriber_id }
+  return sessionToken
 }
 
 export type Session = {

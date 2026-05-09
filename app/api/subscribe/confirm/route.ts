@@ -1,17 +1,40 @@
 import { NextResponse } from "next/server"
 import { getSiteUrl, getSupabaseClient, sourceLabel } from "@/lib/newsletter"
 import { postSlackMessage, slackEscape } from "@/lib/slack"
+import {
+  SESSION_COOKIE,
+  SESSION_TTL_MS,
+  getSessionCookieAttrs,
+  issueSession,
+} from "@/lib/auth"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
 // Bots that subscribe and confirm within seconds of signup get blocked.
 // Real users always take longer than this (open inbox, find the email, click).
-const MIN_CONFIRM_ELAPSED_MS = 30 * 1000
+const MIN_CONFIRM_ELAPSED_MS = 10 * 1000
+
+function safeNextPath(value: string | null): string | null {
+  if (!value) return null
+  if (!value.startsWith("/") || value.startsWith("//")) return null
+  if (value.length > 512) return null
+  return value
+}
+
+function appendQueryFlag(target: string, key: string, value: string): string {
+  // target may include "?query" and/or "#fragment"; preserve both.
+  const hashIdx = target.indexOf("#")
+  const hash = hashIdx >= 0 ? target.slice(hashIdx) : ""
+  const head = hashIdx >= 0 ? target.slice(0, hashIdx) : target
+  const sep = head.includes("?") ? "&" : "?"
+  return `${head}${sep}${key}=${encodeURIComponent(value)}${hash}`
+}
 
 export async function GET(req: Request) {
   const url = new URL(req.url)
   const token = url.searchParams.get("token")?.trim()
+  const next = safeNextPath(url.searchParams.get("next"))
   const site = getSiteUrl()
 
   if (!token) {
@@ -89,5 +112,17 @@ export async function GET(req: Request) {
   ].join("\n")
   void postSlackMessage(slackText)
 
-  return NextResponse.redirect(`${site}/subscribe/confirmed?status=ok`, 303)
+  const target = next
+    ? `${site}${appendQueryFlag(next, "subscribed", "1")}`
+    : `${site}/subscribe/confirmed?status=ok`
+  const response = NextResponse.redirect(target, 303)
+  const sessionToken = await issueSession(row.id)
+  if (sessionToken) {
+    response.cookies.set(
+      SESSION_COOKIE,
+      sessionToken,
+      getSessionCookieAttrs(SESSION_TTL_MS),
+    )
+  }
+  return response
 }

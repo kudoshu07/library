@@ -31,7 +31,19 @@ const payloadSchema = z.object({
     .max(SUBSCRIBABLE_SOURCES.length)
     .refine((arr) => arr.every(isSubscribableSource), { message: "invalid_source" }),
   turnstileToken: z.string().optional(),
+  returnTo: z
+    .string()
+    .max(512)
+    .refine((v) => v.startsWith("/") && !v.startsWith("//"), {
+      message: "invalid_return_to",
+    })
+    .optional(),
 })
+
+function buildConfirmUrl(token: string, returnTo: string | undefined): string {
+  const base = `${getSiteUrl()}/api/subscribe/confirm?token=${encodeURIComponent(token)}`
+  return returnTo ? `${base}&next=${encodeURIComponent(returnTo)}` : base
+}
 
 function newToken(): string {
   return randomBytes(24).toString("base64url")
@@ -151,7 +163,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "resend_not_configured" }, { status: 500 })
   }
 
-  const confirmUrl = `${getSiteUrl()}/api/subscribe/confirm?token=${encodeURIComponent(confirmToken)}`
+  const confirmUrl = buildConfirmUrl(confirmToken, parsed.returnTo)
   const email = renderConfirmEmail({
     email: parsed.email,
     displayName,

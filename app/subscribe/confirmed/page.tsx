@@ -47,7 +47,7 @@ const messages: Record<Status, { icon: "ok" | "warn"; title: string; body: strin
   too_fast: {
     icon: "warn",
     title: "確認が早すぎました",
-    body: "登録直後のため、確認リンクをまだ有効にできません。30秒ほど待ってから、メール内のリンクをもう一度クリックしてください。",
+    body: "登録直後のため、確認リンクをまだ有効にできません。10秒ほど待ってから、メール内のリンクをもう一度クリックしてください。",
   },
 }
 

@@ -58,9 +58,11 @@ export type SubscribeFormStatusKind = Status["kind"]
 export function SubscribeForm({
   embedded = false,
   onStatusChange,
+  returnTo,
 }: {
   embedded?: boolean
   onStatusChange?: (status: SubscribeFormStatusKind) => void
+  returnTo?: string
 } = {}) {
   const [email, setEmail] = useState("")
   const [displayName, setDisplayName] = useState("")
@@ -107,6 +109,7 @@ export function SubscribeForm({
           displayName: displayName.trim(),
           sources: selected,
           turnstileToken: turnstileToken ?? undefined,
+          returnTo,
         }),
       })
       const data = (await res.json().catch(() => ({}))) as {

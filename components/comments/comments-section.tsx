@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
-import { Loader2 } from "lucide-react"
+import { CheckCircle2, Loader2 } from "lucide-react"
 import type { CommentListItem } from "@/lib/comments"
 import { Button } from "@/components/ui/button"
 import { LoginDialog } from "@/components/login-dialog"
@@ -30,6 +30,20 @@ export function CommentsSection({ postId }: { postId: string }) {
     comments: [],
     viewer: INITIAL_VIEWER,
   })
+  const [showSubscribed, setShowSubscribed] = useState(false)
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const params = new URLSearchParams(window.location.search)
+    if (params.get("subscribed") !== "1") return
+    setShowSubscribed(true)
+    params.delete("subscribed")
+    const search = params.toString()
+    const newUrl = `${window.location.pathname}${search ? `?${search}` : ""}${window.location.hash}`
+    window.history.replaceState(null, "", newUrl)
+    const t = setTimeout(() => setShowSubscribed(false), 4500)
+    return () => clearTimeout(t)
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -126,6 +140,7 @@ export function CommentsSection({ postId }: { postId: string }) {
       className="mt-12 rounded-xl border border-border bg-card p-5 md:p-8"
       aria-label="コメント"
     >
+      {showSubscribed ? <SubscribeSuccessToast /> : null}
       <h2 className="text-xl font-bold text-foreground">
         コメント {state.loading ? "" : `(${state.comments.length})`}
       </h2>
@@ -205,7 +220,7 @@ function LoginCta({ postId }: { postId: string }) {
         <span className="h-px flex-1 bg-border" aria-hidden />
       </div>
 
-      <SubscribeForm embedded />
+      <SubscribeForm embedded returnTo={`${postId}#comments`} />
     </div>
   )
 }
@@ -218,6 +233,21 @@ function NeedsDisplayNameNotice() {
         アカウント画面
       </Link>
       で表示名を設定してください。
+    </div>
+  )
+}
+
+function SubscribeSuccessToast() {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="pointer-events-none fixed left-1/2 top-6 z-50 -translate-x-1/2 animate-in fade-in-0 slide-in-from-top-4 duration-300"
+    >
+      <div className="flex items-center gap-2 rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-medium text-emerald-900 shadow-lg">
+        <CheckCircle2 className="size-4 text-emerald-600" />
+        登録完了！コメントできます🙌
+      </div>
     </div>
   )
 }
