@@ -11,7 +11,8 @@ import {
   isSubscribableSource,
   renderConfirmEmail,
 } from "@/lib/newsletter"
-import { isDisposableEmail } from "@/lib/disposable-emails"
+import { isEmailBlocked } from "@/lib/disposable-emails"
+import { containsDisallowedScript } from "@/lib/script-filter"
 import { getRemoteIp, verifyTurnstileToken } from "@/lib/turnstile"
 
 export const runtime = "nodejs"
@@ -65,8 +66,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "invalid_json" }, { status: 400 })
   }
 
-  if (isDisposableEmail(parsed.email)) {
+  if (await isEmailBlocked(parsed.email)) {
     return NextResponse.json({ error: "disposable_email" }, { status: 400 })
+  }
+
+  if (containsDisallowedScript(parsed.displayName)) {
+    return NextResponse.json({ error: "invalid_input" }, { status: 400 })
   }
 
   const turnstileOk = await verifyTurnstileToken(

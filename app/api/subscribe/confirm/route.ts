@@ -105,12 +105,55 @@ export async function GET(req: Request) {
   const ordinal =
     typeof confirmedCount === "number" ? `(${confirmedCount}人目)` : ""
 
+  const emailDomain = row.email.includes("@")
+    ? row.email.slice(row.email.lastIndexOf("@") + 1).toLowerCase()
+    : ""
   const slackText = [
     `ニュースレター新規登録${ordinal}🎉`,
     `・${slackEscape(displayName)}`,
+    `・${slackEscape(row.email)}`,
     `・${slackEscape(labels)}`,
   ].join("\n")
-  void postSlackMessage(slackText)
+  const slackBlocks = [
+    { type: "section", text: { type: "mrkdwn", text: slackText } },
+    {
+      type: "actions",
+      elements: [
+        {
+          type: "button",
+          style: "danger",
+          text: { type: "plain_text", text: "BAN", emoji: false },
+          action_id: "ban_subscriber",
+          value: JSON.stringify({ subscriberId: row.id }),
+          confirm: {
+            title: { type: "plain_text", text: "BANしますか？" },
+            text: {
+              type: "plain_text",
+              text: `${displayName} (${row.email}) をBANし、以降の投稿・いいね等を不可にします。`,
+            },
+            confirm: { type: "plain_text", text: "BANする" },
+            deny: { type: "plain_text", text: "キャンセル" },
+          },
+        },
+        {
+          type: "button",
+          text: { type: "plain_text", text: "ブロックリスト追加", emoji: false },
+          action_id: "block_email_domain",
+          value: JSON.stringify({ domain: emailDomain, subscriberId: row.id }),
+          confirm: {
+            title: { type: "plain_text", text: "ドメインを追加しますか？" },
+            text: {
+              type: "plain_text",
+              text: `${emailDomain} を以後の購読登録不可にします。`,
+            },
+            confirm: { type: "plain_text", text: "追加する" },
+            deny: { type: "plain_text", text: "キャンセル" },
+          },
+        },
+      ],
+    },
+  ]
+  void postSlackMessage(slackText, slackBlocks)
 
   const target = next
     ? `${site}${appendQueryFlag(next, "subscribed", "1")}`
