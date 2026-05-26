@@ -55,6 +55,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  // The owner-only "+ new" / "📝 draft" entry points are gated client-side
+  // (see hooks/use-is-owner.ts) so this layout doesn't touch cookies() and
+  // child pages stay eligible for static generation.
   return (
     <html lang="ja">
       <body className={`${inter.variable} ${notoSansJP.variable} font-sans antialiased`}>

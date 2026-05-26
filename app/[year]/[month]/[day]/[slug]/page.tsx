@@ -6,6 +6,7 @@ import { ContentActions } from "@/components/content-actions"
 import { BlogHeroImage } from "@/components/blog-hero-image"
 import { PodcastLetterForm } from "@/components/podcast-letter-form"
 import { CommentsSection } from "@/components/comments/comments-section"
+import { EditPublishedPostButton } from "@/components/blog-editor/edit-published-post-button"
 import { getBlogPostByPath, getBlogStaticParams } from "@/lib/content-loader"
 import { getSiteUrl, resolveSocialImageUrls, toAbsoluteUrl } from "@/lib/social-metadata"
 
@@ -199,9 +200,15 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             {dateLabel}
           </time>
         </div>
-        <h1 className="text-balance text-[22px] font-bold leading-tight tracking-tight text-foreground md:text-3xl">
-          {post.title}
-        </h1>
+        <div className="flex items-start justify-between gap-3">
+          <h1 className="text-balance text-[22px] font-bold leading-tight tracking-tight text-foreground md:text-3xl">
+            {post.title}
+          </h1>
+          {/* Owner-only inline edit affordance; renders null for everyone else. */}
+          <EditPublishedPostButton
+            repoPath={`content/blog/${route.year}/${route.month}/${route.day}/${route.slug}.mdx`}
+          />
+        </div>
         {post.tags && post.tags.length > 0 && (
           <ul className="flex flex-wrap gap-2 pt-1">
             {post.tags.map((tag) => (
