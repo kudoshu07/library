@@ -87,6 +87,17 @@ export async function POST(req: Request) {
 
   const { frontmatter, body: bodyHtml } = parseMdxFile(raw)
 
+  // Decode URL-encoded Japanese tags from legacy WordPress imports so the
+  // editor surfaces readable characters; new saves will then persist the
+  // decoded form going forward.
+  const decodedTags = frontmatter.tags.map((tag) => {
+    try {
+      return decodeURIComponent(tag)
+    } catch {
+      return tag
+    }
+  })
+
   // Note: HTML → BlockNote blocks conversion happens client-side in the
   // editor (see BlocknoteCanvas). Doing it server-side would require
   // @blocknote/server-util which transitively pulls in browser React
@@ -100,7 +111,7 @@ export async function POST(req: Request) {
       slug: frontmatter.slug,
       publishDate: frontmatter.date || null,
       summary: frontmatter.summary,
-      tags: frontmatter.tags,
+      tags: decodedTags,
       thumbnailUrl: frontmatter.thumbnail ?? null,
       bodyHtml,
       bodyBlocks: null,

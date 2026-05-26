@@ -3,7 +3,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import dynamic from "next/dynamic"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Eye, Save, Send, Trash2 } from "lucide-react"
+import {
+  ArrowLeft,
+  Eye,
+  Minimize2,
+  PanelLeftClose,
+  Save,
+  Send,
+  Trash2,
+} from "lucide-react"
 import Link from "next/link"
 import type { Block, PartialBlock } from "@blocknote/core"
 import { BlogMetaForm, type BlogMeta, useKnownTags } from "@/components/blog-editor/blog-meta-form"
@@ -235,13 +243,78 @@ export function BlogEditor({ initial }: { initial: BlogEditorInitial }) {
     [hydratedInitialBlocks],
   )
 
+  // Focus mode collapses the left meta form AND hides both this editor's
+  // header bar and the site-wide header so only the title + body remain on
+  // screen. Implemented as a fullscreen fixed overlay so we don't have to
+  // coordinate with the LayoutShell (which lives a couple of components up).
+  const [focusMode, setFocusMode] = useState(false)
+  const enterFocus = useCallback(() => setFocusMode(true), [])
+  const exitFocus = useCallback(() => setFocusMode(false), [])
+
+  const titleInput = (
+    <input
+      type="text"
+      value={meta.title}
+      onChange={(e) => onMetaChange({ ...meta, title: e.target.value })}
+      placeholder="タイトル"
+      className="block w-full bg-transparent text-3xl font-bold leading-tight tracking-tight text-foreground placeholder:text-muted-foreground/50 focus:outline-none md:text-4xl"
+      aria-label="記事タイトル"
+    />
+  )
+
+  const bodyCanvas = (
+    <BlocknoteCanvas
+      initialBlocks={initialBlocksMemo}
+      initialHtml={initial.bodyHtml}
+      getSlug={getSlugForUpload}
+      onChange={onCanvasChange}
+      handleRef={canvasHandle}
+    />
+  )
+
+  // -- Focus mode: position:fixed overlay above the site header --
+  if (focusMode) {
+    return (
+      <div className="fixed inset-0 z-[100] overflow-y-auto bg-background">
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-border bg-background/95 px-4 py-2 backdrop-blur">
+          <button
+            type="button"
+            onClick={exitFocus}
+            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-white px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+            title="通常表示に戻る"
+          >
+            <Minimize2 className="size-3.5" />
+            通常表示
+          </button>
+          <div className="flex items-center gap-2">
+            <SaveStatusPill status={saveStatus} error={saveError} dirty={dirty} />
+            <button
+              type="button"
+              onClick={saveDraft}
+              disabled={saveStatus === "saving"}
+              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-white px-3 py-1.5 text-sm hover:bg-secondary disabled:opacity-50"
+            >
+              <Save className="size-4" />
+              保存
+            </button>
+          </div>
+        </div>
+        <div className="mx-auto max-w-3xl px-6 pb-24 pt-10">
+          <div className="mb-6">{titleInput}</div>
+          {bodyCanvas}
+        </div>
+      </div>
+    )
+  }
+
+  // -- Normal mode --
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 lg:px-6">
       <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Link
             href="/admin/blog/drafts"
-            className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+            className="inline-flex items-center gap-1 rounded-md border border-border bg-white px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="size-3.5" />
             一覧へ
@@ -259,7 +332,7 @@ export function BlogEditor({ initial }: { initial: BlogEditorInitial }) {
             type="button"
             onClick={saveDraft}
             disabled={saveStatus === "saving"}
-            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:bg-secondary disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-white px-3 py-1.5 text-sm hover:bg-secondary disabled:opacity-50"
           >
             <Save className="size-4" />
             下書きを保存
@@ -270,7 +343,7 @@ export function BlogEditor({ initial }: { initial: BlogEditorInitial }) {
               const ok = await saveDraft()
               if (ok) window.open(previewHref, "_blank", "noopener,noreferrer")
             }}
-            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:bg-secondary"
+            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-white px-3 py-1.5 text-sm hover:bg-secondary"
           >
             <Eye className="size-4" />
             プレビュー
@@ -287,7 +360,7 @@ export function BlogEditor({ initial }: { initial: BlogEditorInitial }) {
           <button
             type="button"
             onClick={onDelete}
-            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
+            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-white px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
             title="下書きを削除"
           >
             <Trash2 className="size-4" />
@@ -303,16 +376,23 @@ export function BlogEditor({ initial }: { initial: BlogEditorInitial }) {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
         <aside className="lg:sticky lg:top-4 lg:self-start">
+          <div className="mb-3 flex items-center justify-between">
+            <span className="text-xs font-semibold text-muted-foreground">記事の設定</span>
+            <button
+              type="button"
+              onClick={enterFocus}
+              className="inline-flex items-center gap-1 rounded-md border border-border bg-white px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground"
+              title="メタフォームを閉じて集中モードへ"
+            >
+              <PanelLeftClose className="size-3.5" />
+              閉じる
+            </button>
+          </div>
           <BlogMetaForm value={meta} onChange={onMetaChange} knownTags={knownTags} />
         </aside>
-        <section className="min-w-0">
-          <BlocknoteCanvas
-            initialBlocks={initialBlocksMemo}
-            initialHtml={initial.bodyHtml}
-            getSlug={getSlugForUpload}
-            onChange={onCanvasChange}
-            handleRef={canvasHandle}
-          />
+        <section className="flex min-w-0 flex-col gap-4">
+          <div>{titleInput}</div>
+          {bodyCanvas}
         </section>
       </div>
     </div>
