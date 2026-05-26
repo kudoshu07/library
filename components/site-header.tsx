@@ -3,12 +3,13 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { Menu, X } from "lucide-react"
+import { Menu, Plus, NotebookPen, X } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { SubscribeDialog } from "@/components/subscribe-dialog"
 import { ENABLE_SUBSCRIBE_UI } from "@/lib/feature-flags"
 import { useSubscriberCount } from "@/hooks/use-subscriber-count"
+import { useIsOwner } from "@/hooks/use-is-owner"
 
 const navLinks = [
   { href: "/home", label: "Contents" },
@@ -17,6 +18,9 @@ const navLinks = [
 
 export function SiteHeader() {
   const pathname = usePathname()
+  // null while loading — render nothing rather than flashing the
+  // non-owner state before the cookie check completes.
+  const isOwner = useIsOwner() === true
   const [mobileOpen, setMobileOpen] = useState(false)
   const isBlogPostPage = /^\/\d{4}\/\d{2}\/\d{2}\/[^/]+\/?$/.test(pathname)
   const visibleNavLinks = isBlogPostPage ? [] : navLinks
@@ -38,7 +42,7 @@ export function SiteHeader() {
         </Link>
 
         {/* Desktop nav */}
-        {visibleNavLinks.length > 0 && (
+        {(visibleNavLinks.length > 0 || isOwner) && (
           <nav className="hidden items-center gap-1 md:flex" aria-label="Main navigation">
             {visibleNavLinks.map((link) => (
               <Link
@@ -55,6 +59,7 @@ export function SiteHeader() {
                 {renderSubscribeLabel(link.label)}
               </Link>
             ))}
+            {isOwner && <OwnerNavLinks pathname={pathname} />}
           </nav>
         )}
 
@@ -87,7 +92,7 @@ export function SiteHeader() {
       </div>
 
       {/* Mobile nav */}
-      {mobileOpen && visibleNavLinks.length > 0 && (
+      {mobileOpen && (visibleNavLinks.length > 0 || isOwner) && (
         <nav className="border-t border-border bg-background px-4 pb-4 pt-2 md:hidden" aria-label="Mobile navigation">
           <div className="flex flex-col gap-1">
             {visibleNavLinks.map((link) => (
@@ -106,9 +111,64 @@ export function SiteHeader() {
                 {renderSubscribeLabel(link.label)}
               </Link>
             ))}
+            {isOwner && (
+              <>
+                <Link
+                  href="/admin/blog/new"
+                  onClick={() => setMobileOpen(false)}
+                  className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                >
+                  <Plus className="size-4" />+ new
+                </Link>
+                <Link
+                  href="/admin/blog/drafts"
+                  onClick={() => setMobileOpen(false)}
+                  className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                >
+                  <NotebookPen className="size-4" />📝 draft
+                </Link>
+              </>
+            )}
           </div>
         </nav>
       )}
     </header>
+  )
+}
+
+function OwnerNavLinks({ pathname }: { pathname: string }) {
+  const active =
+    pathname.startsWith("/admin/blog/new") ? "new" :
+    pathname.startsWith("/admin/blog/drafts") ? "draft" :
+    null
+  return (
+    <>
+      <Link
+        href="/admin/blog/new"
+        className={cn(
+          "inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+          active === "new"
+            ? "bg-secondary text-foreground"
+            : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+        )}
+        title="新規ブログを書く"
+      >
+        <Plus className="size-4" />
+        new
+      </Link>
+      <Link
+        href="/admin/blog/drafts"
+        className={cn(
+          "inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+          active === "draft"
+            ? "bg-secondary text-foreground"
+            : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+        )}
+        title="下書き一覧"
+      >
+        <NotebookPen className="size-4" />
+        draft
+      </Link>
+    </>
   )
 }

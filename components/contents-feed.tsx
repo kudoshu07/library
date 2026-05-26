@@ -10,6 +10,8 @@ import {
   Instagram,
   Mail,
   Menu,
+  NotebookPen,
+  Plus,
   Search,
   Sparkles,
   User,
@@ -231,11 +233,13 @@ export function ContentsFeed({
   pickupItems,
   profileAvatarUrl,
   sessionInfo = null,
+  isOwner = false,
 }: {
   allItems: ContentItem[]
   pickupItems: ContentItem[]
   profileAvatarUrl?: string
   sessionInfo?: ContentsFeedSessionInfo | null
+  isOwner?: boolean
 }) {
   const isLoggedIn = sessionInfo !== null
   const router = useRouter()
@@ -559,14 +563,36 @@ export function ContentsFeed({
         <div className="border-b border-slate-200 bg-white px-4 py-3 min-[800px]:hidden">
           <div className="flex items-center justify-between gap-3">
             <h1 className="text-xl font-bold tracking-tight text-slate-900">Kudo Shu Library</h1>
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(true)}
-              className="inline-flex size-10 items-center justify-center rounded-full border border-slate-200 text-slate-700"
-              aria-label="Open menu"
-            >
-              <Menu className="size-5" />
-            </button>
+            <div className="flex items-center gap-2">
+              {isOwner && (
+                <>
+                  <Link
+                    href="/admin/blog/new"
+                    className="inline-flex size-10 items-center justify-center rounded-full border border-slate-200 text-slate-700"
+                    aria-label="新規ブログを書く"
+                    title="新規ブログを書く"
+                  >
+                    <Plus className="size-5" />
+                  </Link>
+                  <Link
+                    href="/admin/blog/drafts"
+                    className="inline-flex size-10 items-center justify-center rounded-full border border-slate-200 text-slate-700"
+                    aria-label="下書き一覧"
+                    title="下書き一覧"
+                  >
+                    <NotebookPen className="size-5" />
+                  </Link>
+                </>
+              )}
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(true)}
+                className="inline-flex size-10 items-center justify-center rounded-full border border-slate-200 text-slate-700"
+                aria-label="Open menu"
+              >
+                <Menu className="size-5" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -634,6 +660,26 @@ export function ContentsFeed({
                       <Instagram className="size-5" />
                       <span className="min-[800px]:max-[1024px]:hidden">DMする</span>
                     </a>
+                    {isOwner && (
+                      <>
+                        <Link
+                          href="/admin/blog/new"
+                          className="flex items-center gap-3 rounded-full px-3 py-2 text-base font-semibold text-[#264F8B] transition hover:bg-slate-200 min-[800px]:max-[1024px]:mx-auto min-[800px]:max-[1024px]:h-10 min-[800px]:max-[1024px]:w-10 min-[800px]:max-[1024px]:justify-center min-[800px]:max-[1024px]:px-0 min-[800px]:max-[1024px]:py-0"
+                          title="新規ブログを書く"
+                        >
+                          <Plus className="size-5" />
+                          <span className="min-[800px]:max-[1024px]:hidden">+ new</span>
+                        </Link>
+                        <Link
+                          href="/admin/blog/drafts"
+                          className="flex items-center gap-3 rounded-full px-3 py-2 text-base font-semibold text-[#264F8B] transition hover:bg-slate-200 min-[800px]:max-[1024px]:mx-auto min-[800px]:max-[1024px]:h-10 min-[800px]:max-[1024px]:w-10 min-[800px]:max-[1024px]:justify-center min-[800px]:max-[1024px]:px-0 min-[800px]:max-[1024px]:py-0"
+                          title="下書き一覧"
+                        >
+                          <NotebookPen className="size-5" />
+                          <span className="min-[800px]:max-[1024px]:hidden">📝 draft</span>
+                        </Link>
+                      </>
+                    )}
                   </nav>
                 </div>
 

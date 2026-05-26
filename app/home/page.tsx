@@ -70,6 +70,7 @@ export default async function HomeTimelinePage() {
       pickupItems={pickupItems}
       profileAvatarUrl={profileAvatarUrl}
       sessionInfo={sessionInfo}
+      isOwner={session?.isOwner === true}
     />
   )
 }
