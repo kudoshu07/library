@@ -10,7 +10,10 @@ const patchSchema = z
   .object({
     title: z.string().max(500).optional(),
     slug: z.string().max(200).optional(),
-    publishDate: z.string().datetime().nullable().optional(),
+    // Supabase's timestamptz round-trip returns "+00:00" rather than "Z";
+    // accept both by allowing an offset. Round-trip through `new Date()`
+    // in the API would also work but adding `offset: true` is cheaper.
+    publishDate: z.string().datetime({ offset: true }).nullable().optional(),
     summary: z.string().max(2000).optional(),
     tags: z.array(z.string().max(100)).max(50).optional(),
     thumbnailUrl: z.string().max(2000).nullable().optional(),
