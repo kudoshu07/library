@@ -6,6 +6,7 @@ import { useCreateBlockNote } from "@blocknote/react"
 import { BlockNoteView } from "@blocknote/mantine"
 import "@blocknote/core/fonts/inter.css"
 import "@blocknote/mantine/style.css"
+import { isValidSlug, sanitizeSlug } from "@/lib/mdx-serializer"
 
 // The BlockNote editor wrapper. Owns the editor instance and forwards
 // content-change events to its parent as both BlockNote JSON (for round-trip
@@ -78,15 +79,29 @@ export function BlocknoteCanvas({
     schema: blogSchema,
     initialContent: initialBlocks && initialBlocks.length > 0 ? initialBlocks : undefined,
     uploadFile: async (file: File) => {
-      const slug = slugRef.current.trim()
-      if (!slug) {
+      // Slug becomes part of the storage path (public/{slug}/...), so we
+      // validate it client-side here BEFORE crossing the network. This
+      // matches the same isValidSlug() check the publish endpoint uses,
+      // and surfaces a helpful message via BlockNote's image dialog
+      // instead of the generic "Upload failed" string the dialog falls
+      // back to on opaque server errors.
+      const raw = slugRef.current.trim()
+      if (!raw) {
         throw new Error(
-          "slugを先に入力してください。画像は public/{slug}/ に保存されます。",
+          "slugを先に入力してください（画像は public/{slug}/ に保存されます）。",
         )
       }
+      if (!isValidSlug(raw)) {
+        const suggested = sanitizeSlug(raw)
+        const hint = suggested
+          ? `例: 「${suggested}」のように半角英数字とハイフンで入力してください。`
+          : "半角英数字とハイフンで入力してください（例: my-post）。"
+        throw new Error(`slug 「${raw}」は使えません。${hint}`)
+      }
+
       const fd = new FormData()
       fd.append("file", file)
-      fd.append("slug", slug)
+      fd.append("slug", raw)
       const res = await fetch("/api/admin/blog/upload-image", {
         method: "POST",
         body: fd,

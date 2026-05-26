@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { X } from "lucide-react"
+import { isValidSlug, sanitizeSlug } from "@/lib/mdx-serializer"
 
 export type BlogMeta = {
   title: string
@@ -73,6 +74,10 @@ export function BlogMetaForm({
           onChange={(e) => set("slug", e.target.value)}
           className="block w-full rounded-md border border-border bg-white px-3 py-2 font-mono text-sm"
           placeholder="my-post-slug"
+        />
+        <SlugValidationHint
+          raw={value.slug}
+          onApplySuggested={(suggested) => set("slug", suggested)}
         />
       </Field>
 
@@ -167,6 +172,42 @@ function Field({
       {children}
       {hint && <span className="mt-1 block text-[11px] text-muted-foreground">{hint}</span>}
     </label>
+  )
+}
+
+/**
+ * Live feedback for the slug field. Most failures users hit at publish time
+ * are slug-shape problems (Japanese characters, spaces, leading/trailing
+ * dashes) — surface them as the user types so they don't waste a publish
+ * round-trip OR an image upload to find out. Includes a one-tap fix that
+ * applies the sanitized form.
+ */
+function SlugValidationHint({
+  raw,
+  onApplySuggested,
+}: {
+  raw: string
+  onApplySuggested: (suggested: string) => void
+}) {
+  const trimmed = raw.trim()
+  if (!trimmed) return null
+  if (isValidSlug(trimmed)) return null
+  const suggested = sanitizeSlug(trimmed)
+  return (
+    <div className="mt-1 rounded-md border border-amber-300 bg-amber-50 px-2 py-1.5 text-[11px] text-amber-900">
+      ⚠️ slug は半角英数字とハイフンのみ使えます（画像アップロードもこのslugでフォルダ分けされます）。
+      {suggested ? (
+        <button
+          type="button"
+          onClick={() => onApplySuggested(suggested)}
+          className="ml-1 underline underline-offset-2 hover:no-underline"
+        >
+          「{suggested}」に修正
+        </button>
+      ) : (
+        <span className="ml-1">入力例: <code className="font-mono">my-post</code></span>
+      )}
+    </div>
   )
 }
 
