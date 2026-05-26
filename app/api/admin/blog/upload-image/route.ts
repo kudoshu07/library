@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { requireOwner } from "@/lib/admin-guard"
-import { commitFileChanges, fileExists } from "@/lib/github-publisher"
-import { sanitizeSlug } from "@/lib/mdx-serializer"
+import { getDraftForOwner } from "@/lib/blog-drafts"
+import { uploadDraftImage } from "@/lib/blog-image-storage"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -15,33 +15,14 @@ const ALLOWED_TYPES = new Set([
   "image/svg+xml",
 ])
 
-function extensionFor(mime: string, filename: string): string {
-  switch (mime) {
-    case "image/png": return "png"
-    case "image/jpeg": return "jpg"
-    case "image/webp": return "webp"
-    case "image/gif": return "gif"
-    case "image/svg+xml": return "svg"
-    default:
-      const fromName = filename.match(/\.([a-zA-Z0-9]+)$/)?.[1]?.toLowerCase()
-      if (fromName) return fromName
-      return "bin"
-  }
-}
-
-function safeBaseName(name: string): string {
-  // Drop extension and any path/odd chars; keep ascii + dash + underscore.
-  const noExt = name.replace(/\.[^.]+$/, "")
-  return (
-    noExt
-      .toLowerCase()
-      .replace(/[^a-z0-9-_]/g, "-")
-      .replace(/-+/g, "-")
-      .replace(/^-|-$/g, "")
-      .slice(0, 80) || "image"
-  )
-}
-
+// Drafting-phase images go to Supabase Storage (blog-draft-images bucket)
+// rather than straight to GitHub. That sidesteps the 1-2 minute Vercel
+// rebuild gap that would otherwise leave every freshly-uploaded image
+// returning 404 in the editor — and worse, getting the 404 cached by the
+// browser so the image stays broken even after the rebuild completes.
+// The publish endpoint sweeps these URLs out of the body HTML and
+// commits the actual image bytes to public/{slug}/ in the same commit
+// as the MDX, so the final post still follows the existing convention.
 export async function POST(req: Request) {
   const guard = await requireOwner()
   if (!guard.ok) {
@@ -56,17 +37,14 @@ export async function POST(req: Request) {
   }
 
   const file = formData.get("file")
-  const rawSlug = formData.get("slug")
+  const rawDraftId = formData.get("draftId")
   if (!(file instanceof File)) {
     return NextResponse.json({ error: "file_required" }, { status: 400 })
   }
-  if (typeof rawSlug !== "string" || !rawSlug.trim()) {
-    return NextResponse.json({ error: "slug_required" }, { status: 400 })
+  if (typeof rawDraftId !== "string" || !rawDraftId.trim()) {
+    return NextResponse.json({ error: "draft_id_required" }, { status: 400 })
   }
-  const slug = sanitizeSlug(rawSlug)
-  if (!slug) {
-    return NextResponse.json({ error: "invalid_slug" }, { status: 400 })
-  }
+  const draftId = rawDraftId.trim()
   if (file.size === 0) {
     return NextResponse.json({ error: "empty_file" }, { status: 400 })
   }
@@ -80,56 +58,28 @@ export async function POST(req: Request) {
     )
   }
 
-  // Pick a non-colliding filename inside public/{slug}/. We add a short
-  // timestamp+random suffix to avoid race conditions when the editor uploads
-  // many images quickly, then double-check via the API.
-  const base = safeBaseName(file.name || "image")
-  const ext = extensionFor(file.type, file.name || "")
-  const ts = new Date()
-    .toISOString()
-    .replace(/[-:.TZ]/g, "")
-    .slice(0, 14) // YYYYMMDDHHMMSS
-  const rand = Math.random().toString(36).slice(2, 6)
-  const filename = `${base}-${ts}${rand}.${ext}`
-  const repoPath = `public/${slug}/${filename}`
-  const publicUrl = `/${slug}/${filename}`
-
-  // Defensive: in case the same filename somehow already exists, refuse so we
-  // don't silently overwrite an existing post asset.
+  // Confirm the draft belongs to this owner so a stray draftId from one
+  // user's session can't be used to dump images into another owner's
+  // namespace (defense in depth — there's only ever one owner today).
   try {
-    if (await fileExists(repoPath)) {
-      return NextResponse.json(
-        { error: "filename_collision" },
-        { status: 409 },
-      )
+    const draft = await getDraftForOwner(guard.session.subscriberId, draftId)
+    if (!draft) {
+      return NextResponse.json({ error: "draft_not_found" }, { status: 404 })
     }
   } catch (err) {
-    console.error("fileExists probe failed", err)
-    return NextResponse.json({ error: "github_unreachable" }, { status: 502 })
+    console.error("upload-image: draft lookup failed", err)
+    return NextResponse.json({ error: "draft_lookup_failed" }, { status: 500 })
   }
 
-  const buffer = Buffer.from(await file.arrayBuffer())
-  const base64 = buffer.toString("base64")
-
   try {
-    const commit = await commitFileChanges({
-      message: `feat(blog): upload image for ${slug}`,
-      changes: [
-        {
-          path: repoPath,
-          mode: "100644",
-          type: "blob",
-          contentBase64: base64,
-        },
-      ],
-    })
+    const uploaded = await uploadDraftImage({ draftId, file })
     return NextResponse.json({
-      url: publicUrl,
-      commitSha: commit.commitSha,
-      commitUrl: commit.commitUrl,
+      url: uploaded.publicUrl,
+      storagePath: uploaded.storagePath,
+      filename: uploaded.filename,
     })
   } catch (err) {
-    console.error("upload-image commit error", err)
-    return NextResponse.json({ error: "commit_failed" }, { status: 502 })
+    console.error("upload-image: storage upload failed", err)
+    return NextResponse.json({ error: "upload_failed" }, { status: 502 })
   }
 }

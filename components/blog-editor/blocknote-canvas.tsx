@@ -6,7 +6,6 @@ import { useCreateBlockNote } from "@blocknote/react"
 import { BlockNoteView } from "@blocknote/mantine"
 import "@blocknote/core/fonts/inter.css"
 import "@blocknote/mantine/style.css"
-import { isValidSlug, sanitizeSlug } from "@/lib/mdx-serializer"
 
 // The BlockNote editor wrapper. Owns the editor instance and forwards
 // content-change events to its parent as both BlockNote JSON (for round-trip
@@ -51,7 +50,7 @@ export type BlocknoteCanvasHandle = {
 export function BlocknoteCanvas({
   initialBlocks,
   initialHtml,
-  getSlug,
+  draftId,
   onChange,
   handleRef,
 }: {
@@ -63,45 +62,25 @@ export function BlocknoteCanvas({
    * parse the HTML into blocks once and replace the editor document.
    */
   initialHtml?: string
-  getSlug: () => string
+  /**
+   * Drafts-namespace key used by the image upload endpoint. Images are
+   * stored under blog-draft-images/{draftId}/ in Supabase Storage during
+   * drafting, then rewritten + committed to GitHub at publish time.
+   */
+  draftId: string
   onChange?: (blocks: Block[]) => void
   handleRef?: { current: BlocknoteCanvasHandle | null }
 }) {
-  // The slug can change after the editor is mounted (the user types into the
-  // slug field). useRef lets us read the latest value inside the (stable)
-  // uploadFile callback without re-creating the editor instance.
-  const slugRef = useRef<string>(getSlug())
-  useEffect(() => {
-    slugRef.current = getSlug()
-  })
-
   const editor = useCreateBlockNote({
     schema: blogSchema,
     initialContent: initialBlocks && initialBlocks.length > 0 ? initialBlocks : undefined,
     uploadFile: async (file: File) => {
-      // Slug becomes part of the storage path (public/{slug}/...), so we
-      // validate it client-side here BEFORE crossing the network. This
-      // matches the same isValidSlug() check the publish endpoint uses,
-      // and surfaces a helpful message via BlockNote's image dialog
-      // instead of the generic "Upload failed" string the dialog falls
-      // back to on opaque server errors.
-      const raw = slugRef.current.trim()
-      if (!raw) {
-        throw new Error(
-          "slugを先に入力してください（画像は public/{slug}/ に保存されます）。",
-        )
-      }
-      if (!isValidSlug(raw)) {
-        const suggested = sanitizeSlug(raw)
-        const hint = suggested
-          ? `例: 「${suggested}」のように半角英数字とハイフンで入力してください。`
-          : "半角英数字とハイフンで入力してください（例: my-post）。"
-        throw new Error(`slug 「${raw}」は使えません。${hint}`)
-      }
-
+      // Images go to Supabase Storage (no slug needed during drafting —
+      // the publish endpoint will rewrite URLs to /{slug}/ paths and
+      // commit the bytes to GitHub once the user hits 公開).
       const fd = new FormData()
       fd.append("file", file)
-      fd.append("slug", raw)
+      fd.append("draftId", draftId)
       const res = await fetch("/api/admin/blog/upload-image", {
         method: "POST",
         body: fd,
