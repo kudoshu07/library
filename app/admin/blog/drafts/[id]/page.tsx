@@ -20,11 +20,21 @@ export default async function EditDraftPage({ params }: PageProps) {
   const draft = await getDraftForOwner(session.subscriberId, id)
   if (!draft) notFound()
 
+  // Normalize publish_date into strict ISO 8601 with "Z". Supabase returns
+  // timestamptz columns in the "+00:00" form, which our save-time Zod
+  // schema now also accepts, but normalizing here keeps the round-trip
+  // canonical and the form input parsing trivially deterministic.
+  const normalizedPublishDate = (() => {
+    if (!draft.publish_date) return ""
+    const d = new Date(draft.publish_date)
+    return Number.isNaN(d.getTime()) ? "" : d.toISOString()
+  })()
+
   const initial: BlogEditorInitial = {
     id: draft.id,
     meta: {
       title: draft.title,
-      publishDate: draft.publish_date ?? "",
+      publishDate: normalizedPublishDate,
       slug: draft.slug,
       summary: draft.summary,
       tags: draft.tags,
