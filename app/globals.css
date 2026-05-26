@@ -142,6 +142,23 @@
   padding-top: 1rem;
   padding-bottom: 4rem;
 }
+/*
+ * Hide BlockNote's default placeholder text (e.g. "Enter text or type
+ * '/' for commands"). The editor already has a giant white canvas and
+ * a 公開/プレビュー toolbar above it, so the placeholder is noise more
+ * than guidance. We zap every variant — pseudo-element content, the
+ * legacy ProseMirror placeholder span, and the data-placeholder
+ * attribute fallback — so future BlockNote releases stay quiet too.
+ */
+.ksl-blocknote-canvas .bn-block-content [data-placeholder]::before,
+.ksl-blocknote-canvas .bn-block-content [data-placeholder]::after,
+.ksl-blocknote-canvas .bn-inline-content[data-placeholder]::before,
+.ksl-blocknote-canvas .ProseMirror [data-placeholder]::before,
+.ksl-blocknote-canvas .bn-editor .is-empty::before,
+.ksl-blocknote-canvas .bn-editor .ProseMirror-placeholder {
+  content: none !important;
+  display: none !important;
+}
 
 @layer utilities {
   .scrollbar-none {
