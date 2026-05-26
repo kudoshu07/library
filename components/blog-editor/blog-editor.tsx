@@ -342,134 +342,159 @@ export function BlogEditor({ initial }: { initial: BlogEditorInitial }) {
     </>
   )
 
-  // -- Focus mode: position:fixed overlay above the site header --
-  if (focusMode) {
-    return (
-      <>
-        <div className="fixed inset-0 z-[100] overflow-y-auto bg-background">
-          <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-border bg-background/95 px-4 py-2 backdrop-blur">
-            <button
-              type="button"
-              onClick={exitFocus}
-              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-white px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground"
-              title="通常表示に戻る"
-            >
-              <Minimize2 className="size-3.5" />
-              通常表示
-            </button>
-            <div className="flex items-center gap-2">
-              <SaveStatusPill status={saveStatus} error={saveError} dirty={dirty} />
+  // CRITICAL: focus mode toggle must NOT change the JSX tree shape around
+  // the BlocknoteCanvas. If the canvas's parent path changes, React
+  // unmounts → remounts, which re-runs useCreateBlockNote with the *stale
+  // server `initialBlocks`* and the user's in-flight edits are wiped.
+  //
+  // So instead of two different `return`s, we always render the same tree
+  // and just swap classes + header contents based on `focusMode`. The
+  // <section> holding {titleInput}{bodyCanvas} sits at the same depth in
+  // both modes, so React keeps the editor instance alive across toggles.
+  return (
+    <>
+      <div
+        className={
+          focusMode
+            ? "fixed inset-0 z-[100] overflow-y-auto bg-background"
+            : "mx-auto max-w-6xl px-4 py-6 lg:px-6"
+        }
+      >
+        <header
+          className={
+            focusMode
+              ? "sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-border bg-background/95 px-4 py-2 backdrop-blur"
+              : "mb-4 flex flex-wrap items-center justify-between gap-3"
+          }
+        >
+          {focusMode ? (
+            <>
               <button
                 type="button"
-                onClick={saveDraft}
-                disabled={saveStatus === "saving"}
-                className="inline-flex items-center gap-1.5 rounded-md border border-border bg-white px-3 py-1.5 text-sm hover:bg-secondary disabled:opacity-50"
+                onClick={exitFocus}
+                className="inline-flex items-center gap-1.5 rounded-md border border-border bg-white px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+                title="通常表示に戻る"
               >
-                <Save className="size-4" />
-                保存
+                <Minimize2 className="size-3.5" />
+                通常表示
+              </button>
+              <div className="flex items-center gap-2">
+                <SaveStatusPill status={saveStatus} error={saveError} dirty={dirty} />
+                <button
+                  type="button"
+                  onClick={saveDraft}
+                  disabled={saveStatus === "saving"}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-border bg-white px-3 py-1.5 text-sm hover:bg-secondary disabled:opacity-50"
+                >
+                  <Save className="size-4" />
+                  保存
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/admin/blog/drafts"
+                  className="inline-flex items-center gap-1 rounded-md border border-border bg-white px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  <ArrowLeft className="size-3.5" />
+                  一覧へ
+                </Link>
+                {initial.sourcePath && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-medium text-amber-800">
+                    📝 既存記事を編集中
+                    <code className="ml-1 font-mono">{initial.sourcePath}</code>
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <SaveStatusPill status={saveStatus} error={saveError} dirty={dirty} />
+                <button
+                  type="button"
+                  onClick={saveDraft}
+                  disabled={saveStatus === "saving"}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-border bg-white px-3 py-1.5 text-sm hover:bg-secondary disabled:opacity-50"
+                >
+                  <Save className="size-4" />
+                  下書きを保存
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const ok = await saveDraft()
+                    if (ok) window.open(previewHref, "_blank", "noopener,noreferrer")
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-border bg-white px-3 py-1.5 text-sm hover:bg-secondary"
+                >
+                  <Eye className="size-4" />
+                  プレビュー
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPublishDialogOpen(true)}
+                  disabled={publishing}
+                  className="inline-flex items-center gap-1.5 rounded-md bg-[#264F8B] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#1f4376] disabled:opacity-50"
+                >
+                  <Send className="size-4" />
+                  {publishing ? "公開中..." : "公開"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDeleteDialogOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-border bg-white px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
+                  title="下書きを削除"
+                >
+                  <Trash2 className="size-4" />
+                </button>
+              </div>
+            </>
+          )}
+        </header>
+
+        {publishError && !focusMode && (
+          <div className="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {translatePublishError(publishError)}
+          </div>
+        )}
+
+        <div
+          className={
+            focusMode
+              ? "mx-auto max-w-3xl px-6 pb-24 pt-10"
+              : "grid grid-cols-1 gap-6 lg:grid-cols-[320px_minmax(0,1fr)]"
+          }
+        >
+          {/*
+            Aside is kept in the tree even in focus mode (just `hidden`)
+            so the sibling <section> below stays at the same position and
+            BlocknoteCanvas isn't remounted by React's reconciler.
+          */}
+          <aside
+            className={focusMode ? "hidden" : "lg:sticky lg:top-4 lg:self-start"}
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <span className="text-xs font-semibold text-muted-foreground">記事の設定</span>
+              <button
+                type="button"
+                onClick={enterFocus}
+                className="inline-flex items-center gap-1 rounded-md border border-border bg-white px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground"
+                title="メタフォームを閉じて集中モードへ"
+              >
+                <PanelLeftClose className="size-3.5" />
+                閉じる
               </button>
             </div>
-          </div>
-          <div className="mx-auto max-w-3xl px-6 pb-24 pt-10">
-            <div className="mb-6">{titleInput}</div>
+            <BlogMetaForm value={meta} onChange={onMetaChange} knownTags={knownTags} />
+          </aside>
+          <section className="flex min-w-0 flex-col gap-4">
+            <div className={focusMode ? "mb-6" : undefined}>{titleInput}</div>
             {bodyCanvas}
-          </div>
+          </section>
         </div>
-        {confirmDialogs}
-      </>
-    )
-  }
-
-  // -- Normal mode --
-  return (
-    <div className="mx-auto max-w-6xl px-4 py-6 lg:px-6">
-      <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Link
-            href="/admin/blog/drafts"
-            className="inline-flex items-center gap-1 rounded-md border border-border bg-white px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="size-3.5" />
-            一覧へ
-          </Link>
-          {initial.sourcePath && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-medium text-amber-800">
-              📝 既存記事を編集中
-              <code className="ml-1 font-mono">{initial.sourcePath}</code>
-            </span>
-          )}
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <SaveStatusPill status={saveStatus} error={saveError} dirty={dirty} />
-          <button
-            type="button"
-            onClick={saveDraft}
-            disabled={saveStatus === "saving"}
-            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-white px-3 py-1.5 text-sm hover:bg-secondary disabled:opacity-50"
-          >
-            <Save className="size-4" />
-            下書きを保存
-          </button>
-          <button
-            type="button"
-            onClick={async () => {
-              const ok = await saveDraft()
-              if (ok) window.open(previewHref, "_blank", "noopener,noreferrer")
-            }}
-            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-white px-3 py-1.5 text-sm hover:bg-secondary"
-          >
-            <Eye className="size-4" />
-            プレビュー
-          </button>
-          <button
-            type="button"
-            onClick={() => setPublishDialogOpen(true)}
-            disabled={publishing}
-            className="inline-flex items-center gap-1.5 rounded-md bg-[#264F8B] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#1f4376] disabled:opacity-50"
-          >
-            <Send className="size-4" />
-            {publishing ? "公開中..." : "公開"}
-          </button>
-          <button
-            type="button"
-            onClick={() => setDeleteDialogOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-white px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
-            title="下書きを削除"
-          >
-            <Trash2 className="size-4" />
-          </button>
-        </div>
-      </header>
-
-      {publishError && (
-        <div className="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          {translatePublishError(publishError)}
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
-        <aside className="lg:sticky lg:top-4 lg:self-start">
-          <div className="mb-3 flex items-center justify-between">
-            <span className="text-xs font-semibold text-muted-foreground">記事の設定</span>
-            <button
-              type="button"
-              onClick={enterFocus}
-              className="inline-flex items-center gap-1 rounded-md border border-border bg-white px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground"
-              title="メタフォームを閉じて集中モードへ"
-            >
-              <PanelLeftClose className="size-3.5" />
-              閉じる
-            </button>
-          </div>
-          <BlogMetaForm value={meta} onChange={onMetaChange} knownTags={knownTags} />
-        </aside>
-        <section className="flex min-w-0 flex-col gap-4">
-          <div>{titleInput}</div>
-          {bodyCanvas}
-        </section>
       </div>
       {confirmDialogs}
-    </div>
+    </>
   )
 }
 
