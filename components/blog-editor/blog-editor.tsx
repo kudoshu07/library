@@ -16,6 +16,8 @@ import Link from "next/link"
 import type { Block, PartialBlock } from "@blocknote/core"
 import { BlogMetaForm, type BlogMeta, useKnownTags } from "@/components/blog-editor/blog-meta-form"
 import type { BlocknoteCanvasHandle } from "@/components/blog-editor/blocknote-canvas"
+import { ConfirmDialog } from "@/components/blog-editor/confirm-dialog"
+import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard"
 
 // BlockNote uses ProseMirror under the hood and doesn't render on the server.
 // Skip SSR entirely so we don't ship a hydration mismatch placeholder; the
@@ -103,16 +105,10 @@ export function BlogEditor({ initial }: { initial: BlogEditorInitial }) {
     return () => window.clearInterval(interval)
   }, [initial.id])
 
-  // Warn before navigating away with unsaved changes.
-  useEffect(() => {
-    const handler = (e: BeforeUnloadEvent) => {
-      if (!dirty) return
-      e.preventDefault()
-      e.returnValue = ""
-    }
-    window.addEventListener("beforeunload", handler)
-    return () => window.removeEventListener("beforeunload", handler)
-  }, [dirty])
+  // Warn before navigating away with unsaved changes — both hard nav
+  // (refresh, back button, tab close) and internal Next.js Link clicks.
+  // See hooks/use-unsaved-changes-guard.ts.
+  useUnsavedChangesGuard(dirty)
 
   const markDirty = useCallback(() => {
     setDirty(true)
@@ -170,7 +166,15 @@ export function BlogEditor({ initial }: { initial: BlogEditorInitial }) {
     }
   }, [initial.id, meta])
 
-  const publish = useCallback(async () => {
+  // Confirmation dialog state. We never trigger publish/delete directly
+  // from a button click — those buttons open these dialogs instead, and
+  // the dialog's confirm action invokes the network call. That way an
+  // accidental tap on the (large, prominent) 公開 button doesn't cost a
+  // GitHub commit + Vercel deploy.
+  const [publishDialogOpen, setPublishDialogOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+
+  const runPublish = useCallback(async () => {
     // Save first so the publish API has the absolute latest content. This
     // also gives us a final client-side validation pass before the GitHub
     // round-trip.
@@ -203,8 +207,9 @@ export function BlogEditor({ initial }: { initial: BlogEditorInitial }) {
       if (!res.ok) {
         throw new Error(data?.error ?? `publish failed (${res.status})`)
       }
-      // Draft has been deleted server-side. Send the user to a confirmation
-      // page that points at the new public URL.
+      // Draft has been deleted server-side; clear dirty so the unsaved
+      // guard doesn't block the redirect.
+      setDirty(false)
       const publishedUrl = encodeURIComponent(data.url ?? "/")
       const commitUrl = encodeURIComponent(data.commitUrl ?? "")
       router.push(
@@ -217,8 +222,7 @@ export function BlogEditor({ initial }: { initial: BlogEditorInitial }) {
     }
   }, [initial.id, meta, router, saveDraft])
 
-  const onDelete = useCallback(async () => {
-    if (!window.confirm("この下書きを削除します。よろしいですか？")) return
+  const runDelete = useCallback(async () => {
     try {
       const res = await fetch(`/api/admin/blog/drafts/${initial.id}`, {
         method: "DELETE",
@@ -228,6 +232,7 @@ export function BlogEditor({ initial }: { initial: BlogEditorInitial }) {
         throw new Error(data?.error ?? `delete failed (${res.status})`)
       }
       window.localStorage.removeItem(lsKey(initial.id))
+      setDirty(false)
       router.push("/admin/blog/drafts")
     } catch (e: unknown) {
       window.alert(e instanceof Error ? e.message : "delete failed")
@@ -272,38 +277,106 @@ export function BlogEditor({ initial }: { initial: BlogEditorInitial }) {
     />
   )
 
+  // Confirmation dialogs — rendered once regardless of focus mode so the
+  // overlay (which uses an AlertDialogPortal) stays mounted even when the
+  // editor's chrome changes around it.
+  const confirmDialogs = (
+    <>
+      <ConfirmDialog
+        open={publishDialogOpen}
+        onOpenChange={setPublishDialogOpen}
+        title="本当に公開しますか？"
+        description={
+          <>
+            <p className="mb-2">
+              この内容を GitHub にコミットし、本番サイトに反映します。
+              Vercel ビルド完了後（1〜2分）に公開されます。
+            </p>
+            <ul className="ml-4 list-disc space-y-1 text-xs">
+              <li>タイトル: <strong>{meta.title.trim() || "(未入力)"}</strong></li>
+              <li>
+                公開日:{" "}
+                <strong>
+                  {meta.publishDate
+                    ? new Date(meta.publishDate).toLocaleString("ja-JP")
+                    : "(未入力)"}
+                </strong>
+              </li>
+              <li>slug: <strong className="font-mono">{meta.slug.trim() || "(未入力)"}</strong></li>
+              {initial.sourcePath && (
+                <li className="text-amber-700">
+                  既存記事 <code className="font-mono">{initial.sourcePath}</code>{" "}
+                  を上書きします
+                </li>
+              )}
+            </ul>
+          </>
+        }
+        confirmLabel={publishing ? "公開中..." : "公開する"}
+        onConfirm={runPublish}
+        disabled={publishing}
+      />
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="この下書きを削除しますか？"
+        description={
+          <>
+            <p className="mb-2">
+              下書き「<strong>{meta.title.trim() || "(無題)"}</strong>」を削除します。
+              元に戻せません。
+            </p>
+            {initial.sourcePath && (
+              <p className="text-xs text-amber-700">
+                ※ 削除されるのはこの下書きだけで、公開済み記事{" "}
+                <code className="font-mono">{initial.sourcePath}</code>{" "}
+                には影響しません。
+              </p>
+            )}
+          </>
+        }
+        confirmLabel="削除する"
+        variant="destructive"
+        onConfirm={runDelete}
+      />
+    </>
+  )
+
   // -- Focus mode: position:fixed overlay above the site header --
   if (focusMode) {
     return (
-      <div className="fixed inset-0 z-[100] overflow-y-auto bg-background">
-        <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-border bg-background/95 px-4 py-2 backdrop-blur">
-          <button
-            type="button"
-            onClick={exitFocus}
-            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-white px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground"
-            title="通常表示に戻る"
-          >
-            <Minimize2 className="size-3.5" />
-            通常表示
-          </button>
-          <div className="flex items-center gap-2">
-            <SaveStatusPill status={saveStatus} error={saveError} dirty={dirty} />
+      <>
+        <div className="fixed inset-0 z-[100] overflow-y-auto bg-background">
+          <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-border bg-background/95 px-4 py-2 backdrop-blur">
             <button
               type="button"
-              onClick={saveDraft}
-              disabled={saveStatus === "saving"}
-              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-white px-3 py-1.5 text-sm hover:bg-secondary disabled:opacity-50"
+              onClick={exitFocus}
+              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-white px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+              title="通常表示に戻る"
             >
-              <Save className="size-4" />
-              保存
+              <Minimize2 className="size-3.5" />
+              通常表示
             </button>
+            <div className="flex items-center gap-2">
+              <SaveStatusPill status={saveStatus} error={saveError} dirty={dirty} />
+              <button
+                type="button"
+                onClick={saveDraft}
+                disabled={saveStatus === "saving"}
+                className="inline-flex items-center gap-1.5 rounded-md border border-border bg-white px-3 py-1.5 text-sm hover:bg-secondary disabled:opacity-50"
+              >
+                <Save className="size-4" />
+                保存
+              </button>
+            </div>
+          </div>
+          <div className="mx-auto max-w-3xl px-6 pb-24 pt-10">
+            <div className="mb-6">{titleInput}</div>
+            {bodyCanvas}
           </div>
         </div>
-        <div className="mx-auto max-w-3xl px-6 pb-24 pt-10">
-          <div className="mb-6">{titleInput}</div>
-          {bodyCanvas}
-        </div>
-      </div>
+        {confirmDialogs}
+      </>
     )
   }
 
@@ -350,7 +423,7 @@ export function BlogEditor({ initial }: { initial: BlogEditorInitial }) {
           </button>
           <button
             type="button"
-            onClick={publish}
+            onClick={() => setPublishDialogOpen(true)}
             disabled={publishing}
             className="inline-flex items-center gap-1.5 rounded-md bg-[#264F8B] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#1f4376] disabled:opacity-50"
           >
@@ -359,7 +432,7 @@ export function BlogEditor({ initial }: { initial: BlogEditorInitial }) {
           </button>
           <button
             type="button"
-            onClick={onDelete}
+            onClick={() => setDeleteDialogOpen(true)}
             className="inline-flex items-center gap-1.5 rounded-md border border-border bg-white px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
             title="下書きを削除"
           >
@@ -395,6 +468,7 @@ export function BlogEditor({ initial }: { initial: BlogEditorInitial }) {
           {bodyCanvas}
         </section>
       </div>
+      {confirmDialogs}
     </div>
   )
 }
