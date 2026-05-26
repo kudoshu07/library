@@ -140,8 +140,14 @@ export function BlocknoteCanvas({
     return () => onChange(editor.document)
   }, [editor, onChange])
 
+  // Stretch the editor canvas to fill (most of) the viewport even before the
+  // user has typed enough to need it. BlockNote's default style auto-grows,
+  // which leaves an unhelpful one-line strip when the doc is empty.
+  // The `min-h-[calc(100vh-...)]` accounts for the page padding + the editor
+  // header bar so the white area lines up with the visible viewport without
+  // forcing scrollbars.
   return (
-    <div className="rounded-md border border-border bg-card">
+    <div className="ksl-blocknote-canvas rounded-md border border-border bg-white">
       <BlockNoteView editor={editor} onChange={handleChange} theme="light" />
     </div>
   )

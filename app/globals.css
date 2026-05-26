@@ -124,6 +124,25 @@
   }
 }
 
+/*
+ * BlockNote editor — stretch the writing area to match the visible
+ * viewport even when the document is empty. Without this, BlockNote's
+ * default styles let the contenteditable collapse to a single line of
+ * height, which feels like a tiny strip floating in white space.
+ *
+ * The calc() value accounts for the page top padding + the editor's
+ * action header. In focus mode the overlay has its own padding so the
+ * same min-height still gives comfortable headroom.
+ */
+.ksl-blocknote-canvas .bn-container,
+.ksl-blocknote-canvas .bn-editor {
+  min-height: calc(100vh - 14rem);
+}
+.ksl-blocknote-canvas .bn-editor {
+  padding-top: 1rem;
+  padding-bottom: 4rem;
+}
+
 @layer utilities {
   .scrollbar-none {
     -ms-overflow-style: none;

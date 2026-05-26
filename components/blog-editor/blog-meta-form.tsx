@@ -52,24 +52,17 @@ export function BlogMetaForm({
     .filter((t) => !tagInput || t.toLowerCase().includes(tagInput.toLowerCase()))
     .slice(0, 12)
 
+  // Title is intentionally NOT rendered here — it lives at the top of the
+  // body editor so it reads like a Notion-style document heading. Everything
+  // else stays as left-rail metadata.
   return (
     <div className="flex flex-col gap-5">
-      <Field label="タイトル" required>
-        <input
-          type="text"
-          value={value.title}
-          onChange={(e) => set("title", e.target.value)}
-          className="block w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-          placeholder="記事のタイトル"
-        />
-      </Field>
-
       <Field label="公開日" required hint="UTCで保存されます。空欄なら公開時に未入力エラー。">
         <input
           type="datetime-local"
           value={toLocalDatetimeInputValue(value.publishDate)}
           onChange={(e) => set("publishDate", fromLocalDatetimeInputValue(e.target.value))}
-          className="block w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+          className="block w-full rounded-md border border-border bg-white px-3 py-2 text-sm"
         />
       </Field>
 
@@ -78,7 +71,7 @@ export function BlogMetaForm({
           type="text"
           value={value.slug}
           onChange={(e) => set("slug", e.target.value)}
-          className="block w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-sm"
+          className="block w-full rounded-md border border-border bg-white px-3 py-2 font-mono text-sm"
           placeholder="my-post-slug"
         />
       </Field>
@@ -88,13 +81,13 @@ export function BlogMetaForm({
           value={value.summary}
           onChange={(e) => set("summary", e.target.value)}
           rows={3}
-          className="block w-full resize-y rounded-md border border-border bg-background px-3 py-2 text-sm"
+          className="block w-full resize-y rounded-md border border-border bg-white px-3 py-2 text-sm"
           placeholder="記事の要約（140字程度）"
         />
       </Field>
 
       <Field label="カテゴリ (tags)" hint="既存タグから選択 or 入力してEnterで追加。">
-        <div className="flex flex-wrap gap-2 rounded-md border border-border bg-background p-2">
+        <div className="flex flex-wrap gap-2 rounded-md border border-border bg-white p-2">
           {value.tags.map((tag) => (
             <span
               key={tag}
@@ -134,7 +127,7 @@ export function BlogMetaForm({
                 key={tag}
                 type="button"
                 onClick={() => addTag(tag)}
-                className="rounded-full border border-border bg-background px-2 py-0.5 text-xs text-muted-foreground hover:bg-secondary hover:text-foreground"
+                className="rounded-full border border-border bg-white px-2 py-0.5 text-xs text-muted-foreground hover:bg-secondary hover:text-foreground"
               >
                 + {tag}
               </button>
@@ -243,10 +236,10 @@ function ThumbnailUpload({
           value={url}
           onChange={(e) => onChange(e.target.value)}
           placeholder="/slug/thumbnail.png またはアップロード"
-          className="block flex-1 rounded-md border border-border bg-background px-3 py-2 font-mono text-xs"
+          className="block flex-1 rounded-md border border-border bg-white px-3 py-2 font-mono text-xs"
         />
       </div>
-      <label className="inline-flex cursor-pointer items-center justify-center rounded-md border border-dashed border-border bg-background px-3 py-2 text-xs text-muted-foreground hover:bg-secondary">
+      <label className="inline-flex cursor-pointer items-center justify-center rounded-md border border-dashed border-border bg-white px-3 py-2 text-xs text-muted-foreground hover:bg-secondary">
         {uploading ? "アップロード中…" : "画像を選択"}
         <input
           type="file"

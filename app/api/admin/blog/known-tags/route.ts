@@ -60,6 +60,19 @@ function extractTags(raw: string): string[] {
   return []
 }
 
+// Some older MDX posts (mostly WordPress imports) carry URL-encoded
+// Japanese tags like "%e3%83%aa%e3%83%bc%e3%83%80%e3%83%bc%e3%82%b7%e3%83%83%e3%83%97"
+// (= "リーダーシップ"). Decode them so the editor's tag picker shows
+// readable characters. A Set keyed on the decoded form also collapses
+// duplicates when the same tag appears in both encoded and decoded form.
+function safeDecode(raw: string): string {
+  try {
+    return decodeURIComponent(raw)
+  } catch {
+    return raw
+  }
+}
+
 export async function GET() {
   const guard = await requireOwner()
   if (!guard.ok) {
@@ -74,7 +87,7 @@ export async function GET() {
         try {
           const raw = await fs.readFile(file, "utf-8")
           for (const tag of extractTags(raw)) {
-            const trimmed = tag.trim()
+            const trimmed = safeDecode(tag.trim()).trim()
             if (trimmed) tagSet.add(trimmed)
           }
         } catch {
