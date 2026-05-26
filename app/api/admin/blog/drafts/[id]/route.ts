@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { z } from "zod"
 import { requireOwner } from "@/lib/admin-guard"
 import { deleteDraft, getDraftForOwner, updateDraft } from "@/lib/blog-drafts"
+import { deleteDraftImages } from "@/lib/blog-image-storage"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -81,6 +82,12 @@ export async function DELETE(_req: Request, { params }: RouteContext) {
   try {
     const ok = await deleteDraft(guard.session.subscriberId, id)
     if (!ok) return NextResponse.json({ error: "not_found" }, { status: 404 })
+    // Best-effort: also clear any draft images from Supabase Storage so
+    // we don't accumulate orphan blobs. Non-fatal — the draft row is
+    // already gone, which is what the user asked for.
+    void deleteDraftImages(id).catch((err) => {
+      console.error("delete draft: storage cleanup failed", err)
+    })
     return NextResponse.json({ ok: true })
   } catch (err) {
     console.error("delete draft error", err)

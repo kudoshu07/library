@@ -10,7 +10,13 @@ import {
   isValidSlug,
   type BlogFrontmatter,
 } from "@/lib/mdx-serializer"
-import { commitFileChanges, fileExists } from "@/lib/github-publisher"
+import { commitFileChanges, fileExists, type FileChange } from "@/lib/github-publisher"
+import {
+  deleteDraftImages,
+  fetchDraftImageBase64,
+  findDraftImageReferences,
+  rewriteImageSrc,
+} from "@/lib/blog-image-storage"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -107,7 +113,39 @@ export async function POST(_req: Request, { params }: RouteContext) {
     }
   }
 
-  // --- Build MDX file ---
+  // --- Resolve in-flight images ---
+  // Any <img src="..."> in the body that points at the draft images
+  // bucket needs to (a) move into the GitHub commit at public/{slug}/
+  // and (b) have its URL rewritten to "/{slug}/{filename}" so the
+  // published MDX follows the existing local-path convention. Doing
+  // this here keeps the entire post — MDX + assets — atomic on a
+  // single commit, so the site never has a stale image reference.
+  const imageRefs = findDraftImageReferences(bodyHtml)
+  const imageChanges: FileChange[] = []
+  let rewrittenBody = bodyHtml
+  for (const ref of imageRefs) {
+    // storagePath is "{draftId}/{filename}"; filename is the last segment.
+    const filename = ref.storagePath.split("/").pop()
+    if (!filename) continue
+    try {
+      const { base64 } = await fetchDraftImageBase64(ref.storagePath)
+      imageChanges.push({
+        path: `public/${slug}/${filename}`,
+        mode: "100644",
+        type: "blob",
+        contentBase64: base64,
+      })
+      rewrittenBody = rewriteImageSrc(rewrittenBody, ref.src, `/${slug}/${filename}`)
+    } catch (err) {
+      console.error("publish: image fetch failed", { storagePath: ref.storagePath, err })
+      return NextResponse.json(
+        { error: `image_fetch_failed:${filename}` },
+        { status: 502 },
+      )
+    }
+  }
+
+  // --- Build MDX file (using rewritten body) ---
   const frontmatter: BlogFrontmatter = {
     title,
     date: draft.publish_date,
@@ -116,28 +154,24 @@ export async function POST(_req: Request, { params }: RouteContext) {
     tags,
     thumbnail,
   }
-  const mdxContent = buildMdxFile(frontmatter, bodyHtml)
+  const mdxContent = buildMdxFile(frontmatter, rewrittenBody)
 
-  // --- Commit ---
-  const changes = sourcePath
-    ? [
-        // Slug or date changed — delete old, create new in one atomic commit.
-        { path: sourcePath, sha: null },
-        {
-          path: targetPath,
-          mode: "100644" as const,
-          type: "blob" as const,
-          content: mdxContent,
-        },
-      ]
-    : [
-        {
-          path: targetPath,
-          mode: "100644" as const,
-          type: "blob" as const,
-          content: mdxContent,
-        },
-      ]
+  // --- Assemble the atomic commit ---
+  // Order: optional old-file delete (rename case), the new MDX, then any
+  // images. A single commit means Vercel sees the post and all its
+  // assets together in one build, eliminating broken-image windows.
+  const changes: FileChange[] = []
+  if (sourcePath) {
+    // Slug or date changed — delete old, create new in one atomic commit.
+    changes.push({ path: sourcePath, sha: null })
+  }
+  changes.push({
+    path: targetPath,
+    mode: "100644",
+    type: "blob",
+    content: mdxContent,
+  })
+  changes.push(...imageChanges)
 
   const action = draft.source_path ? "update" : "publish"
   const commitMessage =
@@ -157,12 +191,18 @@ export async function POST(_req: Request, { params }: RouteContext) {
     return NextResponse.json({ error: "commit_failed" }, { status: 502 })
   }
 
-  // --- Clean up draft ---
+  // --- Clean up: draft row + Storage copies of the images ---
+  // Both are non-fatal: the post is already live, so any cleanup hiccup
+  // just leaves orphan rows/blobs that can be tidied later.
   try {
     await deleteDraft(guard.session.subscriberId, id)
   } catch (err) {
-    // Non-fatal — the post is already live. Log so we can clean up by hand.
     console.error("publish: post-publish draft cleanup failed", err)
+  }
+  if (imageRefs.length > 0) {
+    void deleteDraftImages(id).catch((err) => {
+      console.error("publish: storage cleanup failed", err)
+    })
   }
 
   return NextResponse.json({
@@ -171,5 +211,6 @@ export async function POST(_req: Request, { params }: RouteContext) {
     path: targetPath,
     commitSha: commit.commitSha,
     commitUrl: commit.commitUrl,
+    imagesCommitted: imageChanges.length,
   })
 }

@@ -55,10 +55,6 @@ export function BlogEditor({ initial }: { initial: BlogEditorInitial }) {
   const [publishing, setPublishing] = useState(false)
   const [publishError, setPublishError] = useState<string | null>(null)
   const [dirty, setDirty] = useState(false)
-  const slugRef = useRef(meta.slug)
-  useEffect(() => {
-    slugRef.current = meta.slug
-  })
 
   // Latest serialized HTML/blocks from BlockNote — pulled out via this handle
   // on demand (save/publish) instead of held in React state so a fast typer
@@ -241,8 +237,6 @@ export function BlogEditor({ initial }: { initial: BlogEditorInitial }) {
 
   const previewHref = `/admin/blog/preview/${initial.id}`
 
-  const getSlugForUpload = useCallback(() => slugRef.current, [])
-
   const initialBlocksMemo = useMemo(
     () => hydratedInitialBlocks ?? undefined,
     [hydratedInitialBlocks],
@@ -271,7 +265,7 @@ export function BlogEditor({ initial }: { initial: BlogEditorInitial }) {
     <BlocknoteCanvas
       initialBlocks={initialBlocksMemo}
       initialHtml={initial.bodyHtml}
-      getSlug={getSlugForUpload}
+      draftId={initial.id}
       onChange={onCanvasChange}
       handleRef={canvasHandle}
     />
@@ -485,7 +479,12 @@ export function BlogEditor({ initial }: { initial: BlogEditorInitial }) {
                 閉じる
               </button>
             </div>
-            <BlogMetaForm value={meta} onChange={onMetaChange} knownTags={knownTags} />
+            <BlogMetaForm
+              value={meta}
+              onChange={onMetaChange}
+              knownTags={knownTags}
+              draftId={initial.id}
+            />
           </aside>
           <section className="flex min-w-0 flex-col gap-4">
             <div className={focusMode ? "mb-6" : undefined}>{titleInput}</div>

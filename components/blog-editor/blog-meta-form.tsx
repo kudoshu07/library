@@ -22,10 +22,12 @@ export function BlogMetaForm({
   value,
   onChange,
   knownTags,
+  draftId,
 }: {
   value: BlogMeta
   onChange: (next: BlogMeta) => void
   knownTags: string[]
+  draftId: string
 }) {
   const [tagInput, setTagInput] = useState("")
 
@@ -141,9 +143,12 @@ export function BlogMetaForm({
         )}
       </Field>
 
-      <Field label="サムネイル画像" hint="本文中の画像と同じくpublic/{slug}/に保存されます。">
+      <Field
+        label="サムネイル画像"
+        hint="公開時に本文中の画像と一緒に public/{slug}/ に保存されます。"
+      >
         <ThumbnailUpload
-          slug={value.slug}
+          draftId={draftId}
           url={value.thumbnailUrl}
           onChange={(url) => set("thumbnailUrl", url)}
         />
@@ -212,11 +217,11 @@ function SlugValidationHint({
 }
 
 function ThumbnailUpload({
-  slug,
+  draftId,
   url,
   onChange,
 }: {
-  slug: string
+  draftId: string
   url: string
   onChange: (url: string) => void
 }) {
@@ -224,16 +229,15 @@ function ThumbnailUpload({
   const [error, setError] = useState<string | null>(null)
 
   const upload = async (file: File) => {
-    if (!slug.trim()) {
-      setError("slugを先に入力してください。")
-      return
-    }
+    // Slug isn't needed during drafting — Supabase Storage holds the
+    // image under the draftId namespace, and the publish endpoint copies
+    // it to public/{slug}/ at the moment we know the slug is final.
     setUploading(true)
     setError(null)
     try {
       const fd = new FormData()
       fd.append("file", file)
-      fd.append("slug", slug.trim())
+      fd.append("draftId", draftId)
       const res = await fetch("/api/admin/blog/upload-image", {
         method: "POST",
         body: fd,

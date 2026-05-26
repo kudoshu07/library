@@ -9,7 +9,7 @@
 
 - **下書き** は Supabase の `blog_drafts` テーブルに保存されます（容量節約のため autosave なし、手動「下書き保存」ボタン）。
 - **公開** すると、下書きの内容が `content/blog/YYYY/MM/DD/{slug}.mdx` という MDX ファイルに書き出され、GitHub API 経由で `main` ブランチに直接コミットされます。Vercel が自動再デプロイし、1〜2 分でサイトに反映されます。
-- **画像** は本文に挿入したタイミングで GitHub API 経由で `public/{slug}/` にコミットされます（既存記事と同じ流儀）。
+- **画像** は下書き中は **Supabase Storage**（`blog-draft-images` バケット）に保存され、エディタには即時表示されます（Vercelの再ビルド待ちなし）。**公開時に**、本文HTML中のStorage URLをスキャン → 画像を一括ダウンロード → `public/{slug}/{filename}` に MDX と同じ commit で GitHub にコミット → 本文の URL を `/{slug}/{filename}` に書き換え → Storage 上の元画像を削除。最終的なMDXは既存記事と同じローカルパス形式になります。
 - **既存記事の編集** は「編集」ボタン → MDX を読み込んで下書き化 → 編集 → 公開で同じファイルに上書きコミット、という流れです。slug や日付を変えた場合は旧ファイル削除 + 新ファイル作成を 1 コミットで行います。
 
 ---
