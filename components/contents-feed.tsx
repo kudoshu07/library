@@ -30,7 +30,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { SubscribeForm, type SubscribeFormStatusKind } from "@/components/subscribe-form"
+import { LoginForm } from "@/components/login-form"
 import { AccountForm } from "@/components/account-form"
+import { Button } from "@/components/ui/button"
 import { useSubscriberCount } from "@/hooks/use-subscriber-count"
 
 export type ContentsFeedSessionInfo = {
@@ -253,6 +255,7 @@ export function ContentsFeed({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [subscribeOpen, setSubscribeOpen] = useState(false)
   const [subscribeStatus, setSubscribeStatus] = useState<SubscribeFormStatusKind>("idle")
+  const [subscribeMode, setSubscribeMode] = useState<"subscribe" | "login">("subscribe")
   const [accountOpen, setAccountOpen] = useState(false)
   const [showStickyMenuButton, setShowStickyMenuButton] = useState(false)
   const [isSearchNavigating, setIsSearchNavigating] = useState(false)
@@ -1195,21 +1198,63 @@ export function ContentsFeed({
           open={subscribeOpen}
           onOpenChange={(open) => {
             setSubscribeOpen(open)
-            if (!open) setSubscribeStatus("idle")
+            if (!open) {
+              setSubscribeStatus("idle")
+              setSubscribeMode("subscribe")
+            }
           }}
         >
           <DialogContent className="max-h-[90svh] overflow-y-auto sm:max-w-lg">
-            {subscribeStatus === "confirmation_sent" || subscribeStatus === "updated" ? (
-              <DialogTitle className="sr-only">{subscribeDialogTitle}</DialogTitle>
+            {subscribeMode === "login" ? (
+              <>
+                <DialogHeader>
+                  <DialogTitle>ログイン</DialogTitle>
+                  <DialogDescription>
+                    ニュースレターに登録済みのメールアドレスにログインリンクをお送りします✉️
+                  </DialogDescription>
+                </DialogHeader>
+                <LoginForm embedded />
+                <div className="mt-2 flex items-center justify-center gap-1.5 border-t border-border pt-4 text-sm text-muted-foreground">
+                  <span>はじめての方は</span>
+                  <button
+                    type="button"
+                    onClick={() => setSubscribeMode("subscribe")}
+                    className="font-medium text-foreground underline underline-offset-4 transition-colors hover:text-accent"
+                  >
+                    ニュースレター登録
+                  </button>
+                </div>
+              </>
             ) : (
-              <DialogHeader>
-                <DialogTitle>{subscribeDialogTitle}</DialogTitle>
-                <DialogDescription>
-                  新しいコンテンツを見逃さないよう、メールでお知らせします💌
-                </DialogDescription>
-              </DialogHeader>
+              <>
+                {subscribeStatus === "confirmation_sent" || subscribeStatus === "updated" ? (
+                  <DialogTitle className="sr-only">{subscribeDialogTitle}</DialogTitle>
+                ) : (
+                  <DialogHeader>
+                    <DialogTitle>{subscribeDialogTitle}</DialogTitle>
+                    <DialogDescription>
+                      新しいコンテンツを見逃さないよう、メールでお知らせします💌
+                    </DialogDescription>
+                  </DialogHeader>
+                )}
+                <SubscribeForm embedded onStatusChange={setSubscribeStatus} />
+                {subscribeStatus !== "confirmation_sent" && subscribeStatus !== "updated" && (
+                  <div className="mt-2 flex flex-col items-center gap-2 border-t border-border pt-4">
+                    <p className="text-sm text-muted-foreground">
+                      すでに登録済みの方はこちら
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => setSubscribeMode("login")}
+                    >
+                      ログイン
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
-            <SubscribeForm embedded onStatusChange={setSubscribeStatus} />
           </DialogContent>
         </Dialog>
       )}
