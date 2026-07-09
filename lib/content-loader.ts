@@ -28,7 +28,7 @@ type ExternalSeed = {
 }
 
 type PodcastSeed = {
-  source: "pod_yonakoi" | "pod_vegan" | "pod_ochinashi"
+  source: "pod_yonakoi" | "pod_vegan" | "pod_ochinashi" | "pod_gorilla"
   title: string
   date?: string
   url: string

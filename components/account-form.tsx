@@ -15,9 +15,8 @@ const NOTIFICATION_SOURCES: { id: ContentSource }[] = [
   { id: "note" },
   { id: "ig_business" },
   { id: "ig_photo" },
-  { id: "pod_ochinashi" },
+  { id: "pod_gorilla" },
   { id: "pod_yonakoi" },
-  { id: "pod_vegan" },
 ]
 
 const ERROR_MESSAGES: Record<string, string> = {
