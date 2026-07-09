@@ -764,7 +764,13 @@ async function fetchSpotifyShowEpisodesViaApi(seed: PodcastSeed): Promise<Conten
     }
 
     const batch = (data.items ?? [])
-      .map((episode) => toSpotifyEpisodeItem(seed, episode))
+      .map((episode) => {
+        try {
+          return toSpotifyEpisodeItem(seed, episode)
+        } catch {
+          return null
+        }
+      })
       .filter((item): item is ContentItem => item !== null)
 
     items.push(...batch)
@@ -805,7 +811,12 @@ async function fetchSpotifyShowEpisodes(
   seed: PodcastSeed
 ): Promise<ContentItem[]> {
   // Prefer the API route (full episode list). Fallback to HTML parsing when blocked.
-  const viaApi = await fetchSpotifyShowEpisodesViaApi(seed)
+  let viaApi: ContentItem[] = []
+  try {
+    viaApi = await fetchSpotifyShowEpisodesViaApi(seed)
+  } catch {
+    viaApi = []
+  }
   if (viaApi.length > 0) return viaApi
 
   const showUrlInput = normalizeUrl(seed.url)
@@ -889,7 +900,16 @@ async function loadPodcastEpisodes(): Promise<ContentItem[]> {
     return []
   }
 
-  const episodeLists = await Promise.all(seeds.map((seed) => fetchSpotifyShowEpisodes(seed)))
+  const episodeLists = await Promise.all(
+    seeds.map(async (seed) => {
+      try {
+        return await fetchSpotifyShowEpisodes(seed)
+      } catch (error) {
+        console.error(`[content-loader] podcast "${seed.source}" failed; skipping`, error)
+        return []
+      }
+    })
+  )
   const items = episodeLists.flat()
 
   return items.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -1221,13 +1241,32 @@ async function loadPickupIds(): Promise<string[]> {
   return ids
 }
 
+// A single external source (Spotify / Instagram / note …) failing must never take
+// down the whole page. Isolate each loader so a rejection degrades to an empty list
+// instead of propagating and 500ing dynamic pages like /home.
+async function loadSourceSafely(
+  label: string,
+  loader: () => Promise<ContentItem[]>
+): Promise<ContentItem[]> {
+  try {
+    return await loader()
+  } catch (error) {
+    console.error(`[content-loader] source "${label}" failed; degrading to empty list`, error)
+    return []
+  }
+}
+
 export async function getAllContentItems(): Promise<ContentItem[]> {
   const [blogPosts, notePosts, igBusinessPosts, igPhotoPosts, podcastEpisodes] = await Promise.all([
-    loadBlogPosts(),
-    loadNoteItems(),
-    loadInstagramItems("ig_business", process.env.IG_BUSINESS_USERNAME ?? "kudoshu_vcook", "instagram-business.json"),
-    loadInstagramItems("ig_photo", process.env.IG_PHOTO_USERNAME ?? "onoshu_photo", "instagram-photo.json"),
-    loadPodcastEpisodes(),
+    loadSourceSafely("blog", () => loadBlogPosts()),
+    loadSourceSafely("note", () => loadNoteItems()),
+    loadSourceSafely("ig_business", () =>
+      loadInstagramItems("ig_business", process.env.IG_BUSINESS_USERNAME ?? "kudoshu_vcook", "instagram-business.json")
+    ),
+    loadSourceSafely("ig_photo", () =>
+      loadInstagramItems("ig_photo", process.env.IG_PHOTO_USERNAME ?? "onoshu_photo", "instagram-photo.json")
+    ),
+    loadSourceSafely("podcast", () => loadPodcastEpisodes()),
   ])
 
   return [...blogPosts, ...notePosts, ...igBusinessPosts, ...igPhotoPosts, ...podcastEpisodes].sort(
