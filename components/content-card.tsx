@@ -96,7 +96,7 @@ function FeedCard({
 }) {
   const isExternal = item.source !== "blog"
   const isInstagram = item.source === "ig_business" || item.source === "ig_photo"
-  const isPodcast = item.source === "pod_yonakoi" || item.source === "pod_vegan" || item.source === "pod_ochinashi"
+  const isPodcast = item.source === "pod_yonakoi" || item.source === "pod_vegan" || item.source === "pod_ochinashi" || item.source === "pod_gorilla"
   const isExternalLeadLink = isExternal
   const dateLabel = formatDateLabel(item.date)
   const lead = createLeadText(item)
@@ -311,7 +311,7 @@ function FeedCard({
 function PickupCard({ item }: { item: ContentItem }) {
   const isExternal = item.source !== "blog"
   const isInstagram = item.source === "ig_business" || item.source === "ig_photo"
-  const isPodcast = item.source === "pod_yonakoi" || item.source === "pod_vegan" || item.source === "pod_ochinashi"
+  const isPodcast = item.source === "pod_yonakoi" || item.source === "pod_vegan" || item.source === "pod_ochinashi" || item.source === "pod_gorilla"
   const dateLabel = formatDateLabel(item.date)
   const lead = createLeadText(item)
   const className =
