@@ -32,8 +32,6 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     "ig_photo",
     "pod_yonakoi",
     "pod_vegan",
-    "pod_ochinashi",
-    "pod_gorilla",
   ])
   const initialSources = (Array.isArray(sourceParam) ? sourceParam : sourceParam ? [sourceParam] : [])
     .map((value) => value.trim())

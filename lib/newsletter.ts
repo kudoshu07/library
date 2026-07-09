@@ -9,8 +9,9 @@ export const SUBSCRIBABLE_SOURCES: ContentSource[] = [
   "note",
   "ig_business",
   "ig_photo",
-  "pod_gorilla",
+  "pod_ochinashi",
   "pod_yonakoi",
+  "pod_vegan",
 ]
 
 export function isSubscribableSource(value: string): value is ContentSource {

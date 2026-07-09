@@ -71,12 +71,6 @@ export const sourceVisuals: Record<ContentSource, SourceVisual> = {
     avatarClass: "bg-[#E8EEFF] text-[#1C2C5C] border border-[#C5D7FF]",
     short: "P",
   },
-  pod_gorilla: {
-    icon: Podcast,
-    chipClass: "bg-emerald-50 text-emerald-900 border border-emerald-100",
-    avatarClass: "bg-emerald-50 text-emerald-900 border border-emerald-100",
-    short: "P",
-  },
 }
 
 export const sourceFilterOptions: Array<{ value: ContentSource | "all"; label: string }> = [
@@ -85,7 +79,6 @@ export const sourceFilterOptions: Array<{ value: ContentSource | "all"; label: s
   { value: "note", label: sourceLabels.note },
   { value: "ig_business", label: sourceLabels.ig_business },
   { value: "ig_photo", label: sourceLabels.ig_photo },
-  { value: "pod_gorilla", label: sourceLabels.pod_gorilla },
   { value: "pod_ochinashi", label: sourceLabels.pod_ochinashi },
   { value: "pod_yonakoi", label: sourceLabels.pod_yonakoi },
   { value: "pod_vegan", label: sourceLabels.pod_vegan },
