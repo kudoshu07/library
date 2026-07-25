@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { X } from "lucide-react"
 import { isValidSlug, sanitizeSlug } from "@/lib/mdx-serializer"
+import { prepareImageForUpload } from "@/lib/prepare-image-for-upload"
 
 export type BlogMeta = {
   title: string
@@ -228,13 +229,16 @@ function ThumbnailUpload({
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const upload = async (file: File) => {
+  const upload = async (rawFile: File) => {
     // Slug isn't needed during drafting — Supabase Storage holds the
     // image under the draftId namespace, and the publish endpoint copies
     // it to public/{slug}/ at the moment we know the slug is final.
     setUploading(true)
     setError(null)
     try {
+      // Shrink oversized images under Vercel's ~4.5 MB body limit and
+      // convert HEIC/other formats to a supported one before sending.
+      const file = await prepareImageForUpload(rawFile)
       const fd = new FormData()
       fd.append("file", file)
       fd.append("draftId", draftId)
@@ -288,7 +292,7 @@ function ThumbnailUpload({
         {uploading ? "アップロード中…" : "画像を選択"}
         <input
           type="file"
-          accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+          accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,image/heic,image/heif,.heic,.heif"
           className="hidden"
           disabled={uploading}
           onChange={(e) => {
