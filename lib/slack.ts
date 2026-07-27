@@ -44,7 +44,23 @@ export async function postSlackMessage(
   const botToken = getBotToken()
   const channel = getChannelId()
   if (botToken && channel) {
-    return postViaApi({ botToken, channel, text, blocks })
+    const apiResult = await postViaApi({ botToken, channel, text, blocks })
+    if (apiResult.ok) return apiResult
+    // Bot API failed (e.g. not_in_channel / invalid_auth / missing_scope /
+    // channel_not_found). Don't silently drop the notification — fall back to
+    // the Incoming Webhook (text-only, no action buttons) so newsletter signups
+    // and new comments still reach Slack while the bot config is fixed.
+    const fallback = await postViaWebhook(text)
+    if (fallback.ok) {
+      console.warn(
+        `Slack Bot API failed (${apiResult.error}); delivered via webhook fallback instead.`,
+      )
+      return fallback
+    }
+    console.error(
+      `Slack notification dropped: Bot API failed (${apiResult.error}) and webhook fallback failed (${fallback.error}).`,
+    )
+    return apiResult
   }
   return postViaWebhook(text)
 }
@@ -88,7 +104,11 @@ async function postViaApi(opts: {
 async function postViaWebhook(text: string): Promise<SlackPostResult> {
   const url = process.env.SLACK_WEBHOOK_URL?.trim()
   if (!url) {
-    if (process.env.NODE_ENV !== "production") {
+    if (process.env.NODE_ENV === "production") {
+      console.error(
+        "Slack notification skipped: SLACK_WEBHOOK_URL not set (and Bot API unavailable).",
+      )
+    } else {
       console.warn("[dev] SLACK_WEBHOOK_URL not set. Skipping Slack notification.")
     }
     return { ok: false, error: "not_configured" }
