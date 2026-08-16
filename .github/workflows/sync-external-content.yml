@@ -57,7 +57,21 @@ jobs:
             exit 0
           fi
           git commit -m "chore: sync external content"
-          git push
+          # Instagram同期に数分かかるため、その間にブログ公開などのコミットが
+          # main に入って push が弾かれることがある。rebase してリトライする。
+          for attempt in 1 2 3 4 5; do
+            if git push origin "HEAD:${BRANCH}"; then
+              echo "Pushed on attempt ${attempt}"
+              exit 0
+            fi
+            echo "Push rejected (attempt ${attempt}) - rebasing onto origin/${BRANCH}"
+            git pull --rebase origin "${BRANCH}" || exit 1
+            sleep 5
+          done
+          echo "Failed to push after 5 attempts"
+          exit 1
+        env:
+          BRANCH: ${{ github.ref_name }}
 
       - name: Notify subscribers of new content
         # Runs after the sync commit. The script reads current content + Supabase
