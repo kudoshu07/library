@@ -191,8 +191,29 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const canonicalUrl = toAbsoluteUrl(post.url, SITE_URL)
   const showPodcastLetterForm = post.slug === "ochi-nashi-podcast"
 
+  // 検索エンジンに「これは記事である」と伝える構造化データ。
+  // canonical と同じ URL を mainEntityOfPage に置いて URL 表記を一本化する。
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: post.summary ?? undefined,
+    datePublished: post.date,
+    dateModified: post.date,
+    inLanguage: "ja",
+    url: canonicalUrl,
+    mainEntityOfPage: { "@type": "WebPage", "@id": canonicalUrl },
+    image: resolveSocialImageUrls([post.thumbnail], SITE_URL),
+    author: { "@type": "Person", name: "工藤柊", url: SITE_URL },
+    publisher: { "@type": "Person", name: "工藤柊", url: SITE_URL },
+  }
+
   return (
     <article className="mx-auto max-w-xl px-4 py-12 lg:px-6">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
       <header className="mb-8 flex flex-col gap-3">
         <div className="flex items-center gap-3">
           <SourceBadge source="blog" />

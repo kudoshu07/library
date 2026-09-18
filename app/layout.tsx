@@ -14,8 +14,15 @@ const notoSansJP = Noto_Sans_JP({
   variable: '--font-noto-sans-jp',
 })
 
+// Search Console の所有権確認用。Vercel の環境変数に content 値だけを入れる
+// (例: NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=abc123...)。未設定なら何も出力しない。
+const GOOGLE_SITE_VERIFICATION = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION?.trim()
+
 export const metadata: Metadata = {
   metadataBase: new URL('https://kudoshu07.com'),
+  ...(GOOGLE_SITE_VERIFICATION
+    ? { verification: { google: GOOGLE_SITE_VERIFICATION } }
+    : {}),
   icons: {
     icon: '/favicon-ksl.png',
     shortcut: '/favicon-ksl.png',

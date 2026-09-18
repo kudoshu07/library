@@ -191,7 +191,7 @@ export function blogPostUrl(params: { date: string; slug: string }): string {
   const m = String(d.getUTCMonth() + 1).padStart(2, "0")
   const day = String(d.getUTCDate()).padStart(2, "0")
   const safeSlug = sanitizeSlug(params.slug)
-  return `/${y}/${m}/${day}/${safeSlug}/`
+  return `/${y}/${m}/${day}/${safeSlug}`
 }
 
 const SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/

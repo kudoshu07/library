@@ -504,7 +504,7 @@ async function loadBlogPosts(): Promise<ContentItem[]> {
         rawThumbnail && /^https?:\/\//i.test(rawThumbnail)
           ? `/api/thumbnail?src=${encodeURIComponent(rawThumbnail)}`
           : rawThumbnail || undefined
-      const url = `/${year}/${month}/${day}/${slug}/`
+      const url = `/${year}/${month}/${day}/${slug}`
       const resolvedThumbnail = thumbnail ?? buildFallbackThumbnail(title)
 
       const post: ContentItem = {

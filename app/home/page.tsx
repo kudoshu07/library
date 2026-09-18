@@ -30,6 +30,9 @@ export const metadata: Metadata = {
     absolute: "Kudo Shu Library (旧:そうは言っても工藤さん)",
   },
   description: "Blog, note(個人), Instagram のすべてのコンテンツ一覧。",
+  alternates: {
+    canonical: "/home",
+  },
   openGraph: {
     title: "Kudo Shu Library (旧:そうは言っても工藤さん)",
     description: "Blog, note(個人), Instagram のすべてのコンテンツ一覧。",
