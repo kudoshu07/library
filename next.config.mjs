@@ -1,7 +1,67 @@
+import fs from "node:fs"
+import path from "node:path"
+
+const BLOG_ROOT = path.join(process.cwd(), "content", "blog")
+
+// WordPress 時代のパーマリンクは /<slug>（postname 構造）だった。移行後は
+// /<year>/<month>/<day>/<slug> になり、旧URLは 404 のまま放置されていた。
+// Google のインデックスには旧URLが残っていて全部 404 を返していたため、
+// 7年分の被リンクと評価を捨てていた。slug は content/blog のディレクトリ構造
+// (year/month/day/slug.mdx) が持っているので、そこから 301 を組み立てる。
+//
+// 注意: next.config の redirects はファイルシステムルートより先に評価される。
+// /home や /search などの実在ルートと同名の slug を作ると潰れるので除外する。
+const RESERVED_TOP_LEVEL_PATHS = new Set([
+  "home",
+  "contents",
+  "search",
+  "login",
+  "account",
+  "privacy",
+  "subscribe",
+  "podcastform",
+  "admin",
+  "api",
+  "sitemap.xml",
+  "robots.txt",
+])
+
+function legacySlugRedirects() {
+  if (!fs.existsSync(BLOG_ROOT)) return []
+
+  const redirects = []
+  const seen = new Set()
+
+  // content/blog/<year>/<month>/<day>/<slug>.mdx
+  for (const year of fs.readdirSync(BLOG_ROOT)) {
+    for (const month of fs.readdirSync(path.join(BLOG_ROOT, year))) {
+      for (const day of fs.readdirSync(path.join(BLOG_ROOT, year, month))) {
+        const dayDir = path.join(BLOG_ROOT, year, month, day)
+        for (const file of fs.readdirSync(dayDir)) {
+          if (!file.endsWith(".mdx")) continue
+          const slug = file.slice(0, -4)
+          if (RESERVED_TOP_LEVEL_PATHS.has(slug) || seen.has(slug)) continue
+          seen.add(slug)
+          redirects.push({
+            source: `/${slug}`,
+            destination: `/${year}/${month}/${day}/${slug}`,
+            permanent: true,
+          })
+        }
+      }
+    }
+  }
+
+  return redirects
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
+  },
+  async redirects() {
+    return legacySlugRedirects()
   },
   // Serverless function bundle hygiene.
   // The /api/admin/blog/* routes use process.cwd() to read MDX from
