@@ -10,7 +10,8 @@
     "import:wordpress": "node scripts/import-wordpress-xml.mjs",
     "sync:instagram": "bash scripts/sync-instagram.sh",
     "sync:note": "node scripts/sync-note.mjs",
-    "notify:newsletter": "node scripts/notify-new-content.mjs"
+    "notify:newsletter": "node scripts/notify-new-content.mjs",
+    "submit:indexnow": "node scripts/submit-indexnow.mjs"
   },
   "dependencies": {
     "@blocknote/core": "^0.51.2",
