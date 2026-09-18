@@ -14,15 +14,17 @@ const notoSansJP = Noto_Sans_JP({
   variable: '--font-noto-sans-jp',
 })
 
-// Search Console の所有権確認用。Vercel の環境変数に content 値だけを入れる
-// (例: NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=abc123...)。未設定なら何も出力しない。
-const GOOGLE_SITE_VERIFICATION = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION?.trim()
+// Search Console (URL prefix プロパティ https://kudoshu07.com/) の所有権確認トークン。
+// 公開情報なのでベタ書きでよい。認証後も外すと所有権が失われるので消さないこと。
+// public/google5537453e02b14928.html のファイル方式と二重に効かせている。
+// 差し替えたい場合のみ env NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION が優先される。
+const GOOGLE_SITE_VERIFICATION =
+  process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION?.trim() ||
+  'fPMdgPpizwnJaexUm3jfMSZz4og5uCGtMgMYGUTyIOY'
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://kudoshu07.com'),
-  ...(GOOGLE_SITE_VERIFICATION
-    ? { verification: { google: GOOGLE_SITE_VERIFICATION } }
-    : {}),
+  verification: { google: GOOGLE_SITE_VERIFICATION },
   icons: {
     icon: '/favicon-ksl.png',
     shortcut: '/favicon-ksl.png',
