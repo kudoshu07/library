@@ -13,6 +13,7 @@ import {
 import { commitFileChanges, fileExists, type FileChange } from "@/lib/github-publisher"
 import {
   deleteDraftImages,
+  draftImageStoragePath,
   fetchDraftImageBase64,
   findDraftImageReferences,
   rewriteImageSrc,
@@ -64,7 +65,7 @@ export async function POST(_req: Request, { params }: RouteContext) {
   const slug = draft.slug.trim()
   const summary = draft.summary.trim()
   const tags = draft.tags.filter((t) => t.trim()).map((t) => t.trim())
-  const thumbnail = draft.thumbnail_url?.trim() || undefined
+  let thumbnail = draft.thumbnail_url?.trim() || undefined
   const bodyHtml = draft.body_html.trim()
 
   if (!title) return NextResponse.json({ error: "title_required" }, { status: 400 })
@@ -143,6 +144,36 @@ export async function POST(_req: Request, { params }: RouteContext) {
         { status: 502 },
       )
     }
+  }
+
+  // --- Resolve the thumbnail the same way ---
+  // The thumbnail is uploaded to the same draft bucket but lives in
+  // frontmatter, not the body, so the loop above never sees it. Left as a
+  // bucket URL it breaks twice over: the blog loader routes absolute URLs
+  // through /api/thumbnail (whose host allow-list rejects Supabase → 403),
+  // and the Storage copy is deleted right after this commit anyway.
+  const thumbnailStoragePath = thumbnail ? draftImageStoragePath(thumbnail) : null
+  if (thumbnailStoragePath) {
+    const filename = thumbnailStoragePath.split("/").pop()!
+    const repoPath = `public/${slug}/${filename}`
+    if (!imageChanges.some((c) => c.path === repoPath)) {
+      try {
+        const { base64 } = await fetchDraftImageBase64(thumbnailStoragePath)
+        imageChanges.push({
+          path: repoPath,
+          mode: "100644",
+          type: "blob",
+          contentBase64: base64,
+        })
+      } catch (err) {
+        console.error("publish: thumbnail fetch failed", { thumbnailStoragePath, err })
+        return NextResponse.json(
+          { error: `thumbnail_fetch_failed:${filename}` },
+          { status: 502 },
+        )
+      }
+    }
+    thumbnail = `/${slug}/${filename}`
   }
 
   // --- Build MDX file (using rewritten body) ---

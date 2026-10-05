@@ -160,6 +160,19 @@ export async function fetchDraftImageBase64(storagePath: string): Promise<{
 }
 
 /**
+ * If `url` points at the draft images bucket, return its storage path
+ * ("{draftId}/{filename}"); otherwise null. Used for the thumbnail, which
+ * lives in frontmatter rather than as an <img> in the body HTML.
+ */
+export function draftImageStoragePath(url: string): string | null {
+  const idx = url.indexOf(BUCKET_PUBLIC_PATH_FRAGMENT)
+  if (idx === -1) return null
+  const storagePath = url.slice(idx + BUCKET_PUBLIC_PATH_FRAGMENT.length).split(/[?#]/)[0]
+  if (!storagePath || storagePath.includes("..")) return null
+  return storagePath
+}
+
+/**
  * Find every <img src="..."> in `html` whose src points at the draft
  * images bucket, and return the parsed storage paths in document order.
  * Used by the publish endpoint to figure out which images to copy into

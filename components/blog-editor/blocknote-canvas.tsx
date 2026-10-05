@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef } from "react"
 import { BlockNoteSchema, defaultBlockSpecs, type Block, type PartialBlock } from "@blocknote/core"
 import { useCreateBlockNote } from "@blocknote/react"
 import { BlockNoteView } from "@blocknote/mantine"
-import { prepareImageForUpload } from "@/lib/prepare-image-for-upload"
+import { uploadDraftImageFile } from "@/lib/upload-draft-image"
 import "@blocknote/core/fonts/inter.css"
 import "@blocknote/mantine/style.css"
 
@@ -83,20 +83,7 @@ export function BlocknoteCanvas({
       // Normalise first: shrink oversized images under Vercel's ~4.5 MB
       // request-body limit and convert HEIC/other formats into a supported
       // one, so large photos and iPhone HEICs upload without a cryptic 413.
-      const file = await prepareImageForUpload(rawFile)
-      const fd = new FormData()
-      fd.append("file", file)
-      fd.append("draftId", draftId)
-      const res = await fetch("/api/admin/blog/upload-image", {
-        method: "POST",
-        body: fd,
-      })
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}) as { error?: string })
-        throw new Error(data?.error ?? `upload failed (${res.status})`)
-      }
-      const data = (await res.json()) as { url: string }
-      return data.url
+      return uploadDraftImageFile(draftId, rawFile)
     },
   })
 

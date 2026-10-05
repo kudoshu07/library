@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { X } from "lucide-react"
 import { isValidSlug, sanitizeSlug } from "@/lib/mdx-serializer"
-import { prepareImageForUpload } from "@/lib/prepare-image-for-upload"
+import { uploadDraftImageFile } from "@/lib/upload-draft-image"
 
 export type BlogMeta = {
   title: string
@@ -26,29 +26,30 @@ export function BlogMetaForm({
   draftId,
 }: {
   value: BlogMeta
-  onChange: (next: BlogMeta) => void
+  // Updater form: the thumbnail upload resolves seconds after it starts, so
+  // patching a snapshot of `value` taken at click time would silently revert
+  // anything typed in the meantime (title, summary...).
+  onChange: (update: (prev: BlogMeta) => BlogMeta) => void
   knownTags: string[]
   draftId: string
 }) {
   const [tagInput, setTagInput] = useState("")
 
   const set = <K extends keyof BlogMeta>(key: K, next: BlogMeta[K]) => {
-    onChange({ ...value, [key]: next })
+    onChange((prev) => ({ ...prev, [key]: next }))
   }
 
   const addTag = (raw: string) => {
     const trimmed = raw.trim()
     if (!trimmed) return
-    if (value.tags.includes(trimmed)) return
-    set("tags", [...value.tags, trimmed])
+    onChange((prev) =>
+      prev.tags.includes(trimmed) ? prev : { ...prev, tags: [...prev.tags, trimmed] },
+    )
     setTagInput("")
   }
 
   const removeTag = (tag: string) => {
-    set(
-      "tags",
-      value.tags.filter((t) => t !== tag),
-    )
+    onChange((prev) => ({ ...prev, tags: prev.tags.filter((t) => t !== tag) }))
   }
 
   const suggestions = knownTags
@@ -145,6 +146,7 @@ export function BlogMetaForm({
       </Field>
 
       <Field
+        as="div"
         label="サムネイル画像"
         hint="公開時に本文中の画像と一緒に public/{slug}/ に保存されます。"
       >
@@ -159,25 +161,29 @@ export function BlogMetaForm({
 }
 
 function Field({
+  as: Tag = "label",
   label,
   required,
   hint,
   children,
 }: {
+  // "div" for fields that contain their own <label> (the thumbnail picker):
+  // nested labels make clicks on the inner one ambiguous.
+  as?: "label" | "div"
   label: string
   required?: boolean
   hint?: string
   children: React.ReactNode
 }) {
   return (
-    <label className="block">
+    <Tag className="block">
       <span className="mb-1 block text-xs font-semibold text-muted-foreground">
         {label}
         {required && <span className="ml-1 text-red-500">*</span>}
       </span>
       {children}
       {hint && <span className="mt-1 block text-[11px] text-muted-foreground">{hint}</span>}
-    </label>
+    </Tag>
   )
 }
 
@@ -228,6 +234,10 @@ function ThumbnailUpload({
 }) {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Whether the preview <img> failed to load for the *current* url. Reset on
+  // every url change so a fixed/replaced url gets a fresh attempt.
+  const [previewFailed, setPreviewFailed] = useState(false)
+  useEffect(() => setPreviewFailed(false), [url])
 
   const upload = async (rawFile: File) => {
     // Slug isn't needed during drafting — Supabase Storage holds the
@@ -236,24 +246,20 @@ function ThumbnailUpload({
     setUploading(true)
     setError(null)
     try {
-      // Shrink oversized images under Vercel's ~4.5 MB body limit and
-      // convert HEIC/other formats to a supported one before sending.
-      const file = await prepareImageForUpload(rawFile)
-      const fd = new FormData()
-      fd.append("file", file)
-      fd.append("draftId", draftId)
-      const res = await fetch("/api/admin/blog/upload-image", {
-        method: "POST",
-        body: fd,
-      })
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}) as { error?: string })
-        throw new Error(data?.error ?? `upload failed (${res.status})`)
-      }
-      const data = (await res.json()) as { url: string }
-      onChange(data.url)
+      const uploadedUrl = await uploadDraftImageFile(draftId, rawFile)
+      onChange(uploadedUrl)
+      // Persist the thumbnail right away. The bytes are already in Storage;
+      // without this the url only lives in React state, and any reload or
+      // stray navigation before 下書きを保存 makes the thumbnail "vanish".
+      // Best effort: on failure it's still in the form and in the unsaved
+      // changes, so the regular save will pick it up.
+      void fetch(`/api/admin/blog/drafts/${draftId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ thumbnailUrl: uploadedUrl }),
+      }).catch(() => {})
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "upload failed")
+      setError(e instanceof Error ? e.message : "アップロードに失敗しました")
     } finally {
       setUploading(false)
     }
@@ -264,11 +270,18 @@ function ThumbnailUpload({
       {url && (
         <div className="relative inline-block">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={url}
-            alt="thumbnail preview"
-            className="h-32 w-auto rounded-md border border-border object-cover"
-          />
+          {previewFailed ? (
+            <div className="flex h-32 w-48 items-center justify-center rounded-md border border-red-200 bg-red-50 p-2 text-center text-[11px] text-red-700">
+              画像を読み込めません。URLを確認するか、もう一度アップロードしてください。
+            </div>
+          ) : (
+            <img
+              src={url}
+              alt="thumbnail preview"
+              className="h-32 w-auto rounded-md border border-border object-cover"
+              onError={() => setPreviewFailed(true)}
+            />
+          )}
           <button
             type="button"
             onClick={() => onChange("")}

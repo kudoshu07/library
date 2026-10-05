@@ -40,11 +40,19 @@ export type BlogEditorInitial = {
 
 type SaveStatus = "idle" | "saving" | "saved" | "error"
 
-// localStorage key for the in-progress body. Survives accidental tab close
-// even before the user has hit the explicit "下書きを保存" button. The whole
-// blob is wiped on a successful save or publish, so storage stays small.
+// localStorage backup of unsaved work (body blocks + meta). Survives an
+// accidental tab close / reload / crash / iOS discarding the background tab
+// even before the user has hit "下書きを保存". Only written while there are
+// unsaved changes and wiped on a successful save, so it never shadows a
+// newer server copy.
 const LS_KEY_PREFIX = "ksl-blog-draft-"
 const lsKey = (id: string) => `${LS_KEY_PREFIX}${id}`
+
+type LocalBackup = {
+  blocks?: PartialBlock[]
+  meta?: BlogMeta
+  savedAt?: number
+}
 
 export function BlogEditor({ initial }: { initial: BlogEditorInitial }) {
   const router = useRouter()
@@ -55,65 +63,117 @@ export function BlogEditor({ initial }: { initial: BlogEditorInitial }) {
   const [publishing, setPublishing] = useState(false)
   const [publishError, setPublishError] = useState<string | null>(null)
   const [dirty, setDirty] = useState(false)
+  const dirtyRef = useRef(false)
+  dirtyRef.current = dirty
+  const metaRef = useRef(meta)
+  metaRef.current = meta
+  // Bumped on every edit. A save only clears `dirty` if nothing changed
+  // while its request was in flight — otherwise keystrokes typed during the
+  // save would be marked as saved and could be lost without a prompt.
+  const editVersion = useRef(0)
 
   // Latest serialized HTML/blocks from BlockNote — pulled out via this handle
   // on demand (save/publish) instead of held in React state so a fast typer
   // doesn't re-render the whole shell every keystroke.
   const canvasHandle = useRef<BlocknoteCanvasHandle | null>(null)
 
-  // Local-storage backup. We snapshot block JSON only — HTML is cheap to
-  // re-derive from blocks at save time.
-  const [hydratedInitialBlocks, setHydratedInitialBlocks] = useState<PartialBlock[] | null>(
+  // Restore unsaved work from the local backup before the canvas mounts:
+  // BlockNote only reads `initialContent` at creation, so the canvas waits
+  // for this check rather than racing it.
+  const [initialBlocks, setInitialBlocks] = useState<PartialBlock[] | null>(
     initial.bodyBlocks ?? null,
   )
+  const [backupChecked, setBackupChecked] = useState(false)
+  const [restoredAt, setRestoredAt] = useState<number | null>(null)
+  // Changing this remounts the canvas — only used to discard a restored backup.
+  const [canvasKey, setCanvasKey] = useState(0)
   useEffect(() => {
     try {
       const cached = window.localStorage.getItem(lsKey(initial.id))
-      if (!cached) return
-      const parsed = JSON.parse(cached) as { blocks?: PartialBlock[] }
-      if (Array.isArray(parsed?.blocks) && parsed.blocks.length > 0) {
-        // Prefer the local snapshot when the user hasn't saved it yet; the
-        // canonical record on the server is whatever was loaded into
-        // `initial`. We accept the local copy as it's strictly newer.
-        setHydratedInitialBlocks(parsed.blocks)
+      if (cached) {
+        // The backup only exists while there are unsaved changes, so it is
+        // newer than the server copy — except when the draft was saved from
+        // another device since. The banner below lets the user discard it.
+        const parsed = JSON.parse(cached) as LocalBackup
+        const hasBlocks = Array.isArray(parsed.blocks) && parsed.blocks.length > 0
+        // Older versions kept writing the backup after a save, so a backup
+        // can simply mirror the server copy — nothing to restore then.
+        const sameAsServer =
+          (!hasBlocks || stableStringify(parsed.blocks) === stableStringify(initial.bodyBlocks)) &&
+          (!parsed.meta || stableStringify({ ...initial.meta, ...parsed.meta }) === stableStringify(initial.meta))
+        if (sameAsServer) {
+          window.localStorage.removeItem(lsKey(initial.id))
+        } else if (hasBlocks || parsed.meta) {
+          if (hasBlocks) setInitialBlocks(parsed.blocks!)
+          if (parsed.meta) setMeta({ ...initial.meta, ...parsed.meta })
+          setRestoredAt(parsed.savedAt ?? Date.now())
+          setDirty(true)
+        }
       }
     } catch {
       // ignore broken cache
     }
+    setBackupChecked(true)
     // run once on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Debounced background snapshot to localStorage (no network).
+  const discardRestored = useCallback(() => {
+    try {
+      window.localStorage.removeItem(lsKey(initial.id))
+    } catch {}
+    setMeta(initial.meta)
+    setInitialBlocks(initial.bodyBlocks ?? null)
+    setCanvasKey((k) => k + 1)
+    setRestoredAt(null)
+    setDirty(false)
+    setSaveStatus("idle")
+  }, [initial])
+
+  // Background snapshot to localStorage (no network): every 5s while dirty,
+  // plus immediately when the tab is hidden / being unloaded — mobile
+  // browsers may kill a background tab without firing beforeunload.
   useEffect(() => {
-    const interval = window.setInterval(() => {
-      if (!canvasHandle.current) return
+    const snapshot = () => {
+      if (!dirtyRef.current || !canvasHandle.current) return
       try {
-        const blocks = canvasHandle.current.getBlocks()
-        window.localStorage.setItem(
-          lsKey(initial.id),
-          JSON.stringify({ blocks, savedAt: Date.now() }),
-        )
+        const backup: LocalBackup = {
+          blocks: canvasHandle.current.getBlocks(),
+          meta: metaRef.current,
+          savedAt: Date.now(),
+        }
+        window.localStorage.setItem(lsKey(initial.id), JSON.stringify(backup))
       } catch {
         // localStorage may be full or disabled; soldier on.
       }
-    }, 5000)
-    return () => window.clearInterval(interval)
+    }
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") snapshot()
+    }
+    const interval = window.setInterval(snapshot, 5000)
+    document.addEventListener("visibilitychange", onVisibility)
+    window.addEventListener("pagehide", snapshot)
+    return () => {
+      window.clearInterval(interval)
+      document.removeEventListener("visibilitychange", onVisibility)
+      window.removeEventListener("pagehide", snapshot)
+    }
   }, [initial.id])
 
-  // Warn before navigating away with unsaved changes — both hard nav
-  // (refresh, back button, tab close) and internal Next.js Link clicks.
+  // Warn before every way of leaving with unsaved changes — hard nav
+  // (refresh, tab close), internal links, and browser Back/Forward.
   // See hooks/use-unsaved-changes-guard.ts.
   useUnsavedChangesGuard(dirty)
 
   const markDirty = useCallback(() => {
+    editVersion.current += 1
     setDirty(true)
     setSaveStatus("idle")
   }, [])
 
   const onMetaChange = useCallback(
-    (next: BlogMeta) => {
-      setMeta(next)
+    (update: (prev: BlogMeta) => BlogMeta) => {
+      setMeta(update)
       markDirty()
     },
     [markDirty],
@@ -130,6 +190,7 @@ export function BlogEditor({ initial }: { initial: BlogEditorInitial }) {
     if (!canvasHandle.current) return false
     setSaveStatus("saving")
     setSaveError(null)
+    const versionAtStart = editVersion.current
     try {
       const blocks = canvasHandle.current.getBlocks()
       const html = await canvasHandle.current.getHtml()
@@ -151,9 +212,15 @@ export function BlogEditor({ initial }: { initial: BlogEditorInitial }) {
         const data = await res.json().catch(() => ({}) as { error?: string })
         throw new Error(data?.error ?? `save failed (${res.status})`)
       }
-      window.localStorage.removeItem(lsKey(initial.id))
-      setSaveStatus("saved")
-      setDirty(false)
+      setRestoredAt(null)
+      if (editVersion.current === versionAtStart) {
+        window.localStorage.removeItem(lsKey(initial.id))
+        setSaveStatus("saved")
+        setDirty(false)
+      } else {
+        // Edited while saving: those edits are not on the server yet.
+        setSaveStatus("idle")
+      }
       return true
     } catch (e: unknown) {
       setSaveStatus("error")
@@ -161,6 +228,19 @@ export function BlogEditor({ initial }: { initial: BlogEditorInitial }) {
       return false
     }
   }, [initial.id, meta])
+
+  // ⌘S / Ctrl+S saves the draft instead of opening the browser's
+  // "save page" dialog.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "s") {
+        e.preventDefault()
+        void saveDraft()
+      }
+    }
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [saveDraft])
 
   // Confirmation dialog state. We never trigger publish/delete directly
   // from a button click — those buttons open these dialogs instead, and
@@ -237,10 +317,7 @@ export function BlogEditor({ initial }: { initial: BlogEditorInitial }) {
 
   const previewHref = `/admin/blog/preview/${initial.id}`
 
-  const initialBlocksMemo = useMemo(
-    () => hydratedInitialBlocks ?? undefined,
-    [hydratedInitialBlocks],
-  )
+  const initialBlocksMemo = useMemo(() => initialBlocks ?? undefined, [initialBlocks])
 
   // Focus mode collapses the left meta form AND hides both this editor's
   // header bar and the site-wide header so only the title + body remain on
@@ -254,15 +331,21 @@ export function BlogEditor({ initial }: { initial: BlogEditorInitial }) {
     <input
       type="text"
       value={meta.title}
-      onChange={(e) => onMetaChange({ ...meta, title: e.target.value })}
+      onChange={(e) => {
+        const title = e.target.value
+        onMetaChange((prev) => ({ ...prev, title }))
+      }}
       placeholder="タイトル"
       className="block w-full bg-transparent text-3xl font-bold leading-tight tracking-tight text-foreground placeholder:text-muted-foreground/50 focus:outline-none md:text-4xl"
       aria-label="記事タイトル"
     />
   )
 
-  const bodyCanvas = (
+  const bodyCanvas = !backupChecked ? (
+    <EditorSkeleton />
+  ) : (
     <BlocknoteCanvas
+      key={canvasKey}
       initialBlocks={initialBlocksMemo}
       initialHtml={initial.bodyHtml}
       draftId={initial.id}
@@ -446,6 +529,22 @@ export function BlogEditor({ initial }: { initial: BlogEditorInitial }) {
           )}
         </header>
 
+        {restoredAt !== null && !focusMode && (
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+            <span>
+              保存されていなかった編集内容（{new Date(restoredAt).toLocaleString("ja-JP")} 時点）を復元しました。
+              問題なければ「下書きを保存」してください。
+            </span>
+            <button
+              type="button"
+              onClick={discardRestored}
+              className="rounded-md border border-amber-300 bg-white px-2.5 py-1 text-xs hover:bg-amber-100"
+            >
+              復元を取り消して保存済みの内容に戻す
+            </button>
+          </div>
+        )}
+
         {publishError && !focusMode && (
           <div className="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
             {translatePublishError(publishError)}
@@ -525,11 +624,25 @@ function translatePublishError(raw: string): string {
     return `同じ日付・slugの記事が既に存在します（${raw}）。slugか公開日を変更してください。`
   }
   if (raw === "invalid_slug") return "slugは半角英数字とハイフンのみです。"
+  if (raw.startsWith("thumbnail_fetch_failed"))
+    return `サムネイル画像を取得できませんでした（${raw.split(":")[1] ?? ""}）。サムネイルをアップロードし直してから公開してください。`
+  if (raw.startsWith("image_fetch_failed"))
+    return `本文中の画像を取得できませんでした（${raw.split(":")[1] ?? ""}）。その画像を入れ直してから公開してください。`
   if (raw === "github_not_configured")
     return "GITHUB_TOKEN / GITHUB_REPO が未設定です。docs/blog-authoring.md を参照。"
   if (raw === "commit_failed")
     return "GitHub へのコミットに失敗しました。PATが期限切れ or 権限不足の可能性。"
   return raw
+}
+
+// JSON.stringify with sorted object keys: blocks saved to Postgres jsonb come
+// back with their keys reordered, so plain stringify can't compare them.
+function stableStringify(value: unknown): string {
+  return JSON.stringify(value, (_key, v: unknown) =>
+    v && typeof v === "object" && !Array.isArray(v)
+      ? Object.fromEntries(Object.entries(v as Record<string, unknown>).sort(([a], [b]) => a.localeCompare(b)))
+      : v,
+  )
 }
 
 function EditorSkeleton() {
