@@ -451,6 +451,21 @@ function toInstagramItem(
   }
 }
 
+// Instagram/Facebook CDN の画像URLは署名付きで、oe=<16進のUNIX秒> を過ぎると 403 になる。
+// 同期が止まると期限切れURLが残り灰色の仮画像だけが並ぶため、期限切れなら画像なしで表示する。
+function isExpiredSignedCdnUrl(raw: string): boolean {
+  try {
+    const url = new URL(raw)
+    const host = url.hostname.toLowerCase()
+    if (!host.endsWith(".cdninstagram.com") && !host.endsWith(".fbcdn.net")) return false
+    const oe = url.searchParams.get("oe")
+    if (!oe || !/^[0-9a-f]+$/i.test(oe)) return false
+    return parseInt(oe, 16) * 1000 <= Date.now()
+  } catch {
+    return false
+  }
+}
+
 function toExternalItem(source: ContentSource, seed: ExternalSeed, index: number): ContentItem {
   const normalizedDate = normalizeDate(seed.date)
   const title = seed.title.trim()
@@ -460,7 +475,9 @@ function toExternalItem(source: ContentSource, seed: ExternalSeed, index: number
   const rawThumbnail = (seed.thumbnail ?? "").trim()
   const thumbnail =
     rawThumbnail && /^https?:\/\//i.test(rawThumbnail)
-      ? `/api/thumbnail?src=${encodeURIComponent(rawThumbnail)}`
+      ? isExpiredSignedCdnUrl(rawThumbnail)
+        ? undefined
+        : `/api/thumbnail?src=${encodeURIComponent(rawThumbnail)}`
       : rawThumbnail || undefined
 
   return {
