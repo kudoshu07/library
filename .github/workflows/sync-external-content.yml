@@ -41,6 +41,11 @@ jobs:
           IG_BUSINESS_USERNAME: ${{ vars.IG_BUSINESS_USERNAME }}
           IG_PHOTO_USERNAME: ${{ vars.IG_PHOTO_USERNAME }}
           INSTAGRAM_FETCH_LIMIT: ${{ vars.INSTAGRAM_FETCH_LIMIT }}
+          # 公式API用の長期トークン。以降の自動更新分は Supabase Storage(app-secrets) に保管される
+          INSTAGRAM_TOKEN_BUSINESS: ${{ secrets.INSTAGRAM_TOKEN_BUSINESS }}
+          INSTAGRAM_TOKEN_PHOTO: ${{ secrets.INSTAGRAM_TOKEN_PHOTO }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
       - name: Sync note RSS fallback
         run: pnpm run sync:note
@@ -51,7 +56,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add content/external/instagram-business.json content/external/instagram-photo.json content/external/note-fallback.json
+          git add content/external/instagram-business.json content/external/instagram-photo.json content/external/note-fallback.json public/instagram
           if git diff --cached --quiet; then
             echo "No changes to commit"
             exit 0
