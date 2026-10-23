@@ -1261,7 +1261,7 @@ export async function getAllContentItems(): Promise<ContentItem[]> {
     loadSourceSafely("blog", () => loadBlogPosts()),
     loadSourceSafely("note", () => loadNoteItems()),
     loadSourceSafely("ig_business", () =>
-      loadInstagramItems("ig_business", process.env.IG_BUSINESS_USERNAME ?? "kudoshu_vcook", "instagram-business.json")
+      loadInstagramItems("ig_business", process.env.IG_BUSINESS_USERNAME ?? "kudoshu_vegan", "instagram-business.json")
     ),
     loadSourceSafely("ig_photo", () =>
       loadInstagramItems("ig_photo", process.env.IG_PHOTO_USERNAME ?? "onoshu_photo", "instagram-photo.json")

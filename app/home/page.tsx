@@ -51,7 +51,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic"
 
 export default async function HomeTimelinePage() {
-  const profileAvatarUrl = "/profile.jpg"
+  const profileAvatarUrl = "/profile-kudoshu.jpg"
   const [allItems, session] = await Promise.all([getAllContentItems(), getSession()])
   const pickupItems = await getPickupItems(allItems)
 

@@ -69,7 +69,7 @@ type RelatedLinkItem =
 const relatedLinks: RelatedLinkItem[] = [
   { kind: "source", source: "blog", href: "/search?source=blog", external: false },
   { kind: "source", source: "note", href: "https://note.com/onoshu1127", external: true },
-  { kind: "source", source: "ig_business", href: "https://www.instagram.com/kudoshu_vcook/", external: true },
+  { kind: "source", source: "ig_business", href: "https://www.instagram.com/kudoshu_vegan/", external: true },
   { kind: "source", source: "ig_photo", href: "https://www.instagram.com/onoshu_photo/", external: true },
   {
     kind: "source",
@@ -296,7 +296,7 @@ export function ContentsFeed({
     if (resolvedProfileAvatarUrl) return
 
     const controller = new AbortController()
-    fetch("/api/instagram-avatar?username=kudoshu_vcook", { signal: controller.signal })
+    fetch("/api/instagram-avatar?username=kudoshu_vegan", { signal: controller.signal })
       .then((response) => (response.ok ? response.json() : null))
       .then((data: { avatarUrl?: string } | null) => {
         if (data?.avatarUrl) setResolvedProfileAvatarUrl(data.avatarUrl)
@@ -661,7 +661,7 @@ export function ContentsFeed({
                       <span className="min-[800px]:max-[1024px]:hidden">検索</span>
                     </button>
                     <a
-                      href="https://www.instagram.com/kudoshu_vcook/"
+                      href="https://www.instagram.com/kudoshu_vegan/"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-3 rounded-full px-3 py-2 text-base font-semibold text-slate-900 transition hover:bg-slate-200 min-[800px]:max-[1024px]:mx-auto min-[800px]:max-[1024px]:h-10 min-[800px]:max-[1024px]:w-10 min-[800px]:max-[1024px]:justify-center min-[800px]:max-[1024px]:px-0 min-[800px]:max-[1024px]:py-0"
@@ -738,7 +738,7 @@ export function ContentsFeed({
                   }}
                 />
                 <a
-                  href="https://www.instagram.com/kudoshu_vcook/"
+                  href="https://www.instagram.com/kudoshu_vegan/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="absolute bottom-0 left-4 z-10 inline-flex size-24 translate-y-1/2 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-slate-200 sm:left-6 sm:size-32"
@@ -747,7 +747,7 @@ export function ContentsFeed({
                   {resolvedProfileAvatarUrl ? (
                     <img
                       src={resolvedProfileAvatarUrl}
-                      alt="kudoshu_vcook"
+                      alt="kudoshu_vegan"
                       className="h-full w-full object-cover"
                       referrerPolicy="no-referrer"
                       onError={(event) => {
@@ -1032,7 +1032,7 @@ export function ContentsFeed({
             )
           )}
           <a
-            href="https://www.instagram.com/kudoshu_vcook/"
+            href="https://www.instagram.com/kudoshu_vegan/"
             target="_blank"
             rel="noopener noreferrer"
             className="flex h-[clamp(3.75rem,8svh,4.5rem)] flex-col items-center justify-center gap-1 px-1 text-[10px] font-semibold leading-none text-slate-700 sm:text-xs"
@@ -1106,7 +1106,7 @@ export function ContentsFeed({
                 )
               )}
               <a
-                href="https://www.instagram.com/kudoshu_vcook/"
+                href="https://www.instagram.com/kudoshu_vegan/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-100"

@@ -30,7 +30,7 @@ export interface ContentItem {
 export const sourceLabels: Record<ContentSource, string> = {
   blog: "Blog",
   note: "note(個人)",
-  ig_business: "kudoshu_vcook",
+  ig_business: "kudoshu_vegan",
   ig_photo: "onoshu_photo(写真)",
   pod_yonakoi: "よな恋ラジオ",
   pod_vegan: "ヴィーガンの裏側",

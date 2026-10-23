@@ -584,7 +584,7 @@ export function SearchResultsPage({
             </Link>
           )}
           <a
-            href="https://www.instagram.com/kudoshu_vcook/"
+            href="https://www.instagram.com/kudoshu_vegan/"
             target="_blank"
             rel="noopener noreferrer"
             className="flex h-[clamp(3.75rem,8svh,4.5rem)] flex-col items-center justify-center gap-1 px-1 text-[10px] font-semibold leading-none text-slate-700 sm:text-xs"

@@ -7,7 +7,7 @@ const filters: { value: ContentSource | "all"; label: string }[] = [
   { value: "all", label: "All" },
   { value: "blog", label: "Blog" },
   { value: "note", label: "note(個人)" },
-  { value: "ig_business", label: "kudoshu_vcook" },
+  { value: "ig_business", label: "kudoshu_vegan" },
   { value: "ig_photo", label: "onoshu_photo(写真)" },
 ]
 

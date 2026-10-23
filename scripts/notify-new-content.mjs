@@ -32,7 +32,7 @@ if (!RESEND_API_KEY && !DRY_RUN) {
 const SOURCE_LABELS = {
   blog: "Blog",
   note: "note(個人)",
-  ig_business: "kudoshu_vcook",
+  ig_business: "kudoshu_vegan",
   ig_photo: "onoshu_photo(写真)",
 }
 
@@ -46,6 +46,10 @@ const PALETTE = {
 
 const ESCAPE_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }
 const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (c) => ESCAPE_MAP[c] ?? c)
+
+function notificationKey(id) {
+  return String(id).replace(/^ig:[^:]+:/, "ig:")
+}
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -439,7 +443,10 @@ async function main() {
     return
   }
 
-  const newItems = items.filter((item) => !notifiedIds.has(item.id))
+  // Instagram の id は ig:<username>:<shortcode>。アカウント名変更(kudoshu_vcook→kudoshu_vegan)で
+  // 既読判定が外れて過去投稿を一斉配信しないよう、username を除いた shortcode で照合する。
+  const notifiedKeys = new Set(Array.from(notifiedIds, notificationKey))
+  const newItems = items.filter((item) => !notifiedKeys.has(notificationKey(item.id)))
   if (newItems.length === 0) {
     console.log("[newsletter] no new items")
     return

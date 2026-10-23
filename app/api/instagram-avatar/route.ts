@@ -5,7 +5,7 @@ export async function GET(request: NextRequest) {
   const username =
     request.nextUrl.searchParams.get("username") ??
     process.env.IG_BUSINESS_USERNAME ??
-    "kudoshu_vcook"
+    "kudoshu_vegan"
 
   const avatarUrl = await getInstagramProfileAvatar(username)
 

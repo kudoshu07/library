@@ -168,7 +168,7 @@ async function writeJson(fileName, data) {
 }
 
 async function run() {
-  const business = normalizeUsername(env("IG_BUSINESS_USERNAME", "kudoshu_vcook"))
+  const business = normalizeUsername(env("IG_BUSINESS_USERNAME", "kudoshu_vegan"))
   const photo = normalizeUsername(env("IG_PHOTO_USERNAME", "onoshu_photo"))
   const limit = parseLimit(env("INSTAGRAM_FETCH_LIMIT", "12"), 12)
 
