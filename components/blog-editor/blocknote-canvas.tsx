@@ -5,6 +5,7 @@ import { BlockNoteSchema, defaultBlockSpecs, type Block, type PartialBlock } fro
 import { useCreateBlockNote } from "@blocknote/react"
 import { BlockNoteView } from "@blocknote/mantine"
 import { uploadDraftImageFile } from "@/lib/upload-draft-image"
+import { hasForeignColors, sanitizeBlockColors, stripPastedColors } from "@/lib/blog-color-sanitizer"
 import "@blocknote/core/fonts/inter.css"
 import "@blocknote/mantine/style.css"
 
@@ -85,6 +86,22 @@ export function BlocknoteCanvas({
       // one, so large photos and iPhone HEICs upload without a cryptic 413.
       return uploadDraftImageFile(draftId, rawFile)
     },
+    // Text copied from other apps (note.com in dark mode, web pages…) carries
+    // inline colours that the editor hides but the public page renders —
+    // e.g. white text that vanishes on the white post background. Strip them
+    // on the way in; everything else goes through BlockNote's default path.
+    pasteHandler: ({ event, editor, defaultPasteHandler }) => {
+      const types = event.clipboardData?.types ?? []
+      if (types.includes("text/html") && !types.includes("blocknote/html")) {
+        const html = event.clipboardData!.getData("text/html")
+        const inCode = editor.getTextCursorPosition().block.type === "codeBlock"
+        if (!inCode && hasForeignColors(html)) {
+          editor.pasteHTML(stripPastedColors(html))
+          return true
+        }
+      }
+      return defaultPasteHandler()
+    },
   })
 
   // Stable handle for the parent (Save / Publish buttons) to pull current
@@ -94,8 +111,10 @@ export function BlocknoteCanvas({
   useEffect(() => {
     if (!handleRef) return
     handleRef.current = {
-      getHtml: () => editor.blocksToHTMLLossy(editor.document),
-      getBlocks: () => editor.document,
+      // Belt and braces: even if a foreign colour slipped in (older drafts,
+      // drag-and-drop), never save or publish it.
+      getHtml: () => editor.blocksToHTMLLossy(sanitizeBlockColors(editor.document)),
+      getBlocks: () => sanitizeBlockColors(editor.document),
     }
     return () => {
       if (handleRef) handleRef.current = null
